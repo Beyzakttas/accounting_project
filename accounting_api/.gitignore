@@ -1,0 +1,45 @@
+# Bağımlılıklar (Her iki klasördeki node_modules'u da kapsar)
+node_modules/
+jspm_packages/
+
+# Gizli Bilgiler (Güvenlik için asla yüklenmemeli)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Log dosyaları
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build ve Dağıtım Çıktıları
+dist/
+build/
+.next/
+out/
+
+# Test ve Coverage (Jest, Mocha vb.)
+coverage/
+.nyc_output/
+
+# IDE ve Editör Dosyaları
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# İşletim Sistemi Geçici Dosyaları
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+
+# Yerel Sertifikalar
+*.pem
