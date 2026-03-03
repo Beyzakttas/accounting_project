@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import MESSAGES from '../Utils/messages.js';
 
 const UserSchema = new mongoose.Schema({
@@ -15,7 +16,8 @@ const UserSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, MESSAGES.MODELS.USER.PASSWORD_REQUIRED],
-    minlength: 6 // Güvenlik için minimum şifre uzunluğu
+    minlength: 6, // Güvenlik için minimum şifre uzunluğu
+    select: false // Varsayılan olarak şifreyi sorgularda getirme
   },
   role: {                       //type
     type: String,
@@ -42,8 +44,25 @@ const UserSchema = new mongoose.Schema({
   timestamps: true // createdAt ve updatedAt alanlarını otomatik ekler
 });
 
+// Kaydetmeden önce şifreyi hashleme işlemi
+UserSchema.pre('save', async function (next) {
+  // Sadece şifre alanı değiştirildiyse (veya yeniyse) hashleme yap
+  if (!this.isModified('password')) {
+    return next();
+  }
 
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
-// İmage   phone number 
+// Kullanıcının girdiği şifre ile veritabanındaki hashlenmiş şifreyi karşılaştırma metodu
+UserSchema.methods.comparePassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 export default mongoose.model('User', UserSchema);

@@ -4,43 +4,98 @@ import jwt from 'jsonwebtoken';
 import User from '../Models/User.js';
 import MESSAGES from '../Utils/messages.js';
 
+const generateToken = (id, role, companyId) => {
+  return jwt.sign({ id, role, companyId }, process.env.JWT_SECRET || 'fallback_secret', {
+    expiresIn: '1d',
+  });
+};
+
 const authController = {
   login: async (req, res) => {
     const { email, password } = req.body;
 
+    // Alanların dolu olduğunu kontrol et
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Lütfen e-posta ve şifrenizi girin.' });
+    }
+
     try {
-      const user = await User.findOne({ email });
+      // Şifreyi de getirmek için .select('+password') kullandık
+      const user = await User.findOne({ email }).select('+password');
       if (!user) {
-        return res.status(404).json({ message: MESSAGES.CONTROLLERS.AUTH.USER_NOT_FOUND });
+        return res.status(404).json({ success: false, message: MESSAGES.CONTROLLERS.AUTH.USER_NOT_FOUND });
       }
 
-      // Placeholder for password validation logic
-      if (password !== user.password) {
-        return res.status(401).json({ message: MESSAGES.CONTROLLERS.AUTH.INVALID_CREDENTIALS });
+      // Şifre doğrulama
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+        return res.status(401).json({ success: false, message: MESSAGES.CONTROLLERS.AUTH.INVALID_CREDENTIALS });
       }
 
-      // Generate JWT token with role and company information
-      const token = jwt.sign(
-        { id: user._id, role: user.role, companyId: user.companyId },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' }
-      );
+      // Aktiflik kontrolü vb. de eklenebilir
+      if (!user.isActive) {
+        return res.status(403).json({ success: false, message: MESSAGES.AUTH.ACCOUNT_SUSPENDED });
+      }
 
-      res.json({ token, role: user.role, companyId: user.companyId });
+      // Token oluştur
+      const token = generateToken(user._id, user.role, user.companyId);
+
+      // Başarılı giriş yanıtı. Şifreyi yanıttan çıkar!
+      user.password = undefined;
+
+      res.status(200).json({
+        success: true,
+        token,
+        data: {
+          user
+        }
+      });
     } catch (error) {
-      res.status(500).json({ message: MESSAGES.CONTROLLERS.AUTH.SERVER_ERROR, error });
+      res.status(500).json({ success: false, message: MESSAGES.CONTROLLERS.AUTH.SERVER_ERROR, error: error.message });
     }
   },
 
   register: async (req, res) => {
-    const { name, email, password, role } = req.body;
+    // Model şemasındaki 'fullname' kullanılıyor, req.body'den buna uygun alan istenir
+    const { fullname, email, password, role, companyId, department } = req.body;
+
+    if (!fullname || !email || !password) {
+      return res.status(400).json({ success: false, message: 'İsim, e-posta ve şifre zorunludur.' });
+    }
 
     try {
-      const newUser = new User({ name, email, password, role });
-      await newUser.save();
-      res.status(201).json({ message: MESSAGES.CONTROLLERS.AUTH.REGISTER_SUCCESS });
+      // 1. Kullanıcı zaten var mı kontrol et
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ success: false, message: 'Bu e-posta adresi ile zaten bir hesap mevcut.' });
+      }
+
+      // 2. Yeni kullanıcıyı oluştur (şifre User modelindeki pre-save kancasıyla hash'lenecek)
+      const newUser = await User.create({
+        fullname,
+        email,
+        password,
+        role,
+        companyId,
+        department
+      });
+
+      // Şifreyi güvenlik nedeniyle yanıttan kaldır
+      newUser.password = undefined;
+
+      // 3. Kayıt olur olmaz otomatik giriş yaptırmak istersek (opsiyonel), token dönebiliriz
+      const token = generateToken(newUser._id, newUser.role, newUser.companyId);
+
+      res.status(201).json({
+        success: true,
+        message: MESSAGES.CONTROLLERS.AUTH.REGISTER_SUCCESS,
+        token,
+        data: {
+          user: newUser
+        }
+      });
     } catch (error) {
-      res.status(500).json({ message: MESSAGES.CONTROLLERS.AUTH.SERVER_ERROR, error });
+      res.status(500).json({ success: false, message: MESSAGES.CONTROLLERS.AUTH.SERVER_ERROR, error: error.message });
     }
   },
 };

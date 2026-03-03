@@ -1,19 +1,18 @@
-// invoiceController.js
+import Invoice from '../Models/Invoice.js';
+import {
+  createOne,
+  getAll,
+  getOne,
+  updateOne,
+  deleteOne
+} from './handlerFactory.js';
 
-// Placeholder for invoice management logic
 const invoiceController = {
-  getAllInvoices: (req, res) => {
-    // Logic for retrieving all invoices
-  },
-  createInvoice: (req, res) => {
-    // Logic for creating an invoice
-  },
-  updateInvoice: (req, res) => {
-    // Logic for updating an invoice
-  },
-  deleteInvoice: (req, res) => {
-    // Logic for deleting an invoice
-  },
+  getAllInvoices: getAll(Invoice),
+  getInvoice: getOne(Invoice),
+  createInvoice: createOne(Invoice),
+  updateInvoice: updateOne(Invoice),
+  deleteInvoice: deleteOne(Invoice),
 };
 
 export default invoiceController;
