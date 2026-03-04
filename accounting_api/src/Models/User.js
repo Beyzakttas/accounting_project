@@ -16,7 +16,14 @@ const UserSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, MESSAGES.MODELS.USER.PASSWORD_REQUIRED],
-    minlength: 6, // Güvenlik için minimum şifre uzunluğu
+    minlength: [8, MESSAGES.MODELS.USER.PASSWORD_LENGTH], // Güvenlik için minimum 8 karakter
+    validate: {
+      validator: function (v) {
+        // En az bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter (+8 minimum check regex üzerinde de var ama minlength ile sağlandı)
+        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(v);
+      },
+      message: MESSAGES.MODELS.USER.PASSWORD_COMPLEXITY
+    },
     select: false // Varsayılan olarak şifreyi sorgularda getirme
   },
   role: {                       //type

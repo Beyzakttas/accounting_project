@@ -4,6 +4,8 @@ const MESSAGES = {
             FULLNAME_REQUIRED: 'isim soyisim alanı zorunludur',
             EMAIL_REQUIRED: 'E-posta alanı zorunludur',
             PASSWORD_REQUIRED: 'Şifre alanı zorunludur',
+            PASSWORD_LENGTH: 'Şifre en az 8 karakter uzunluğunda olmalıdır',
+            PASSWORD_COMPLEXITY: 'Şifre en az bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter (!@#$%^&* gibi) içermelidir',
         },
         CATEGORY: {
             NAME_REQUIRED: 'Kategori adı zorunludur'

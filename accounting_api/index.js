@@ -4,6 +4,7 @@ import connectDB from './src/Config/db.js';
 import cors from 'cors';
 
 import routes from './src/Routers/index.js'; // Bu otomatik olarak src/Routers/index.js'i çeker
+import { setupSwagger } from './src/Config/swagger.js';
 
 // Yapılandırmayı ve Veritabanını yükle
 dotenv.config();
@@ -26,4 +27,5 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Sunucu ${PORT} portunda yayında!`);
+  setupSwagger(app, PORT);
 });
