@@ -7,7 +7,7 @@ const ownerController = {
     // 1. Create Staff account
     createStaff: async (req, res) => {
         // Only MANAGERS should do this (enforced by roleMiddleware)
-        const { name, email, password, department } = req.body;
+        const { fullname, email, password, department } = req.body;
 
         // In our authMiddleware, we set req.user from JWT
         const ownerCompanyId = req.user.companyId;
@@ -19,9 +19,9 @@ const ownerController = {
             }
 
             const newStaff = new User({
-                name,
+                fullname,
                 email,
-                password, // Naive storage as per existing codebase
+                password,
                 role: 'USER',
                 companyId: ownerCompanyId,
                 department: department || 'Diger', // Add department option

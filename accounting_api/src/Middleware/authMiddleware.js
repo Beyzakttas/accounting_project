@@ -37,8 +37,10 @@ const authMiddleware = async (req, res, next) => {
     // Doğrulanmış ve aktif kullanıcıyı request objesine ekle
     req.user = user;
     next();
+    // authMiddleware.js içindeki catch kısmını böyle yap:
   } catch (error) {
-    res.status(400).json({ message: MESSAGES.AUTH.INVALID_TOKEN });
+    console.error("Auth Middleware Hatası:", error.message);
+    return res.status(401).json({ message: MESSAGES.AUTH.INVALID_TOKEN });
   }
 };
 

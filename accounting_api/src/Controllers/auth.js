@@ -4,11 +4,7 @@ import jwt from 'jsonwebtoken';
 import User from '../Models/User.js';
 import MESSAGES from '../Utils/messages.js';
 
-const generateToken = (id, role, companyId) => {
-  return jwt.sign({ id, role, companyId }, process.env.JWT_SECRET || 'fallback_secret', {
-    expiresIn: '1d',
-  });
-};
+import TokenService from '../Services/tokenService.js';
 
 const authController = {
   login: async (req, res) => {
@@ -37,8 +33,13 @@ const authController = {
         return res.status(403).json({ success: false, message: MESSAGES.AUTH.ACCOUNT_SUSPENDED });
       }
 
-      // Token oluştur
-      const token = generateToken(user._id, user.role, user.companyId);
+      // TokenService kullanarak (username bilgilerini de içeriye gizleyerek) token oluştur
+      const token = TokenService.generateToken({
+        id: user._id,
+        role: user.role,
+        companyId: user.companyId,
+        fullname: user.fullname // Tokeni çözüp username/fullname alma işlemi için eklendi
+      });
 
       // Başarılı giriş yanıtı. Şifreyi yanıttan çıkar!
       user.password = undefined;
@@ -83,8 +84,13 @@ const authController = {
       // Şifreyi güvenlik nedeniyle yanıttan kaldır
       newUser.password = undefined;
 
-      // 3. Kayıt olur olmaz otomatik giriş yaptırmak istersek (opsiyonel), token dönebiliriz
-      const token = generateToken(newUser._id, newUser.role, newUser.companyId);
+      // 3. Kayıt olur olmaz otomatik giriş yaptırmak istersek, TokenService çağır
+      const token = TokenService.generateToken({
+        id: newUser._id,
+        role: newUser.role,
+        companyId: newUser.companyId,
+        fullname: newUser.fullname
+      });
 
       res.status(201).json({
         success: true,

@@ -20,21 +20,23 @@ const adminController = {
                 return res.status(400).json({ message: MESSAGES.CONTROLLERS.ADMIN.OWNER_EXISTS });
             }
 
-            // Create company
+            // Create company with all required fields from schema
             const newCompany = new Company({
                 name: companyName,
-                quota: quota || 100
+                address: req.body.address || 'Belirtilmemiş',
+                taxNumber: req.body.taxNumber || 'Belirtilmemiş',
+                phone: req.body.phone || 'Belirtilmemiş',
+                email: req.body.companyEmail || `${companyName.replace(/\s+/g, '').toLowerCase()}@admin.com`
             });
             await newCompany.save();
 
             // Create Owner user
-            // Assuming naive password storage for now as in authController.
-            // In a real app we would use bcrypt.hash
             const newOwner = new User({
-                name: ownerName,
+                fullname: ownerName,
                 email: ownerEmail,
                 password: ownerPassword,
                 role: 'MANAGER',
+                department: 'Yonetim',
                 companyId: newCompany._id
             });
             await newOwner.save();
@@ -42,7 +44,7 @@ const adminController = {
             res.status(201).json({
                 message: MESSAGES.CONTROLLERS.ADMIN.COMPANY_CREATED,
                 company: newCompany,
-                owner: { id: newOwner._id, name: newOwner.name, email: newOwner.email }
+                owner: { id: newOwner._id, name: newOwner.fullname, email: newOwner.email }
             });
         } catch (error) {
             res.status(500).json({ message: MESSAGES.CONTROLLERS.ADMIN.SERVER_ERROR, error: error.message });

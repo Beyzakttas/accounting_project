@@ -52,19 +52,21 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Kaydetmeden önce şifreyi hashleme işlemi
-UserSchema.pre('save', async function (next) {
+UserSchema.pre('save', function (next) {
   // Sadece şifre alanı değiştirildiyse (veya yeniyse) hashleme yap
   if (!this.isModified('password')) {
     return next();
   }
 
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
+  bcrypt.genSalt(10, (err, salt) => {
+    if (err) return next(err);
+
+    bcrypt.hash(this.password, salt, (err, hash) => {
+      if (err) return next(err);
+      this.password = hash;
+      next();
+    });
+  });
 });
 
 // Kullanıcının girdiği şifre ile veritabanındaki hashlenmiş şifreyi karşılaştırma metodu

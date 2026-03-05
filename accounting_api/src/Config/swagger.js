@@ -1,5 +1,6 @@
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import { swaggerSecurityDefinitions } from './swaggerAuth.js';
 
 const options = {
     definition: {
@@ -15,20 +16,7 @@ const options = {
                 description: 'Genel API Sunucusu',
             },
         ],
-        components: {
-            securitySchemes: {
-                bearerAuth: {
-                    type: 'http',
-                    scheme: 'bearer',
-                    bearerFormat: 'JWT',
-                },
-            },
-        },
-        security: [
-            {
-                bearerAuth: [],
-            },
-        ],
+        ...swaggerSecurityDefinitions,
     },
     // Swagger JSDoc'ın okuyacağı rotalar
     apis: ['./src/Routers/*.js'],
