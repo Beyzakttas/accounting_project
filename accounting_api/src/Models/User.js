@@ -10,7 +10,7 @@ const UserSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, MESSAGES.MODELS.USER.EMAIL_REQUIRED],
-    unique: true, // Aynı e-posta ile ikinci kayıt yapılamaz
+    unique: true, //Aynı e-posta ile ikinci kayıt yapılamaz
     lowercase: true // E-postaları hep küçük harf kaydeder
   },
   password: {
@@ -46,6 +46,10 @@ const UserSchema = new mongoose.Schema({
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company'
+  },
+  refreshToken: {
+    type: String,
+    select: false
   }
 }, {
   timestamps: true // createdAt ve updatedAt alanlarını otomatik ekler

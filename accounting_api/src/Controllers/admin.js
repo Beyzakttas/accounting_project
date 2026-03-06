@@ -8,6 +8,10 @@ const adminController = {
     createCompanyWithOwner: async (req, res) => {
         const { companyName, quota, ownerName, ownerEmail, ownerPassword } = req.body;
 
+        if (!companyName || !ownerEmail || !ownerPassword) {
+            return res.status(400).json({ success: false, message: 'Şirket adı, sahip e-postası ve şifresi zorunludur.' });
+        }
+
         try {
             // Check if company or owner email already exists
             const existingCompany = await Company.findOne({ name: companyName });
@@ -26,7 +30,7 @@ const adminController = {
                 address: req.body.address || 'Belirtilmemiş',
                 taxNumber: req.body.taxNumber || 'Belirtilmemiş',
                 phone: req.body.phone || 'Belirtilmemiş',
-                email: req.body.companyEmail || `${companyName.replace(/\s+/g, '').toLowerCase()}@admin.com`
+                email: req.body.companyEmail || `${companyName.toString().replace(/\s+/g, '').toLowerCase()}@admin.com`
             });
             await newCompany.save();
 

@@ -33,7 +33,7 @@ import authMiddleware from '../Middleware/authMiddleware.js';
  *                 type: string
  *     responses:
  *       200:
- *         description: Başarılı giriş, token döndürüldü
+ *         description: Başarılı giriş, access token ve refresh token döndürüldü
  *       401:
  *         description: Geçersiz e-posta veya şifre
  */
@@ -71,10 +71,37 @@ router.post('/login', authController.login);
  *                 description: Kullanıcının bağlı olduğu şirket ID'si
  *     responses:
  *       201:
- *         description: Kullanıcı başarıyla kaydedildi
+ *         description: Kullanıcı başarıyla kaydedildi, access token ve refresh token döndürüldü
  *       400:
  *         description: Geçersiz veri veya e-posta zaten kullanımda
  */
 router.post('/register', authController.register);
+
+/**
+ * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Yeni bir access token almak için kullanılır
+ *     tags: [Auth]
+ *     security:
+ *       - refreshTokenAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Yeni access token başarıyla oluşturuldu
+ *       401:
+ *         description: Geçersiz veya süresi dolmuş refresh token
+ */
+router.post('/refresh', authController.refreshToken);
 
 export default router;

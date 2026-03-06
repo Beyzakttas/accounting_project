@@ -1,26 +1,23 @@
 export const swaggerSecurityDefinitions = {
     components: {
         securitySchemes: {
-            AdminAuth: {
+            bearerAuth: {
                 type: 'apiKey',
                 in: 'header',
                 name: 'Authorization',
-                description: 'Sadece Admin kullanıcılar için Bearer [token]'
+                description: 'Bearer [token] formatında JWT token giriniz.'
             },
-            UserAuth: {
+            refreshTokenAuth: {
                 type: 'apiKey',
                 in: 'header',
-                name: 'Authorization',
-                description: 'Standart Kullanıcılar için Bearer [token]'
+                name: 'x-refresh-token',
+                description: 'Yenileme (Refresh) tokenını buraya giriniz.'
             }
         },
     },
     security: [
         {
-            AdminAuth: [],
-        },
-        {
-            UserAuth: []
+            bearerAuth: [],
         }
     ],
 };

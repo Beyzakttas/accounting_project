@@ -18,7 +18,7 @@ import roleMiddleware from '../Middleware/roleMiddleware.js';
  *     summary: Yeni bir şirket ve o şirkete ait yönetici (Owner) oluşturur
  *     tags: [Company]
  *     security:
- *       - AdminAuth: []
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -48,7 +48,7 @@ import roleMiddleware from '../Middleware/roleMiddleware.js';
  *       400:
  *         description: Şirket veya kullanıcı email adresi zaten mevcut
  */
-router.post('/', authMiddleware, roleMiddleware(['ADMİN']), adminController.createCompanyWithOwner);
+router.post('/', authMiddleware, roleMiddleware(['ADMİN', 'MANAGER']), adminController.createCompanyWithOwner);
 
 /**
  * @swagger
@@ -57,7 +57,7 @@ router.post('/', authMiddleware, roleMiddleware(['ADMİN']), adminController.cre
  *     summary: Giriş yapmış yöneticinin bağlı olduğu kendi şirketinin bilgilerini getirir.
  *     tags: [Company]
  *     security:
- *       - UserAuth: []
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Şirket bilgileri başarılı şekilde getirildi
@@ -76,7 +76,7 @@ router.get('/my-company', authMiddleware, roleMiddleware(['MANAGER']), companyCo
  *     summary: Şirket kotasını ve abonelik bilgilerini günceller
  *     tags: [Company]
  *     security:
- *       - AdminAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -113,7 +113,7 @@ router.put('/:id', authMiddleware, roleMiddleware(['ADMİN']), adminController.u
  *     summary: Sistemdeki tüm şirketleri listeler
  *     tags: [Company]
  *     security:
- *       - AdminAuth: []
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Başarılı liste döndürüldü

@@ -12,7 +12,20 @@ class TokenService {
      */
     static generateToken(payload) {
         return jwt.sign(payload, process.env.JWT_SECRET || 'fallback_secret', {
-            expiresIn: '1d', // Token'ın geçerlilik süresi (1 gün)
+            expiresIn: '15m', // Access token'ın geçerlilik süresi (15 dakika - Güvenlik için kısa tutuldu)
+        });
+    }
+
+    /**
+     * Refresh Token oluşturma işlemi.
+     * Genellikle daha uzun süreli (örn. 7 gün) ve DB'de saklanarak kontrol edilir.
+     * 
+     * @param {Object} payload 
+     * @returns {string}
+     */
+    static generateRefreshToken(payload) {
+        return jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET || 'refresh_fallback_secret', {
+            expiresIn: '7d', // Refresh token'ın geçerlilik süresi (7 gün)
         });
     }
 
@@ -29,6 +42,21 @@ class TokenService {
             return decoded;
         } catch (error) {
             return null; // Token süresi bitmiş veya uydurma (geçersiz) bir token girilmişse
+        }
+    }
+
+    /**
+     * Refresh Token doğrulama işlemi.
+     * 
+     * @param {string} token 
+     * @returns {Object|null}
+     */
+    static verifyRefreshToken(token) {
+        try {
+            const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET || 'refresh_fallback_secret');
+            return decoded;
+        } catch (error) {
+            return null;
         }
     }
 

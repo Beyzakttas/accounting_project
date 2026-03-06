@@ -33,20 +33,25 @@ const authController = {
         return res.status(403).json({ success: false, message: MESSAGES.AUTH.ACCOUNT_SUSPENDED });
       }
 
-      // TokenService kullanarak (username bilgilerini de içeriye gizleyerek) token oluştur
-      const token = TokenService.generateToken({
-        id: user._id,
-        role: user.role,
-        companyId: user.companyId,
-        fullname: user.fullname // Tokeni çözüp username/fullname alma işlemi için eklendi
-      });
+      // TokenService kullanarak tokenları oluştur
+      const tokenPayload = {
+        id: user._id
+      };
 
-      // Başarılı giriş yanıtı. Şifreyi yanıttan çıkar!
+      const token = TokenService.generateToken(tokenPayload);
+      const refreshToken = TokenService.generateRefreshToken({ id: user._id });
+
+      // Refresh token'ı veritabanına kaydet
+      user.refreshToken = refreshToken;
+      await user.save();
+
+      // Başarılı giriş yanıtı. Şifreyi yanıtın içinden zaten .select('+password') ile aldık ama modele geri yazılmasın diye undefined yapıyoruz
       user.password = undefined;
 
       res.status(200).json({
         success: true,
         token,
+        refreshToken,
         data: {
           user
         }
@@ -85,20 +90,60 @@ const authController = {
       newUser.password = undefined;
 
       // 3. Kayıt olur olmaz otomatik giriş yaptırmak istersek, TokenService çağır
-      const token = TokenService.generateToken({
-        id: newUser._id,
-        role: newUser.role,
-        companyId: newUser.companyId,
-        fullname: newUser.fullname
-      });
+      const tokenPayload = {
+        id: newUser._id
+      };
+
+      const token = TokenService.generateToken(tokenPayload);
+      const refreshToken = TokenService.generateRefreshToken({ id: newUser._id });
+
+      // Refresh token'ı kaydet
+      const userToUpdate = await User.findById(newUser._id);
+      userToUpdate.refreshToken = refreshToken;
+      await userToUpdate.save();
 
       res.status(201).json({
         success: true,
         message: MESSAGES.CONTROLLERS.AUTH.REGISTER_SUCCESS,
         token,
+        refreshToken,
         data: {
           user: newUser
         }
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, message: MESSAGES.CONTROLLERS.AUTH.SERVER_ERROR, error: error.message });
+    }
+  },
+
+  refreshToken: async (req, res) => {
+    const refreshToken = req.body.refreshToken || req.headers['x-refresh-token'];
+
+    if (!refreshToken) {
+      return res.status(400).json({ success: false, message: 'Refresh token gereklidir.' });
+    }
+
+    try {
+      // 1. Token'ı doğrula
+      const decoded = TokenService.verifyRefreshToken(refreshToken);
+      if (!decoded) {
+        return res.status(401).json({ success: false, message: 'Geçersiz veya süresi dolmuş refresh token.' });
+      }
+
+      // 2. Veritabanında bu user ve token eşleşiyor mu bak
+      const user = await User.findById(decoded.id).select('+refreshToken');
+      if (!user || user.refreshToken !== refreshToken) {
+        return res.status(401).json({ success: false, message: 'Refresh token eşleşmiyor veya kullanıcı bulunamadı.' });
+      }
+
+      // 3. Yeni bir access token oluştur
+      const newToken = TokenService.generateToken({
+        id: user._id
+      });
+
+      res.status(200).json({
+        success: true,
+        token: newToken
       });
     } catch (error) {
       res.status(500).json({ success: false, message: MESSAGES.CONTROLLERS.AUTH.SERVER_ERROR, error: error.message });
