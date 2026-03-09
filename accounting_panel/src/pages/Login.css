@@ -31,6 +31,7 @@
   justify-content: center;
   background: var(--bg-color);
   overflow: hidden;
+  transition: background-color 0.2s ease;
 }
 
 /* Animated Background Blobs */
@@ -97,6 +98,7 @@
   box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
+  transition: background-color 0.2s, border-color 0.2s;
 }
 
 .login-glass-card::before {
@@ -168,7 +170,7 @@
   font-weight: 500;
   color: var(--text-secondary);
   margin-bottom: 0.5rem;
-  transition: color 0.3s ease;
+  transition: color 0.2s ease;
 }
 
 .input-group:focus-within label {
@@ -189,8 +191,17 @@
   color: var(--text-primary);
   font-size: 0.95rem;
   font-family: inherit;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
   outline: none;
+  color-scheme: inherit;
+}
+
+.login-form input:-webkit-autofill,
+.login-form input:-webkit-autofill:hover,
+.login-form input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text-primary);
+  -webkit-box-shadow: 0 0 0px 1000px var(--bg-color) inset;
+  transition: background-color 0s ease-in-out 0s;
 }
 
 .login-form input:focus,
@@ -204,6 +215,7 @@
 .login-form input::placeholder {
   color: var(--text-secondary);
   opacity: 0.6;
+  transition: color 0.2s ease;
 }
 
 .login-form select {
@@ -217,6 +229,7 @@
 .login-form select option {
   background: var(--bg-color);
   color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Button */
@@ -232,7 +245,7 @@
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.3);
   display: flex;
   justify-content: center;

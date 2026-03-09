@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import './Login.css';
 
 function Login({ setUsername, setRole }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [localRole, setLocalRole] = useState('Admin');
+  const [localRole, setLocalRole] = useState('USER');
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
@@ -33,11 +34,13 @@ function Login({ setUsername, setRole }) {
       const data = await response.json();
 
       if (response.ok) {
+        const userData = data.data.user;
         localStorage.setItem('token', data.token);
-        localStorage.setItem('role', data.role);
+        localStorage.setItem('role', userData.role);
+        localStorage.setItem('userName', userData.fullname);
 
-        if (setUsername) setUsername(data.user?.name || email.split('@')[0]);
-        if (setRole) setRole(data.role);
+        if (setUsername) setUsername(userData.fullname);
+        if (setRole) setRole(userData.role);
 
         window.location.href = '/dashboard';
       } else {
@@ -105,16 +108,26 @@ function Login({ setUsername, setRole }) {
               value={localRole}
               onChange={(e) => setLocalRole(e.target.value)}
             >
-              <option value="Admin">Admin</option>
-              <option value="Owner">Kurucu</option>
-              <option value="Staff">Personel</option>
+              <option value="ADMİN">Admin</option>
+              <option value="MANAGER">Yönetici</option>
+              <option value="USER">Kullanıcı</option>
             </select>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-0.5rem' }}>
+            <Link to="/forgot-password" style={{ color: 'var(--primary-color)', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '500' }}>
+              Şifremi Unuttum
+            </Link>
           </div>
 
           <button type="submit" className="login-btn" disabled={isLoading}>
             {isLoading ? <span className="loader"></span> : 'Giriş Yap'}
           </button>
         </form>
+
+        <div className="login-footer" style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+          <p>Hesabınız yok mu? <Link to="/register" style={{ color: 'var(--primary-color)', textDecoration: 'none', fontWeight: '600' }}>Kayıt Ol</Link></p>
+        </div>
       </div>
     </div>
   );
