@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 
-const Dashboard = () => {
+const Dashboard = ({ user: propUser }) => {
   const [user] = useState({
-    name: localStorage.getItem('userName') || 'Demo Kullanıcı',
-    role: localStorage.getItem('role') || 'admin'
+    name: propUser?.name || localStorage.getItem('userName') || 'Demo Kullanıcı',
+    role: propUser?.role || localStorage.getItem('role') || 'admin'
   });
 
   const [activeMenu, setActiveMenu] = useState('Anasayfa');
