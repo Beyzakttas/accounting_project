@@ -1,10 +1,9 @@
-// authController.js
-
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import User from '../Models/User.js';
 import MESSAGES from '../Utils/messages.js';
-
 import TokenService from '../Services/tokenService.js';
+import emailService from '../Services/emailService.js';
 
 const authController = {
   login: async (req, res) => {
@@ -144,6 +143,93 @@ const authController = {
       res.status(200).json({
         success: true,
         token: newToken
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, message: MESSAGES.CONTROLLERS.AUTH.SERVER_ERROR, error: error.message });
+    }
+  },
+
+  forgotPassword: async (req, res) => {
+    const { email } = req.body;
+
+    try {
+      // 1. Kullanıcıyı bul
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({ success: false, message: MESSAGES.CONTROLLERS.AUTH.EMAIL_NOT_FOUND });
+      }
+
+      // 2. Rastgele bir reset token oluştur
+      const resetToken = crypto.randomBytes(32).toString('hex');
+
+      // 3. Token'ı hash'leyip DB'ye kaydet (güvenlik için)
+      user.resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+
+      // 4. Token süresi (örn. 10 dakika)
+      user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
+
+      await user.save({ validateBeforeSave: false });
+
+      // 5. URL'yi oluştur ve e-posta gönder
+      // Frontend URL'si sürece göre değişebilir, şimdilik API endpoint'ini veya bir placeholder'ı gönderiyoruz
+      const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/reset-password/${resetToken}`;
+
+      const message = `Şifrenizi sıfırlamak için şu bağlantıya tıklayın: \n\n ${resetUrl}\n\nEğer bu isteği siz yapmadıysanız lütfen bu e-postayı dikkate almayın.`;
+
+      try {
+        await emailService.sendEmail({
+          email: user.email,
+          subject: 'Şifre Sıfırlama İsteği',
+          message
+        });
+
+        res.status(200).json({
+          success: true,
+          message: MESSAGES.CONTROLLERS.AUTH.RESET_LINK_SENT
+        });
+      } catch (err) {
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save({ validateBeforeSave: false });
+
+        return res.status(500).json({ success: false, message: 'E-posta gönderilirken bir hata oluştu. Lütfen tekrar deneyin.', error: err.message });
+      }
+    } catch (error) {
+      res.status(500).json({ success: false, message: MESSAGES.CONTROLLERS.AUTH.SERVER_ERROR, error: error.message });
+    }
+  },
+
+  resetPassword: async (req, res) => {
+    try {
+      // 1. Gelen token'ı sha256 ile hash'le (DB'dekilerle karşılaştırmak için)
+      const hashedToken = crypto
+        .createHash('sha256')
+        .update(req.params.token)
+        .digest('hex');
+
+      // 2. Token geçerli mi ve süresi dolmamış mı kontrol et
+      const user = await User.findOne({
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: { $gt: Date.now() }
+      });
+
+      if (!user) {
+        return res.status(400).json({ success: false, message: MESSAGES.CONTROLLERS.AUTH.INVALID_RESET_TOKEN });
+      }
+
+      // 3. Şifreyi güncelle ve token alanlarını temizle
+      user.password = req.body.password;
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+
+      await user.save();
+
+      res.status(200).json({
+        success: true,
+        message: MESSAGES.CONTROLLERS.AUTH.PASSWORD_RESET_SUCCESS
       });
     } catch (error) {
       res.status(500).json({ success: false, message: MESSAGES.CONTROLLERS.AUTH.SERVER_ERROR, error: error.message });

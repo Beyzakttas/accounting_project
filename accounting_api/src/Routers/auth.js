@@ -104,4 +104,61 @@ router.post('/register', authController.register);
  */
 router.post('/refresh', authController.refreshToken);
 
+/**
+ * @swagger
+ * /api/auth/forgot-password:
+ *   post:
+ *     summary: Şifre sıfırlama bağlantısı gönderir
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Reset bağlantısı gönderildi
+ *       404:
+ *         description: E-posta bulunamadı
+ */
+router.post('/forgot-password', authController.forgotPassword);
+
+/**
+ * @swagger
+ * /api/auth/reset-password/{token}:
+ *   post:
+ *     summary: Yeni şifre belirleyerek şifreyi sıfırlar
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Şifre sıfırlama token'ı
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Şifre başarıyla sıfırlandı
+ *       400:
+ *         description: Geçersiz veya süresi dolmuş token
+ */
+router.post('/reset-password/:token', authController.resetPassword);
+
 export default router;

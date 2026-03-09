@@ -31,7 +31,11 @@ const MESSAGES = {
             USER_NOT_FOUND: 'User not found',
             INVALID_CREDENTIALS: 'Invalid credentials',
             SERVER_ERROR: 'Server error',
-            REGISTER_SUCCESS: 'User registered successfully'
+            REGISTER_SUCCESS: 'User registered successfully',
+            RESET_LINK_SENT: 'Şifre sıfırlama bağlantısı e-posta adresine gönderildi.',
+            INVALID_RESET_TOKEN: 'Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş.',
+            PASSWORD_RESET_SUCCESS: 'Şifreniz başarıyla güncellendi.',
+            EMAIL_NOT_FOUND: 'Bu e-posta adresiyle bir kullanıcı bulunamadı.'
         },
         ADMIN: {
             COMPANY_EXISTS: 'Company name already exists',
