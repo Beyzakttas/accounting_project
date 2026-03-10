@@ -50,25 +50,7 @@ router.post('/login', authController.login);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - name
- *               - email
- *               - password
- *               - role
- *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *               role:
- *                 type: string
- *                 description: Müşterinin rolü (örn. CUSTOMER, EMPLOYEE)
- *               companyId:
- *                 type: string
- *                 description: Kullanıcının bağlı olduğu şirket ID'si
+ *             $ref: '#/components/schemas/User'
  *     responses:
  *       201:
  *         description: Kullanıcı başarıyla kaydedildi, access token ve refresh token döndürüldü
@@ -83,8 +65,6 @@ router.post('/register', authController.register);
  *   post:
  *     summary: Yeni bir access token almak için kullanılır
  *     tags: [Auth]
- *     security:
- *       - refreshTokenAuth: []
  *     requestBody:
  *       required: true
  *       content:

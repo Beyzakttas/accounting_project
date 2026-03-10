@@ -39,12 +39,7 @@ router.get('/', authMiddleware, invoiceController.getAllInvoices);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               title:
- *                 type: string
- *               amount:
- *                 type: number
+ *             $ref: '#/components/schemas/Invoice'
  *     responses:
  *       201:
  *         description: Fatura oluşturuldu
@@ -70,12 +65,7 @@ router.post('/', authMiddleware, roleMiddleware(['ADMİN']), invoiceController.c
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               title:
- *                 type: string
- *               amount:
- *                 type: number
+ *             $ref: '#/components/schemas/Invoice'
  *     responses:
  *       200:
  *         description: Fatura güncellendi

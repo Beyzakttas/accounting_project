@@ -26,22 +26,34 @@ import roleMiddleware from '../Middleware/roleMiddleware.js';
  *           schema:
  *             type: object
  *             required:
- *               - companyName
- *               - ownerName
+ *               - name
+ *               - address
+ *               - taxNumber
+ *               - phone
+ *               - email
+ *               - ownerFullname
  *               - ownerEmail
  *               - ownerPassword
  *             properties:
- *               companyName:
+ *               name:
  *                 type: string
- *               quota:
- *                 type: number
- *                 description: Şirket fatura/kullanıcı kotası
- *               ownerName:
+ *               address:
+ *                 type: string
+ *               taxNumber:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               ownerFullname:
  *                 type: string
  *               ownerEmail:
  *                 type: string
  *               ownerPassword:
  *                 type: string
+ *               quota:
+ *                 type: number
+ *                 description: Şirket fatura/kullanıcı kotası
  *     responses:
  *       201:
  *         description: Şirket başarıyla oluşturuldu
@@ -61,6 +73,10 @@ router.post('/', authMiddleware, roleMiddleware(['ADMİN', 'MANAGER']), adminCon
  *     responses:
  *       200:
  *         description: Şirket bilgileri başarılı şekilde getirildi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Company'
  *       403:
  *         description: Herhangi bir şirkete bağlı değilsiniz
  *       404:
@@ -89,15 +105,7 @@ router.get('/my-company', authMiddleware, roleMiddleware(['MANAGER']), companyCo
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               quota:
- *                 type: number
- *               isActive:
- *                 type: boolean
- *               subscriptionEndDate:
- *                 type: string
- *                 format: date-time
+ *             $ref: '#/components/schemas/Company'
  *     responses:
  *       200:
  *         description: Şirket başarıyla güncellendi

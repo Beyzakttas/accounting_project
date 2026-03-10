@@ -19,7 +19,7 @@ const options = {
         ...swaggerSecurityDefinitions,
     },
     // Swagger JSDoc'ın okuyacağı rotalar
-    apis: ['./src/Routers/*.js'],
+    apis: ['./src/Routers/*.js', './src/SwaggerSchemes/*.js'],
 };
 
 export const swaggerSpec = swaggerJSDoc(options);

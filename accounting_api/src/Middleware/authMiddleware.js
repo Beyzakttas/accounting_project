@@ -13,7 +13,7 @@ const authMiddleware = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
 
     // JWT içindeki id ile gerçek kullanıcıyı veritabanından bul
     const user = await User.findById(decoded.id);
@@ -37,7 +37,6 @@ const authMiddleware = async (req, res, next) => {
     // Doğrulanmış ve aktif kullanıcıyı request objesine ekle
     req.user = user;
     next();
-    // authMiddleware.js içindeki catch kısmını böyle yap:
   } catch (error) {
     console.error("Auth Middleware Hatası:", error.message);
     return res.status(401).json({ message: MESSAGES.AUTH.INVALID_TOKEN });

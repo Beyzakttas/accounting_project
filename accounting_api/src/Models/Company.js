@@ -25,6 +25,10 @@ const CompanySchema = new mongoose.Schema({
     required: [true, MESSAGES.MODELS.COMPANY.EMAIL_REQUIRED],
     unique: true,
     lowercase: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true

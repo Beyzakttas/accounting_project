@@ -24,18 +24,7 @@ import roleMiddleware from '../Middleware/roleMiddleware.js';
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - name
- *               - email
- *               - password
- *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *               password:
- *                 type: string
+ *             $ref: '#/components/schemas/User'
  *     responses:
  *       201:
  *         description: Personel başarıyla eklendi
@@ -109,15 +98,7 @@ router.put('/settings', authMiddleware, roleMiddleware(['MANAGER']), ownerContro
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - name
- *             properties:
- *               name:
- *                 type: string
- *               type:
- *                 type: string
- *                 description: Kategori tipi (INCOME / EXPENSE)
+ *             $ref: '#/components/schemas/Category'
  *     responses:
  *       201:
  *         description: Kategori başarıyla oluşturuldu
