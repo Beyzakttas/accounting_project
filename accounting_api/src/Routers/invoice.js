@@ -24,7 +24,7 @@ import roleMiddleware from '../Middleware/roleMiddleware.js';
  *       200:
  *         description: Faturalar listelendi
  */
-router.get('/', authMiddleware, invoiceController.getAllInvoices);
+router.get('/', authMiddleware, roleMiddleware(['ADMIN', 'MANAGER', 'USER']), invoiceController.getAllInvoices);
 
 /**
  * @swagger
@@ -44,7 +44,7 @@ router.get('/', authMiddleware, invoiceController.getAllInvoices);
  *       201:
  *         description: Fatura oluşturuldu
  */
-router.post('/', authMiddleware, roleMiddleware(['ADMİN']), invoiceController.createInvoice);
+router.post('/', authMiddleware, roleMiddleware(['ADMIN', 'MANAGER', 'USER']), invoiceController.createInvoice);
 
 /**
  * @swagger
@@ -70,7 +70,7 @@ router.post('/', authMiddleware, roleMiddleware(['ADMİN']), invoiceController.c
  *       200:
  *         description: Fatura güncellendi
  */
-router.put('/:id', authMiddleware, roleMiddleware(['ADMİN']), invoiceController.updateInvoice);
+router.put('/:id', authMiddleware, roleMiddleware(['ADMIN', 'MANAGER']), invoiceController.updateInvoice);
 
 /**
  * @swagger
@@ -90,6 +90,6 @@ router.put('/:id', authMiddleware, roleMiddleware(['ADMİN']), invoiceController
  *       200:
  *         description: Fatura silindi
  */
-router.delete('/:id', authMiddleware, roleMiddleware(['ADMİN']), invoiceController.deleteInvoice);
+router.delete('/:id', authMiddleware, roleMiddleware(['ADMIN', 'MANAGER']), invoiceController.deleteInvoice);
 
 export default router;

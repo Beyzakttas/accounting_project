@@ -50,7 +50,7 @@ function Login({ setUsername, setRole }) {
       console.error("Bağlantı hatası:", error);
       console.log("Backend ulaşılamadı, demo girişi yapılıyor...");
 
-      localStorage.setItem('role', localRole.toLowerCase());
+      localStorage.setItem('role', localRole.toUpperCase());
       localStorage.setItem('userName', email.split('@')[0] || 'Demo Kullanıcı');
       window.location.href = '/dashboard';
     } finally {
@@ -108,7 +108,7 @@ function Login({ setUsername, setRole }) {
               value={localRole}
               onChange={(e) => setLocalRole(e.target.value)}
             >
-              <option value="ADMİN">Admin</option>
+              <option value="ADMIN">Admin</option>
               <option value="MANAGER">Yönetici</option>
               <option value="USER">Kullanıcı</option>
             </select>

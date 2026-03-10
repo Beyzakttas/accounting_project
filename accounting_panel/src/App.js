@@ -13,7 +13,7 @@ import ResetPassword from './pages/ResetPassword';
 function App() {
   const [username, setUsername] = useState(localStorage.getItem('userName') || '');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState(localStorage.getItem('role') || 'Admin');
+  const [role, setRole] = useState(localStorage.getItem('role') || 'ADMIN');
 
   const handleLogin = (e) => {
     // e.preventDefault() eklemeyi unutma, sayfa yenilenmesin
@@ -24,7 +24,7 @@ function App() {
 
   const user = {
     name: username || 'Kullanıcı',
-    role: role.toLowerCase(),
+    role: role,
   };
 
   return (

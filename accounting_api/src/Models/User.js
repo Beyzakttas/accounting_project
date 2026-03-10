@@ -28,7 +28,7 @@ const UserSchema = new mongoose.Schema({
   },
   role: {                       //type
     type: String,
-    enum: ['ADMİN', 'MANAGER', 'USER'],
+    enum: ['ADMIN', 'MANAGER', 'USER'],
     default: 'USER', // Rol belirtilmezse varsayılan olarak Staff atanır
     required: true,
   },

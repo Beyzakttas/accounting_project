@@ -4,7 +4,7 @@ import Company from '../Models/Company.js';
 import MESSAGES from '../Utils/messages.js';
 
 const companyController = {
-  // Şirket listesini sadece Admin yetkisine ayarlamıştık (Router'da `roleMiddleware(['ADMİN'])` var)
+  // Şirket listesini sadece Admin yetkisine ayarlamıştık (Router'da `roleMiddleware(['ADMIN'])` var)
   getCompanies: async (req, res) => {
     try {
       const companies = await Company.find();

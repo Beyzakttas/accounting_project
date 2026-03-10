@@ -2,12 +2,21 @@ import MESSAGES from '../Utils/messages.js';
 
 export const deleteOne = (Model) => async (req, res) => {
     try {
-        const doc = await Model.findByIdAndDelete(req.params.id);
+        const query = { _id: req.params.id };
+        if (req.user.role !== 'ADMIN') {
+            query.companyId = req.user.companyId;
+            // EĞER USER İSE SADECE KENDİ YÜKLEDİĞİNİ SİLEBİLSİN (Daha güvenli senaryo)
+            if (req.user.role === 'USER' && Model.schema.paths.uploadedBy) {
+                query.uploadedBy = req.user._id;
+            }
+        }
+
+        const doc = await Model.findOneAndDelete(query);
 
         if (!doc) {
             return res.status(404).json({
                 success: false,
-                message: 'Belirtilen ID ile kayıt bulunamadı'
+                message: 'Belirtilen ID ile kayıt bulunamadı veya bu işlem için yetkiniz yok'
             });
         }
 
@@ -26,7 +35,19 @@ export const deleteOne = (Model) => async (req, res) => {
 
 export const updateOne = (Model) => async (req, res) => {
     try {
-        const doc = await Model.findByIdAndUpdate(req.params.id, req.body, {
+        const query = { _id: req.params.id };
+        if (req.user.role !== 'ADMIN') {
+            query.companyId = req.user.companyId;
+            // EĞER USER İSE SADECE KENDİ YÜKLEDİĞİNİ GÜNCELLEYEBİLSİN
+            if (req.user.role === 'USER' && Model.schema.paths.uploadedBy) {
+                query.uploadedBy = req.user._id;
+            }
+            // Kullanıcının kendi companyId'sini veya yükleyiciyi değiştirmesini engelle
+            delete req.body.companyId;
+            delete req.body.uploadedBy;
+        }
+
+        const doc = await Model.findOneAndUpdate(query, req.body, {
             new: true,
             runValidators: true
         });
@@ -34,7 +55,7 @@ export const updateOne = (Model) => async (req, res) => {
         if (!doc) {
             return res.status(404).json({
                 success: false,
-                message: 'Belirtilen ID ile kayıt bulunamadı'
+                message: 'Belirtilen ID ile kayıt bulunamadı veya bu işlem için yetkiniz yok'
             });
         }
 
@@ -52,6 +73,14 @@ export const updateOne = (Model) => async (req, res) => {
 
 export const createOne = (Model) => async (req, res) => {
     try {
+        // Otomatik olarak kullanıcının şirketini ve kendisini ekle (Admin değilse)
+        if (req.user.role !== 'ADMIN') {
+            req.body.companyId = req.user.companyId;
+            if (Model.schema.paths.uploadedBy) {
+                req.body.uploadedBy = req.user._id;
+            }
+        }
+
         const newDoc = await Model.create(req.body);
 
         res.status(201).json({
@@ -68,14 +97,23 @@ export const createOne = (Model) => async (req, res) => {
 
 export const getOne = (Model, popOptions) => async (req, res) => {
     try {
-        let query = Model.findById(req.params.id);
+        const queryFilter = { _id: req.params.id };
+        if (req.user.role !== 'ADMIN') {
+            queryFilter.companyId = req.user.companyId;
+            // USER ise sadece kendi yüklediğini görsün
+            if (req.user.role === 'USER' && Model.schema.paths.uploadedBy) {
+                queryFilter.uploadedBy = req.user._id;
+            }
+        }
+
+        let query = Model.findOne(queryFilter);
         if (popOptions) query = query.populate(popOptions);
         const doc = await query;
 
         if (!doc) {
             return res.status(404).json({
                 success: false,
-                message: 'Belirtilen ID ile kayıt bulunamadı'
+                message: 'Belirtilen ID ile kayıt bulunamadı veya bu işlem için yetkiniz yok'
             });
         }
 
@@ -93,7 +131,16 @@ export const getOne = (Model, popOptions) => async (req, res) => {
 
 export const getAll = (Model) => async (req, res) => {
     try {
-        const docs = await Model.find();
+        const filter = {};
+        if (req.user && req.user.role !== 'ADMIN') {
+            filter.companyId = req.user.companyId;
+            // USER ise sadece kendi yüklediği faturaları görsün (Senaryo B)
+            if (req.user.role === 'USER' && Model.schema.paths.uploadedBy) {
+                filter.uploadedBy = req.user._id;
+            }
+        }
+
+        const docs = await Model.find(filter);
 
         res.status(200).json({
             success: true,

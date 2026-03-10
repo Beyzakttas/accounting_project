@@ -26,7 +26,7 @@
  *           description: Kullanıcının şifresi (en az 8 karakter, karmaşık yapı)
  *         role:
  *           type: string
- *           enum: [ADMİN, MANAGER, USER]
+ *           enum: [ADMIN, MANAGER, USER]
  *           default: USER
  *           description: Kullanıcı rolü
  *         isActive:

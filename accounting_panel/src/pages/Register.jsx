@@ -143,7 +143,7 @@ function Register() {
                                     value={formData.role}
                                     onChange={handleChange}
                                 >
-                                    <option value="ADMİN">Admin</option>
+                                    <option value="ADMIN">Admin</option>
                                     <option value="MANAGER">Yönetici</option>
                                     <option value="USER">Kullanıcı</option>
                                 </select>

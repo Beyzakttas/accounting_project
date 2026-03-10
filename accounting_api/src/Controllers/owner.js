@@ -54,10 +54,16 @@ const ownerController = {
     // 3. View all invoices belonging to their companyId only
     getCompanyInvoices: async (req, res) => {
         const ownerCompanyId = req.user.companyId;
+        const filter = { companyId: ownerCompanyId };
+
+        // Senaryo B: USER sadece kendi yüklediğini görsün
+        if (req.user.role === 'USER') {
+            filter.uploadedBy = req.user._id;
+        }
 
         try {
             // In a real app we might want pagination
-            const invoices = await Invoice.find({ companyId: ownerCompanyId })
+            const invoices = await Invoice.find(filter)
                 .populate('uploadedBy', 'name email')
                 .sort({ createdAt: -1 });
             res.json(invoices);

@@ -60,7 +60,7 @@ import roleMiddleware from '../Middleware/roleMiddleware.js';
  *       400:
  *         description: Şirket veya kullanıcı email adresi zaten mevcut
  */
-router.post('/', authMiddleware, roleMiddleware(['ADMİN', 'MANAGER']), adminController.createCompanyWithOwner);
+router.post('/', authMiddleware, roleMiddleware(['ADMIN', 'MANAGER']), adminController.createCompanyWithOwner);
 
 /**
  * @swagger
@@ -83,7 +83,7 @@ router.post('/', authMiddleware, roleMiddleware(['ADMİN', 'MANAGER']), adminCon
  *         description: Şirket bulunamadı
  */
 import companyController from '../Controllers/company.js';
-router.get('/my-company', authMiddleware, roleMiddleware(['MANAGER']), companyController.getMyCompany);
+router.get('/my-company', authMiddleware, roleMiddleware(['MANAGER', 'USER']), companyController.getMyCompany);
 
 /**
  * @swagger
@@ -112,7 +112,7 @@ router.get('/my-company', authMiddleware, roleMiddleware(['MANAGER']), companyCo
  *       404:
  *         description: Şirket bulunamadı
  */
-router.put('/:id', authMiddleware, roleMiddleware(['ADMİN']), adminController.updateCompanyQuota);
+router.put('/:id', authMiddleware, roleMiddleware(['ADMIN']), adminController.updateCompanyQuota);
 
 /**
  * @swagger
@@ -126,6 +126,6 @@ router.put('/:id', authMiddleware, roleMiddleware(['ADMİN']), adminController.u
  *       200:
  *         description: Başarılı liste döndürüldü
  */
-router.get('/', authMiddleware, roleMiddleware(['ADMİN']), adminController.getAllCompanies);
+router.get('/', authMiddleware, roleMiddleware(['ADMIN']), adminController.getAllCompanies);
 
 export default router;

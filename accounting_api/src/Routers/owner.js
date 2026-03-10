@@ -59,7 +59,7 @@ router.get('/staff', authMiddleware, roleMiddleware(['MANAGER']), ownerControlle
  *       200:
  *         description: Fatura listesi döndürüldü
  */
-router.get('/invoices', authMiddleware, roleMiddleware(['MANAGER']), ownerController.getCompanyInvoices);
+router.get('/invoices', authMiddleware, roleMiddleware(['MANAGER', 'USER']), ownerController.getCompanyInvoices);
 
 /**
  * @swagger

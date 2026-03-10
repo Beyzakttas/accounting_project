@@ -4,7 +4,7 @@ import './Dashboard.css';
 const Dashboard = ({ user: propUser }) => {
   const [user] = useState({
     name: propUser?.name || localStorage.getItem('userName') || 'Demo Kullanıcı',
-    role: propUser?.role || localStorage.getItem('role') || 'admin'
+    role: propUser?.role || localStorage.getItem('role') || 'ADMIN'
   });
 
   const [activeMenu, setActiveMenu] = useState('Anasayfa');
@@ -42,7 +42,7 @@ const Dashboard = ({ user: propUser }) => {
 
         <nav className="sidebar-nav">
           {navItems.map((item) => {
-            if (item.adminOnly && !['admin', 'owner'].includes(user.role)) return null;
+            if (item.adminOnly && !['ADMIN', 'MANAGER'].includes(user.role.toUpperCase())) return null;
             return (
               <button
                 key={item.id}
