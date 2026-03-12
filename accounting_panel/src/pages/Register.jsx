@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../contexts/ToastContext';
 import './Register.css';
 
 function Register() {
@@ -11,17 +13,9 @@ function Register() {
     });
     const [isLoading, setIsLoading] = useState(false);
     const [showPasswordError, setShowPasswordError] = useState(false);
-    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+    const { theme, toggleTheme } = useTheme();
+    const { addToast } = useToast();
     const navigate = useNavigate();
-
-    useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-    }, [theme]);
-
-    const toggleTheme = () => {
-        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-    };
 
     const handleChange = (e) => {
         setFormData({
@@ -61,14 +55,14 @@ function Register() {
             const data = await response.json();
 
             if (response.ok) {
-                alert("Kayıt başarılı! Giriş yapabilirsiniz.");
+                addToast("Kayıt başarılı! Giriş yapabilirsiniz.", "success");
                 navigate('/');
             } else {
-                alert("Hata: " + (data.message || "Kayıt işlemi başarısız."));
+                addToast("Hata: " + (data.message || "Kayıt işlemi başarısız."), "error");
             }
         } catch (error) {
             console.error("Bağlantı hatası:", error);
-            alert("Sunucuya bağlanılamadı. Lütfen backend'in çalıştığından emin olun.");
+            addToast("Sunucuya bağlanılamadı. Lütfen backend'in çalıştığından emin olun.", "error");
         } finally {
             setIsLoading(false);
         }

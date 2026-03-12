@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../contexts/ToastContext';
 import './Login.css';
 
 function Login({ setUsername, setRole }) {
@@ -7,16 +9,8 @@ function Login({ setUsername, setRole }) {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [localRole, setLocalRole] = useState('USER');
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
+  const { theme, toggleTheme } = useTheme();
+  const { addToast } = useToast();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -44,12 +38,13 @@ function Login({ setUsername, setRole }) {
 
         window.location.href = '/dashboard';
       } else {
-        alert("Hata: " + data.message);
+        addToast("Hata: " + data.message, "error");
       }
     } catch (error) {
       console.error("Bağlantı hatası:", error);
-      console.log("Backend ulaşılamadı, demo girişi yapılıyor...");
+      addToast("Backend ulaşılamadı. Lütfen sunucuyu kontrol edin.", "error");
 
+      // Fallback demo login (You might want to remove this in production)
       localStorage.setItem('role', localRole.toUpperCase());
       localStorage.setItem('userName', email.split('@')[0] || 'Demo Kullanıcı');
       window.location.href = '/dashboard';
@@ -71,8 +66,6 @@ function Login({ setUsername, setRole }) {
 
       <div className="login-glass-card">
         <div className="login-header">
-          <h1 className="login-title">Hoş Geldiniz</h1>
-          <p className="login-subtitle">Muhasebe AI Sistemine Giriş Yapın</p>
         </div>
 
         <form onSubmit={handleLogin} className="login-form">

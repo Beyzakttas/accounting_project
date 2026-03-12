@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useToast } from '../contexts/ToastContext';
 import './Login.css';
 
 function ResetPassword() {
@@ -9,6 +10,7 @@ function ResetPassword() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const { addToast } = useToast();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -32,7 +34,7 @@ function ResetPassword() {
             const data = await response.json();
 
             if (response.ok) {
-                alert("Şifreniz başarıyla güncellendi!");
+                addToast("Şifreniz başarıyla güncellendi!", "success");
                 navigate('/');
             } else {
                 setError(data.message);

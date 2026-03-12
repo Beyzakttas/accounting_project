@@ -53,7 +53,7 @@
   display: flex;
   flex-direction: column;
   z-index: 10;
-  transition: transform 0.3s ease, width 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .sidebar-logo {
@@ -107,7 +107,7 @@
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition: all 0.3s ease;
   text-align: left;
 }
 
@@ -185,7 +185,7 @@
   font-family: inherit;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .logout-btn:hover {
@@ -251,7 +251,7 @@
   justify-content: center;
   font-size: 1.2rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
 .action-btn:hover {
@@ -283,7 +283,7 @@
   border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
 }
 
@@ -326,7 +326,7 @@
   display: flex;
   align-items: flex-start;
   gap: 1.5rem;
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .stat-card:hover {
@@ -460,7 +460,7 @@
   flex: 1;
   background: linear-gradient(to top, var(--primary-color), rgba(99, 102, 241, 0.5));
   border-radius: 8px 8px 0 0;
-  transition: height 1s ease;
+  transition: height 1s ease, background 0.3s ease;
   position: relative;
 }
 
@@ -485,7 +485,7 @@
   padding: 2rem;
   text-align: center;
   background: rgba(99, 102, 241, 0.05);
-  transition: all 0.3s;
+  transition: all 0.3s ease;
 }
 
 .ai-upload-area:hover {
@@ -522,7 +522,7 @@
   border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
 .upload-btn:hover {

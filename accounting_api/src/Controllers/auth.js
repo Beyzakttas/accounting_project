@@ -174,8 +174,8 @@ const authController = {
       await user.save({ validateBeforeSave: false });
 
       // 5. URL'yi oluştur ve e-posta gönder
-      // Frontend URL'si sürece göre değişebilir, şimdilik API endpoint'ini veya bir placeholder'ı gönderiyoruz
-      const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/reset-password/${resetToken}`;
+      // Frontend URL'si (Port 3000)
+      const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
 
       const message = `Şifrenizi sıfırlamak için şu bağlantıya tıklayın: \n\n ${resetUrl}\n\nEğer bu isteği siz yapmadıysanız lütfen bu e-postayı dikkate almayın.`;
 

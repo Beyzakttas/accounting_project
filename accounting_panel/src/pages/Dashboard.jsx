@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 import './Dashboard.css';
 
 const Dashboard = ({ user: propUser }) => {
@@ -8,16 +9,7 @@ const Dashboard = ({ user: propUser }) => {
   });
 
   const [activeMenu, setActiveMenu] = useState('Anasayfa');
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
+  const { theme, toggleTheme } = useTheme();
 
   const onLogout = () => {
     localStorage.clear();

@@ -4,9 +4,10 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import AdminPanel from './pages/AdminPanel';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { ToastProvider } from './contexts/ToastContext';
 
 // ... importlar aynı kalıyor
 
@@ -28,25 +29,28 @@ function App() {
   };
 
   return (
-    <Router>
-      <Routes>
-        {/* Login bileşenine tüm yetkileri ve verileri gönderiyoruz */}
-        <Route path="/" element={
-          <Login
-            setUsername={setUsername}
-            setPassword={setPassword}
-            setRole={setRole}
-            handleLogin={handleLogin}
-            values={{ username, password, role }}
-          />
-        } />
-        <Route path="/dashboard" element={<Dashboard user={user} onLogout={() => console.log('Çıkış yapıldı')} />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/admin" element={<AdminPanel />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-      </Routes>
-    </Router>
+    <ThemeProvider>
+      <ToastProvider>
+        <Router>
+          <Routes>
+            {/* Login bileşenine tüm yetkileri ve verileri gönderiyoruz */}
+            <Route path="/" element={
+              <Login
+                setUsername={setUsername}
+                setPassword={setPassword}
+                setRole={setRole}
+                handleLogin={handleLogin}
+                values={{ username, password, role }}
+              />
+            } />
+            <Route path="/dashboard" element={<Dashboard user={user} onLogout={() => console.log('Çıkış yapıldı')} />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+          </Routes>
+        </Router>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
 

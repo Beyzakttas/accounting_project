@@ -19,6 +19,8 @@ const UserSchema = new mongoose.Schema({
     minlength: [8, MESSAGES.MODELS.USER.PASSWORD_LENGTH], // Güvenlik için minimum 8 karakter
     validate: {
       validator: function (v) {
+        // Sadece şifre değiştirildiğinde (veya yeni ise) karmaşıklık kontrolü yap
+        if (!this.isModified('password')) return true;
         // En az bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter.
         return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])/.test(v);
       },
