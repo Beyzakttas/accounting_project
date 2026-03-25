@@ -1,6 +1,5 @@
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import { swaggerSecurityDefinitions } from './swaggerAuth.js';
 
 const options = {
     definition: {
@@ -16,7 +15,27 @@ const options = {
                 description: 'Genel API Sunucusu',
             },
         ],
-        ...swaggerSecurityDefinitions,
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                    description: 'Sadece JWT token\'ını (eyJ...) kopyalayıp buraya yapıştırın. "Bearer " kelimesini eklemenize gerek yoktur, sistem otomatik ekler.'
+                },
+                refreshTokenAuth: {
+                    type: 'apiKey',
+                    in: 'header',
+                    name: 'x-refresh-token',
+                    description: 'Yenileme (Refresh) tokenını buraya giriniz.'
+                }
+            },
+        },
+        security: [
+            {
+                bearerAuth: [],
+            }
+        ],
     },
     // Swagger JSDoc'ın okuyacağı rotalar
     apis: ['./src/Routers/*.js', './src/SwaggerSchemes/*.js'],

@@ -1,8 +1,9 @@
 import express from 'express';
-const router = express.Router();
 import ownerController from '../Controllers/owner.js';
 import authMiddleware from '../Middleware/authMiddleware.js';
 import roleMiddleware from '../Middleware/roleMiddleware.js';
+
+const router = express.Router();
 
 /**
  * @swagger
@@ -31,7 +32,7 @@ import roleMiddleware from '../Middleware/roleMiddleware.js';
  *       400:
  *         description: Kota dolu veya email kullanımda
  */
-router.post('/staff', authMiddleware, roleMiddleware(['MANAGER']), ownerController.createStaff);
+router.post('/staff', roleMiddleware(['MANAGER']), ownerController.createStaff);
 
 /**
  * @swagger
@@ -45,7 +46,7 @@ router.post('/staff', authMiddleware, roleMiddleware(['MANAGER']), ownerControll
  *       200:
  *         description: Personel listesi döndürüldü
  */
-router.get('/staff', authMiddleware, roleMiddleware(['MANAGER']), ownerController.getCompanyStaff);
+router.get('/staff', roleMiddleware(['MANAGER']), ownerController.getCompanyStaff);
 
 /**
  * @swagger
@@ -59,7 +60,7 @@ router.get('/staff', authMiddleware, roleMiddleware(['MANAGER']), ownerControlle
  *       200:
  *         description: Fatura listesi döndürüldü
  */
-router.get('/invoices', authMiddleware, roleMiddleware(['MANAGER', 'USER']), ownerController.getCompanyInvoices);
+router.get('/invoices', roleMiddleware(['MANAGER', 'USER']), ownerController.getCompanyInvoices);
 
 /**
  * @swagger
@@ -83,7 +84,7 @@ router.get('/invoices', authMiddleware, roleMiddleware(['MANAGER', 'USER']), own
  *       200:
  *         description: Ayarlar başarıyla güncellendi
  */
-router.put('/settings', authMiddleware, roleMiddleware(['MANAGER']), ownerController.updateSettings);
+router.put('/settings', roleMiddleware(['MANAGER']), ownerController.updateSettings);
 
 /**
  * @swagger
@@ -103,7 +104,7 @@ router.put('/settings', authMiddleware, roleMiddleware(['MANAGER']), ownerContro
  *       201:
  *         description: Kategori başarıyla oluşturuldu
  */
-router.post('/categories', authMiddleware, roleMiddleware(['MANAGER']), ownerController.createCategory);
+router.post('/categories', roleMiddleware(['MANAGER']), ownerController.createCategory);
 
 /**
  * @swagger
@@ -117,6 +118,6 @@ router.post('/categories', authMiddleware, roleMiddleware(['MANAGER']), ownerCon
  *       200:
  *         description: Kategoriler listelendi
  */
-router.get('/categories', authMiddleware, roleMiddleware(['MANAGER', 'USER']), ownerController.getCategories);
+router.get('/categories', roleMiddleware(['MANAGER', 'USER']), ownerController.getCategories);
 
 export default router;

@@ -8,6 +8,7 @@ import MESSAGES from '../Utils/messages.js';
 const authMiddleware = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
 
+  console.log("Auth Middleware - Token:", token,req.headers);
   if (!token) {
     return res.status(401).json({ message: MESSAGES.AUTH.NO_TOKEN });
   }
