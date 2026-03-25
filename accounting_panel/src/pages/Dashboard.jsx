@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import './Dashboard.css';
 
@@ -9,7 +9,29 @@ const Dashboard = ({ user: propUser }) => {
   });
 
   const [activeMenu, setActiveMenu] = useState('Anasayfa');
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState('ALL');
   const { theme, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    if (user.role.toUpperCase() === 'ADMIN') {
+      const fetchCompanies = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const response = await fetch('http://localhost:5000/api/company', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setCompanies(data);
+          }
+        } catch (error) {
+          console.error('Şirketler listesi alınamadı:', error);
+        }
+      };
+      fetchCompanies();
+    }
+  }, [user.role]);
 
   const onLogout = () => {
     localStorage.clear();
@@ -72,6 +94,31 @@ const Dashboard = ({ user: propUser }) => {
           </div>
 
           <div className="topbar-actions">
+            {user.role.toUpperCase() === 'ADMIN' && (
+              <select
+                title="Şirket Seçin"
+                className="company-select"
+                value={selectedCompanyId}
+                onChange={(e) => setSelectedCompanyId(e.target.value)}
+                style={{
+                  marginRight: '1rem',
+                  padding: '8px 12px',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  color: 'inherit',
+                  backdropFilter: 'blur(10px)',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  fontSize: '0.9rem'
+                }}
+              >
+                <option value="ALL" style={{ color: 'black' }}>Tüm Şirketler (Genel Bakış)</option>
+                {companies.map(c => (
+                  <option key={c._id} value={c._id} style={{ color: 'black' }}>{c.name}</option>
+                ))}
+              </select>
+            )}
             <button className="action-btn" onClick={toggleTheme} title="Tema Değiştir">
               {theme === 'light' ? '☀️' : '🌙'}
             </button>

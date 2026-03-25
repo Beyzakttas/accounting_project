@@ -8,12 +8,12 @@ function Login({ setUsername, setRole }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [localRole, setLocalRole] = useState('USER');
   const { theme, toggleTheme } = useTheme();
   const { addToast } = useToast();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
     setIsLoading(true);
 
     try {
@@ -45,7 +45,7 @@ function Login({ setUsername, setRole }) {
       addToast("Backend ulaşılamadı. Lütfen sunucuyu kontrol edin.", "error");
 
       // Fallback demo login (You might want to remove this in production)
-      localStorage.setItem('role', localRole.toUpperCase());
+      localStorage.setItem('role', 'USER');
       localStorage.setItem('userName', email.split('@')[0] || 'Demo Kullanıcı');
       window.location.href = '/dashboard';
     } finally {
@@ -93,18 +93,6 @@ function Login({ setUsername, setRole }) {
                 required
               />
             </div>
-          </div>
-
-          <div className="input-group">
-            <label>Rol</label>
-            <select
-              value={localRole}
-              onChange={(e) => setLocalRole(e.target.value)}
-            >
-              <option value="ADMIN">Admin</option>
-              <option value="MANAGER">Yönetici</option>
-              <option value="USER">Kullanıcı</option>
-            </select>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-0.5rem' }}>

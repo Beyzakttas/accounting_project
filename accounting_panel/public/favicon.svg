@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" /> <!-- Blue -->
+      <stop offset="100%" stop-color="#8b5cf6" /> <!-- Violet -->
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  
+  <!-- Modern Rounded Background -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGradient)" />
+  
+  <!-- Stylized M (Muhasebe) -->
+  <g filter="url(#shadow)">
+    <path d="M140 340 V 190 L 256 290 L 372 190 V 340" fill="none" stroke="#ffffff" stroke-width="48" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- AI Spark (Yapay Zeka Dot) -->
+    <path d="M256 100 L 270 130 L 300 144 L 270 158 L 256 188 L 242 158 L 212 144 L 242 130 Z" fill="#ffffff" />
+  </g>
+</svg>

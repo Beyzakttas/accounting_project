@@ -9,7 +9,7 @@ function Register() {
         fullname: '',
         email: '',
         password: '',
-        role: 'USER'
+        confirmPassword: ''
     });
     const [isLoading, setIsLoading] = useState(false);
     const [showPasswordError, setShowPasswordError] = useState(false);
@@ -36,6 +36,11 @@ function Register() {
 
         if (!validatePassword(formData.password)) {
             setShowPasswordError(true);
+            return;
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+            addToast("Şifreler birbirleriyle eşleşmiyor!", "error");
             return;
         }
 
@@ -131,16 +136,17 @@ function Register() {
                             </div>
 
                             <div className="input-group">
-                                <label>Rol</label>
-                                <select
-                                    name="role"
-                                    value={formData.role}
-                                    onChange={handleChange}
-                                >
-                                    <option value="ADMIN">Admin</option>
-                                    <option value="MANAGER">Yönetici</option>
-                                    <option value="USER">Kullanıcı</option>
-                                </select>
+                                <label>Şifre (Tekrar)</label>
+                                <div className="input-wrapper">
+                                    <input
+                                        type="password"
+                                        name="confirmPassword"
+                                        value={formData.confirmPassword}
+                                        onChange={handleChange}
+                                        placeholder="••••••••"
+                                        required
+                                    />
+                                </div>
                             </div>
                         </div>
 
