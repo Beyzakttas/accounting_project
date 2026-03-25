@@ -10,7 +10,7 @@ import authMiddleware from '../Middleware/authMiddleware.js';
 // Tüm rotaları tek bir merkezden dağıtalım
 router.use('/auth', authRoutes);
 
-router.use(authMiddleware);
+router.use(authMiddleware)
 
 router.use('/company', companyRoutes);
 router.use('/owner', ownerRoutes);
