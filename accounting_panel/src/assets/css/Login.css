@@ -288,3 +288,39 @@
     justify-content: center;
   }
 }
+
+.forgot-password-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.5rem;
+}
+
+.primary-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.primary-link.small {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.login-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.success-message {
+  color: #10b981;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 0.9rem;
+  text-align: center;
+}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import './Login.css'; // Reusing Login styles for consistency
+import '../assets/css/Login.css'; // Reusing Login styles for consistency
 
 function ForgotPassword() {
     const [email, setEmail] = useState('');
@@ -64,16 +64,16 @@ function ForgotPassword() {
                         </div>
                     </div>
 
-                    {message && <p style={{ color: '#10b981', fontSize: '0.9rem', textAlign: 'center' }}>{message}</p>}
-                    {error && <p style={{ color: '#ef4444', fontSize: '0.9rem', textAlign: 'center' }}>{error}</p>}
+                    {message && <p className="success-message">{message}</p>}
+                    {error && <p className="error-message">{error}</p>}
 
                     <button type="submit" className="login-btn" disabled={isLoading}>
                         {isLoading ? <span className="loader"></span> : 'Bağlantı Gönder'}
                     </button>
                 </form>
 
-                <div className="login-footer" style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem' }}>
-                    <p><Link to="/" style={{ color: 'var(--primary-color)', textDecoration: 'none', fontWeight: '600' }}>Girişe Dön</Link></p>
+                <div className="login-footer">
+                    <p><Link to="/" className="primary-link">Girişe Dön</Link></p>
                 </div>
             </div>
         </div>

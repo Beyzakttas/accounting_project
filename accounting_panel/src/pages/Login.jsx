@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
-import './Login.css';
+import '../assets/css/Login.css';
+import { loginUser } from '../services/authService';
 
 function Login({ setUsername, setRole }) {
   const [email, setEmail] = useState('');
@@ -17,32 +18,20 @@ function Login({ setUsername, setRole }) {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const data = await loginUser({ email, password });
 
-      const data = await response.json();
+      const userData = data.data.user;
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('role', userData.role);
+      localStorage.setItem('userName', userData.fullname);
 
-      if (response.ok) {
-        const userData = data.data.user;
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('role', userData.role);
-        localStorage.setItem('userName', userData.fullname);
+      if (setUsername) setUsername(userData.fullname);
+      if (setRole) setRole(userData.role);
 
-        if (setUsername) setUsername(userData.fullname);
-        if (setRole) setRole(userData.role);
-
-        window.location.href = '/dashboard';
-      } else {
-        addToast("Hata: " + data.message, "error");
-      }
+      window.location.href = '/dashboard';
     } catch (error) {
       console.error("Bağlantı hatası:", error);
-      addToast("Backend ulaşılamadı. Lütfen sunucuyu kontrol edin.", "error");
+      addToast("Hata: " + (error.message || "Giriş işlemi başarısız. Sunucuyu kontrol edin."), "error");
 
       // Fallback demo login (You might want to remove this in production)
       localStorage.setItem('role', 'USER');
@@ -66,6 +55,7 @@ function Login({ setUsername, setRole }) {
 
       <div className="login-glass-card">
         <div className="login-header">
+          <h1 className="login-title">LOGIN</h1>
         </div>
 
         <form onSubmit={handleLogin} className="login-form">
@@ -95,8 +85,8 @@ function Login({ setUsername, setRole }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-0.5rem' }}>
-            <Link to="/forgot-password" style={{ color: 'var(--primary-color)', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '500' }}>
+          <div className="forgot-password-wrapper">
+            <Link to="/forgot-password" className="primary-link small">
               Şifremi Unuttum
             </Link>
           </div>
@@ -106,8 +96,8 @@ function Login({ setUsername, setRole }) {
           </button>
         </form>
 
-        <div className="login-footer" style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-          <p>Hesabınız yok mu? <Link to="/register" style={{ color: 'var(--primary-color)', textDecoration: 'none', fontWeight: '600' }}>Kayıt Ol</Link></p>
+        <div className="login-footer">
+          <p>Hesabınız yok mu? <Link to="/register" className="primary-link">Kayıt Ol</Link></p>
         </div>
       </div>
     </div>

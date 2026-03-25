@@ -28,6 +28,11 @@ Aşağıda sisteme yeni eklenen/güncellenen özelliklerin detayı yer almaktad�
 - Sadece eski test amaçlı eklenmiş olan ve kullanılmayan ayrı `AdminPanel.jsx` dosyası ve `/admin` rotası projeden tamamen temizlendi.
 - Sistem artık tam olarak tasarlandığı gibi, tek bir `Dashboard` üzerinden "Rol" (USER/ADMIN) yetkisine bağlı dinamik (öğe gizleyip gösterme) bir şemada çalışmaktadır.
 
+### 5. Kod Mimarisi ve Dosya Yapılandırması (Refactoring)
+- **API Merkezileştirme:** `src/utils/apiClient.js` kurularak tüm `fetch` istekleri tek bir merkezden (otomatik Base URL ve Authorization Token eklenerek) yönetilmeye başlandı.
+- **Servis Katmanı:** Arayüz dosyalarında (Dashboard, Login vb.) kod kalabalığı yaratan ve dağınık halde bulunan API istekleri `src/services/authService.js` ve `src/services/companyService.js` dosyalarına modüler olarak taşındı. Sayfalar tamamen arayüze (UI) odaklı hale getirildi.
+- **CSS Düzeni:** `pages` klasörü altındaki tüm dağınık CSS dosyaları merkezileştirilerek `src/assets/css` klasörü altına taşındı ve import bağlantıları güncellendi.
+
 ---
 
 ## ⚙️ Backend (Sunucu) Güncellemeleri

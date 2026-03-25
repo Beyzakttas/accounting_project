@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import './Dashboard.css';
+import '../assets/css/Dashboard.css';
+import { getAllCompanies } from '../services/companyService';
+import Sidebar from '../components/Sidebar';
+import Topbar from '../components/Topbar';
 
 const Dashboard = ({ user: propUser }) => {
   const [user] = useState({
@@ -17,14 +20,8 @@ const Dashboard = ({ user: propUser }) => {
     if (user.role.toUpperCase() === 'ADMIN') {
       const fetchCompanies = async () => {
         try {
-          const token = localStorage.getItem('token');
-          const response = await fetch('http://localhost:5000/api/company', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (response.ok) {
-            const data = await response.json();
-            setCompanies(data);
-          }
+          const data = await getAllCompanies();
+          setCompanies(data);
         } catch (error) {
           console.error('Şirketler listesi alınamadı:', error);
         }
@@ -38,94 +35,27 @@ const Dashboard = ({ user: propUser }) => {
     window.location.href = '/';
   };
 
-  const navItems = [
-    { id: 'Anasayfa', icon: '🏠', label: 'Dashboard' },
-    { id: 'Faturalar', icon: '📄', label: 'Faturalar' },
-    { id: 'Raporlar', icon: '📊', label: 'Raporlar', adminOnly: true },
-    { id: 'Personel', icon: '👥', label: 'Personel Yönetimi', adminOnly: true },
-    { id: 'Ayarlar', icon: '⚙️', label: 'Ayarlar' },
-  ];
-
   return (
     <div className="dashboard-layout">
       {/* Sidebar */}
-      <aside className="glass-sidebar">
-        <div className="sidebar-logo">
-          <span className="logo-text">Muhasebe AI</span>
-        </div>
-
-        <nav className="sidebar-nav">
-          {navItems.map((item) => {
-            if (item.adminOnly && !['ADMIN', 'MANAGER'].includes(user.role.toUpperCase())) return null;
-            return (
-              <button
-                key={item.id}
-                className={`nav-item ${activeMenu === item.id ? 'active' : ''}`}
-                onClick={() => setActiveMenu(item.id)}
-              >
-                <span className="nav-icon">{item.icon}</span>
-                <span className="nav-label">{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="sidebar-footer">
-          <div className="user-profile">
-            <div className="avatar">{user.name.charAt(0).toUpperCase()}</div>
-            <div className="user-info">
-              <span className="user-name">{user.name}</span>
-              <span className="user-role">{user.role.toUpperCase()}</span>
-            </div>
-          </div>
-          <button className="logout-btn" onClick={onLogout}>
-            <span className="logout-icon">🚪</span>
-            <span>Çıkış Yap</span>
-          </button>
-        </div>
-      </aside>
+      <Sidebar
+        user={user}
+        activeMenu={activeMenu}
+        setActiveMenu={setActiveMenu}
+      />
 
       {/* Main Content */}
       <main className="main-area">
-        <header className="topbar">
-          <div className="page-title">
-            <h1>{activeMenu}</h1>
-            <p>Sistemin genel durumu ve özet bilgiler.</p>
-          </div>
-
-          <div className="topbar-actions">
-            {user.role.toUpperCase() === 'ADMIN' && (
-              <select
-                title="Şirket Seçin"
-                className="company-select"
-                value={selectedCompanyId}
-                onChange={(e) => setSelectedCompanyId(e.target.value)}
-                style={{
-                  marginRight: '1rem',
-                  padding: '8px 12px',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  color: 'inherit',
-                  backdropFilter: 'blur(10px)',
-                  cursor: 'pointer',
-                  outline: 'none',
-                  fontSize: '0.9rem'
-                }}
-              >
-                <option value="ALL" style={{ color: 'black' }}>Tüm Şirketler (Genel Bakış)</option>
-                {companies.map(c => (
-                  <option key={c._id} value={c._id} style={{ color: 'black' }}>{c.name}</option>
-                ))}
-              </select>
-            )}
-            <button className="action-btn" onClick={toggleTheme} title="Tema Değiştir">
-              {theme === 'light' ? '☀️' : '🌙'}
-            </button>
-            <button className="action-btn">🔔<span className="badge">3</span></button>
-            <button className="primary-btn">+ Yeni Fatura</button>
-          </div>
-        </header>
+        <Topbar
+          activeMenu={activeMenu}
+          user={user}
+          companies={companies}
+          selectedCompanyId={selectedCompanyId}
+          setSelectedCompanyId={setSelectedCompanyId}
+          theme={theme}
+          toggleTheme={toggleTheme}
+          onLogout={onLogout}
+        />
 
         <div className="content-scroll-area">
           {activeMenu === 'Anasayfa' && (

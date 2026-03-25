@@ -171,25 +171,16 @@
   letter-spacing: 0.5px;
 }
 
-.logout-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 0.875rem;
-  background: transparent;
-  color: var(--danger);
-  border: 1px solid var(--danger);
-  border-radius: 12px;
-  font-family: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.logout-action-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-.logout-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
+.logout-action-btn:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: var(--danger) !important;
+  border-color: var(--danger) !important;
 }
 
 /* Main Area */
@@ -236,6 +227,29 @@
   display: flex;
   gap: 1rem;
   align-items: center;
+}
+
+.company-select {
+  margin-right: 0.5rem;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  outline: none;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.company-select:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.company-select option {
+  color: black;
 }
 
 .action-btn {

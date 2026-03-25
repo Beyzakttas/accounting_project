@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
-import './Register.css';
+import '../assets/css/Register.css';
+import { registerUser } from '../services/authService';
 
 function Register() {
     const [formData, setFormData] = useState({
@@ -49,25 +50,12 @@ function Register() {
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://localhost:5000/api/auth/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                addToast("Kayıt başarılı! Giriş yapabilirsiniz.", "success");
-                navigate('/');
-            } else {
-                addToast("Hata: " + (data.message || "Kayıt işlemi başarısız."), "error");
-            }
+            await registerUser(formData);
+            addToast("Kayıt başarılı! Giriş yapabilirsiniz.", "success");
+            navigate('/');
         } catch (error) {
             console.error("Bağlantı hatası:", error);
-            addToast("Sunucuya bağlanılamadı. Lütfen backend'in çalıştığından emin olun.", "error");
+            addToast("Hata: " + (error.message || "Kayıt işlemi başarısız."), "error");
         } finally {
             setIsLoading(false);
         }

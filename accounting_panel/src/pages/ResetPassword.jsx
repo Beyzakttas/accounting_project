@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
-import './Login.css';
+import '../assets/css/Login.css';
 
 function ResetPassword() {
     const { token } = useParams();
@@ -86,7 +86,7 @@ function ResetPassword() {
                         </div>
                     </div>
 
-                    {error && <p style={{ color: '#ef4444', fontSize: '0.9rem', textAlign: 'center' }}>{error}</p>}
+                    {error && <p className="error-message">{error}</p>}
 
                     <button type="submit" className="login-btn" disabled={isLoading}>
                         {isLoading ? <span className="loader"></span> : 'Şifreyi Güncelle'}
