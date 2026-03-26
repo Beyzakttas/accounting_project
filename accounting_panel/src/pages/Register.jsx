@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext';
+import AuthLayout from '../components/common/AuthLayout';
+import LoadingButton from '../components/common/LoadingButton';
 import { useToast } from '../contexts/ToastContext';
-import '../assets/css/Register.css';
 import { registerUser } from '../services/authService';
+import '../assets/css/Register.css';
 
 function Register() {
     const [formData, setFormData] = useState({
@@ -14,7 +15,6 @@ function Register() {
     });
     const [isLoading, setIsLoading] = useState(false);
     const [showPasswordError, setShowPasswordError] = useState(false);
-    const { theme, toggleTheme } = useTheme();
     const { addToast } = useToast();
     const navigate = useNavigate();
 
@@ -26,8 +26,6 @@ function Register() {
     };
 
     const validatePassword = (pass) => {
-        // En az bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter.
-        // Daha geniş bir özel karakter kümesi destekleniyor.
         const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
         return regex.test(pass);
     };
@@ -46,7 +44,6 @@ function Register() {
         }
 
         setShowPasswordError(false);
-
         setIsLoading(true);
 
         try {
@@ -62,114 +59,108 @@ function Register() {
     };
 
     return (
-        <div className="register-wrapper">
-            <button className="theme-toggle" onClick={toggleTheme}>
-                {theme === 'light' ? '☀️' : '🌙'}
-            </button>
+        <AuthLayout
+            containerClass="register-glass-card"
+            wrapperClass="register-wrapper"
+        >
+            {/* Sağ Taraf - Form Bölümü (Şimdi solda olabilir veya tam tersi, DOM sırasına göre) */}
+            <div className="register-form-container">
+                <div className="register-header">
+                    <h1 className="register-title">Kayıt Ol</h1>
+                    <p className="register-subtitle">Bilgilerinizi girerek hesabınızı oluşturun</p>
+                </div>
 
-            <div className="blobs">
-                <div className="blob blob-1"></div>
-                <div className="blob blob-2"></div>
-            </div>
-
-            <div className="register-glass-card">
-                <div className="register-form-container">
-                    <div className="register-header">
-                        <h1 className="register-title">Kayıt Ol</h1>
-                        <p className="register-subtitle">Bilgilerinizi girerek hesabınızı oluşturun</p>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="register-form">
-                        <div className="form-grid">
-                            <div className="input-group">
-                                <label>Ad Soyad</label>
-                                <div className="input-wrapper">
-                                    <input
-                                        type="text"
-                                        name="fullname"
-                                        value={formData.fullname}
-                                        onChange={handleChange}
-                                        placeholder="Ad Soyad"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="input-group">
-                                <label>E-posta</label>
-                                <div className="input-wrapper">
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        placeholder="ornek@sirket.com"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="input-group">
-                                <label>Şifre</label>
-                                <div className="input-wrapper">
-                                    <input
-                                        type="password"
-                                        name="password"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        placeholder="••••••••"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="input-group">
-                                <label>Şifre (Tekrar)</label>
-                                <div className="input-wrapper">
-                                    <input
-                                        type="password"
-                                        name="confirmPassword"
-                                        value={formData.confirmPassword}
-                                        onChange={handleChange}
-                                        placeholder="••••••••"
-                                        required
-                                    />
-                                </div>
+                <form onSubmit={handleSubmit} className="register-form">
+                    <div className="form-grid">
+                        <div className="input-group">
+                            <label>Ad Soyad</label>
+                            <div className="input-wrapper">
+                                <input
+                                    type="text"
+                                    name="fullname"
+                                    value={formData.fullname}
+                                    onChange={handleChange}
+                                    placeholder="Ad Soyad"
+                                    required
+                                />
                             </div>
                         </div>
 
-                        {showPasswordError && (
-                            <div className="password-instruction error">
-                                <small className="password-hint">
-                                    ❌ Şifre: Min. 8 karakter, büyük/küçük harf, rakam ve özel karakter içermelidir.
-                                </small>
+                        <div className="input-group">
+                            <label>E-posta</label>
+                            <div className="input-wrapper">
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    placeholder="ornek@sirket.com"
+                                    required
+                                />
                             </div>
-                        )}
+                        </div>
 
-                        <button type="submit" className="register-btn" disabled={isLoading}>
-                            {isLoading ? <span className="loader"></span> : 'Hesabımı Oluştur'}
-                        </button>
-                    </form>
+                        <div className="input-group">
+                            <label>Şifre</label>
+                            <div className="input-wrapper">
+                                <input
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    placeholder="••••••••"
+                                    required
+                                />
+                            </div>
+                        </div>
 
-                    <div className="register-footer">
-                        <p>Zaten hesabınız var mı? <Link to="/">Giriş Yap</Link></p>
+                        <div className="input-group">
+                            <label>Şifre (Tekrar)</label>
+                            <div className="input-wrapper">
+                                <input
+                                    type="password"
+                                    name="confirmPassword"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    placeholder="••••••••"
+                                    required
+                                />
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div className="register-side-info">
-                    <div className="side-content">
-                        <div className="logo-icon">🚀</div>
-                        <h2 className="side-title">Muhasebe AI</h2>
-                        <p className="side-text">Modern, hızlı ve yapay zeka destekli muhasebe yönetimine bugün başlayın.</p>
-                        <ul className="side-features">
-                            <li>✨ Akıllı Fatura Takibi</li>
-                            <li>📊 Gelişmiş Raporlama</li>
-                            <li>🛡️ Güvenli Bulut Altyapısı</li>
-                        </ul>
-                    </div>
+                    {showPasswordError && (
+                        <div className="password-instruction error">
+                            <small className="password-hint">
+                                ❌ Şifre: Min. 8 karakter, büyük/küçük harf, rakam ve özel karakter içermelidir.
+                            </small>
+                        </div>
+                    )}
+
+                    <LoadingButton isLoading={isLoading} className="register-btn">
+                        Hesabımı Oluştur
+                    </LoadingButton>
+                </form>
+
+                <div className="register-footer">
+                    <p>Zaten hesabınız var mı? <Link to="/">Giriş Yap</Link></p>
                 </div>
             </div>
-        </div>
+
+            {/* Sol Taraf - Bilgi Bölümü (Şimdi sağda olacak) */}
+            <div className="register-side-info">
+                <div className="logo-icon">🚀</div>
+                <h2 className="side-title">Muhasebe AI</h2>
+                <p className="side-text">
+                    Yapay zeka destekli fatura analizi ve modern muhasebe deneyimine hoş geldiniz.
+                </p>
+                <ul className="side-features">
+                    <li>✅ AI ile Otomatik Fatura Okuma</li>
+                    <li>📊 Gelişmiş Raporlama Sistemleri</li>
+                    <li>☁️ Güvenli Bulut Altyapısı</li>
+                </ul>
+            </div>
+        </AuthLayout>
     );
 }
 

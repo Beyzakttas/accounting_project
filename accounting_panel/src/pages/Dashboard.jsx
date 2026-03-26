@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import '../assets/css/Dashboard.css';
 import { getAllCompanies } from '../services/companyService';
-import Sidebar from '../components/Sidebar';
-import Topbar from '../components/Topbar';
+import Sidebar from '../components/layout/Sidebar';
+import Topbar from '../components/layout/Topbar';
 
 const Dashboard = ({ user: propUser }) => {
   const [user] = useState({

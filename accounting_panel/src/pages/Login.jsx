@@ -1,26 +1,25 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext';
+import AuthLayout from '../components/common/AuthLayout';
+import LoadingButton from '../components/common/LoadingButton';
 import { useToast } from '../contexts/ToastContext';
-import '../assets/css/Login.css';
 import { loginUser } from '../services/authService';
+import '../assets/css/Login.css';
 
 function Login({ setUsername, setRole }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { theme, toggleTheme } = useTheme();
   const { addToast } = useToast();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
     setIsLoading(true);
 
     try {
       const data = await loginUser({ email, password });
-
       const userData = data.data.user;
+      
       localStorage.setItem('token', data.token);
       localStorage.setItem('role', userData.role);
       localStorage.setItem('userName', userData.fullname);
@@ -32,75 +31,53 @@ function Login({ setUsername, setRole }) {
     } catch (error) {
       console.error("Bağlantı hatası:", error);
       addToast("Hata: " + (error.message || "Giriş işlemi başarısız. Sunucuyu kontrol edin."), "error");
-
-      // Fallback demo login (You might want to remove this in production)
-      localStorage.setItem('role', 'USER');
-      localStorage.setItem('userName', email.split('@')[0] || 'Demo Kullanıcı');
-      window.location.href = '/dashboard';
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="login-wrapper">
-      <button className="theme-toggle" onClick={toggleTheme}>
-        {theme === 'light' ? '☀️' : '🌙'}
-      </button>
-
-      <div className="blobs">
-        <div className="blob blob-1"></div>
-        <div className="blob blob-2"></div>
-      </div>
-
-      <div className="login-glass-card">
-        <div className="login-header">
-          <h1 className="login-title">LOGIN</h1>
+    <AuthLayout title="LOGIN">
+      <form onSubmit={handleLogin} className="login-form">
+        <div className="input-group">
+          <label>E-posta</label>
+          <div className="input-wrapper">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="ornek@sirket.com"
+              required
+            />
+          </div>
         </div>
 
-        <form onSubmit={handleLogin} className="login-form">
-          <div className="input-group">
-            <label>E-posta</label>
-            <div className="input-wrapper">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="ornek@sirket.com"
-                required
-              />
-            </div>
+        <div className="input-group">
+          <label>Şifre</label>
+          <div className="input-wrapper">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
           </div>
-
-          <div className="input-group">
-            <label>Şifre</label>
-            <div className="input-wrapper">
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="forgot-password-wrapper">
-            <Link to="/forgot-password" className="primary-link small">
-              Şifremi Unuttum
-            </Link>
-          </div>
-
-          <button type="submit" className="login-btn" disabled={isLoading}>
-            {isLoading ? <span className="loader"></span> : 'Giriş Yap'}
-          </button>
-        </form>
-
-        <div className="login-footer">
-          <p>Hesabınız yok mu? <Link to="/register" className="primary-link">Kayıt Ol</Link></p>
         </div>
+
+        <div className="forgot-password-wrapper">
+          <Link to="/forgot-password" className="primary-link small">
+            Şifremi Unuttum
+          </Link>
+        </div>
+
+        <LoadingButton isLoading={isLoading}>Giriş Yap</LoadingButton>
+      </form>
+
+      <div className="login-footer">
+        <p>Hesabınız yok mu? <Link to="/register" className="primary-link">Kayıt Ol</Link></p>
       </div>
-    </div>
+    </AuthLayout>
   );
 }
 

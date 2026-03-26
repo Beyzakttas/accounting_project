@@ -18,19 +18,6 @@ const Topbar = ({
             </div>
 
             <div className="topbar-actions">
-                {user.role.toUpperCase() === 'ADMIN' && (
-                    <select
-                        title="Şirket Seçin"
-                        className="company-select"
-                        value={selectedCompanyId}
-                        onChange={(e) => setSelectedCompanyId(e.target.value)}
-                    >
-                        <option value="ALL">Tüm Şirketler (Genel Bakış)</option>
-                        {companies.map(c => (
-                            <option key={c._id} value={c._id}>{c.name}</option>
-                        ))}
-                    </select>
-                )}
                 <button className="action-btn" onClick={toggleTheme} title="Tema Değiştir">
                     {theme === 'light' ? '☀️' : '🌙'}
                 </button>
