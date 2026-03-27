@@ -1,7 +1,8 @@
-// authRoutes.js
 import express from 'express';
 const router = express.Router();
 import authController from '../Controllers/auth.js';
+import validate from '../Middleware/validateMiddleware.js';
+import { registerSchema, loginSchema } from '../Utils/validators.js';
 
 /**
  * @swagger
@@ -36,7 +37,7 @@ import authController from '../Controllers/auth.js';
  *       401:
  *         description: Geçersiz e-posta veya şifre
  */
-router.post('/login', authController.login);
+router.post('/login', validate(loginSchema), authController.login);
 
 /**
  * @swagger
@@ -56,7 +57,7 @@ router.post('/login', authController.login);
  *       400:
  *         description: Geçersiz veri veya e-posta zaten kullanımda
  */
-router.post('/register', authController.register);
+router.post('/register', validate(registerSchema), authController.register);
 
 /**
  * @swagger

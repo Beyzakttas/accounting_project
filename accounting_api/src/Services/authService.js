@@ -1,0 +1,120 @@
+import crypto from 'crypto';
+import User from '../Models/User.js';
+import MESSAGES from '../Utils/messages.js';
+import TokenService from './tokenService.js';
+import emailService from './emailService.js';
+import STATUS_CODES from '../Utils/statusCodes.js';
+
+/**
+ * Kullanıcı girişi yapar ve tokenları döner
+ */
+export const login = async (email, password) => {
+  const user = await User.findOne({ email }).select('+password');
+  if (!user) {
+    const error = new Error(MESSAGES.CONTROLLERS.AUTH.USER_NOT_FOUND);
+    error.statusCode = STATUS_CODES.NOT_FOUND;
+    throw error;
+  }
+
+  const isMatch = await user.comparePassword(password);
+  if (!isMatch) {
+    const error = new Error(MESSAGES.CONTROLLERS.AUTH.INVALID_CREDENTIALS);
+    error.statusCode = STATUS_CODES.UNAUTHORIZED;
+    throw error;
+  }
+
+  if (!user.isActive) {
+    const error = new Error(MESSAGES.AUTH.ACCOUNT_SUSPENDED);
+    error.statusCode = STATUS_CODES.FORBIDDEN;
+    throw error;
+  }
+
+  const token = TokenService.generateToken({ id: user._id });
+  const refreshToken = TokenService.generateRefreshToken({ id: user._id });
+
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  user.password = undefined;
+  return { user, token, refreshToken };
+};
+
+/**
+ * Yeni kullanıcı kaydı oluşturur
+ */
+export const register = async (userData) => {
+  const existingUser = await User.findOne({ email: userData.email });
+  if (existingUser) {
+    const error = new Error('Bu e-posta adresi ile zaten bir hesap mevcut.');
+    error.statusCode = STATUS_CODES.BAD_REQUEST;
+    throw error;
+  }
+
+  const newUser = await User.create(userData);
+  
+  const token = TokenService.generateToken({ id: newUser._id });
+  const refreshToken = TokenService.generateRefreshToken({ id: newUser._id });
+
+  newUser.refreshToken = refreshToken;
+  await newUser.save();
+
+  newUser.password = undefined;
+  return { user: newUser, token, refreshToken };
+};
+
+/**
+ * Şifre sıfırlama e-postası gönderir
+ */
+export const forgotPassword = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) {
+    const error = new Error(MESSAGES.CONTROLLERS.AUTH.EMAIL_NOT_FOUND);
+    error.statusCode = STATUS_CODES.NOT_FOUND;
+    throw error;
+  }
+
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
+
+  await user.save({ validateBeforeSave: false });
+
+  const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
+  const message = `Şifrenizi sıfırlamak için şu bağlantıya tıklayın: \n\n ${resetUrl}\n\nEğer bu isteği siz yapmadıysanız lütfen bu e-postayı dikkate almayın.`;
+
+  try {
+    await emailService.sendEmail({
+      email: user.email,
+      subject: 'Şifre Sıfırlama İsteği',
+      message
+    });
+  } catch (err) {
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+    throw new Error('E-posta gönderilemedi.');
+  }
+};
+
+/**
+ * Şifreyi sıfırlar
+ */
+export const resetPassword = async (token, newPassword) => {
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  const user = await User.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpires: { $gt: Date.now() }
+  });
+
+  if (!user) {
+    const error = new Error(MESSAGES.CONTROLLERS.AUTH.INVALID_RESET_TOKEN);
+    error.statusCode = STATUS_CODES.BAD_REQUEST;
+    throw error;
+  }
+
+  user.password = newPassword;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+};

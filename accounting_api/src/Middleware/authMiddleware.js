@@ -4,43 +4,51 @@ import jwt from 'jsonwebtoken';
 import User from '../Models/User.js';
 import Company from '../Models/Company.js';
 import MESSAGES from '../Utils/messages.js';
+import STATUS_CODES from '../Utils/statusCodes.js';
 
 const authMiddleware = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
 
-  console.log("Auth Middleware - Token:", token,req.headers);
   if (!token) {
-    return res.status(401).json({ message: MESSAGES.AUTH.NO_TOKEN });
+    const error = new Error(MESSAGES.AUTH.NO_TOKEN);
+    error.statusCode = STATUS_CODES.UNAUTHORIZED;
+    return next(error);
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
 
-    // JWT içindeki id ile gerçek kullanıcıyı veritabanından bul
+    // Kullanıcıyı bul
     const user = await User.findById(decoded.id);
     if (!user) {
-      return res.status(401).json({ message: MESSAGES.AUTH.INVALID_TOKEN_USER });
+      const error = new Error(MESSAGES.AUTH.INVALID_TOKEN_USER);
+      error.statusCode = STATUS_CODES.UNAUTHORIZED;
+      return next(error);
     }
 
-    // Kullanıcı hesabı dondurulmuş (pasif) ise erişimi engelle
+    // Aktiflik kontrolü (Kullanıcı)
     if (user.isActive === false) {
-      return res.status(403).json({ message: MESSAGES.AUTH.ACCOUNT_SUSPENDED });
+      const error = new Error(MESSAGES.AUTH.ACCOUNT_SUSPENDED);
+      error.statusCode = STATUS_CODES.FORBIDDEN;
+      return next(error);
     }
 
-    // Eğer kullanıcı bir şirkete bağlıysa (Admin olmayanlar) şirketin aktifliğini de kontrol et
+    // Aktiflik kontrolü (Şirket)
     if (user.companyId) {
       const company = await Company.findById(user.companyId);
       if (!company || company.isActive === false) {
-        return res.status(403).json({ message: MESSAGES.AUTH.COMPANY_INACTIVE });
+        const error = new Error(MESSAGES.AUTH.COMPANY_INACTIVE);
+        error.statusCode = STATUS_CODES.FORBIDDEN;
+        return next(error);
       }
     }
 
-    // Doğrulanmış ve aktif kullanıcıyı request objesine ekle
     req.user = user;
     next();
-  } catch (error) {
-    console.error("Auth Middleware Hatası:", error.message);
-    return res.status(401).json({ message: MESSAGES.AUTH.INVALID_TOKEN });
+  } catch (err) {
+    // Hata yönetimini merkezi middleware'e bırakıyoruz
+    err.statusCode = STATUS_CODES.UNAUTHORIZED;
+    next(err);
   }
 };
 

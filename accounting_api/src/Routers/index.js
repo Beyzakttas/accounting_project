@@ -17,5 +17,4 @@ router.use('/owner', ownerRoutes);
 router.use('/invoice', invoiceRoutes);
 
 
-
 export default router;
