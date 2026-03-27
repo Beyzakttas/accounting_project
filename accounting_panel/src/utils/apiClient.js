@@ -29,6 +29,13 @@ const apiClient = {
                 throw new Error('Oturum süresi doldu. Lütfen tekrar giriş yapın.');
             }
 
+            // 403 Forbidden (Yasaklı/Pasif) durumunda uyarı
+            if (response.status === 403) {
+                const errorData = await response.json();
+                alert(errorData.message || 'Bu işlem için yetkiniz bulunmamaktadır veya hesabınız pasif durumdadır.');
+                throw errorData;
+            }
+
             const data = await response.json();
 
             if (!response.ok) {
