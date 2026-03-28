@@ -6,6 +6,9 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import StaffManagement from './pages/StaffManagement';
+import Invoices from './pages/Invoices';
+import Placeholder from './pages/Placeholder';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
 
@@ -43,7 +46,11 @@ function App() {
                 values={{ username, password, role }}
               />
             } />
-            <Route path="/dashboard" element={<Dashboard user={user} onLogout={() => console.log('Çıkış yapıldı')} />} />
+            <Route path="/dashboard" element={<Dashboard user={user} />} />
+            <Route path="/staff" element={<StaffManagement user={user} />} />
+            <Route path="/invoices" element={<Invoices user={user} />} />
+            <Route path="/reports" element={<Placeholder title="Raporlar" user={user} />} />
+            <Route path="/settings" element={<Placeholder title="Ayarlar" user={user} />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />

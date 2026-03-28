@@ -8,7 +8,8 @@ const Topbar = ({
     setSelectedCompanyId,
     theme,
     toggleTheme,
-    onLogout
+    onLogout,
+    onAddInvoice
 }) => {
     return (
         <header className="topbar">
@@ -34,7 +35,7 @@ const Topbar = ({
                     </svg>
                 </button>
                 {activeMenu === 'Faturalar' && (
-                    <button className="primary-btn">+ Yeni Fatura</button>
+                    <button className="primary-btn" onClick={onAddInvoice}>+ Yeni Fatura</button>
                 )}
             </div>
         </header>

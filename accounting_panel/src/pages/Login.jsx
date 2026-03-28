@@ -17,10 +17,10 @@ function Login({ setUsername, setRole }) {
     setIsLoading(true);
 
     try {
-      const data = await loginUser({ email, password });
-      const userData = data.data.user;
+      const response = await loginUser({ email, password });
+      const { user: userData, token } = response.data;
       
-      localStorage.setItem('token', data.token);
+      localStorage.setItem('token', token);
       localStorage.setItem('role', userData.role);
       localStorage.setItem('userName', userData.fullname);
 

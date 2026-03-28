@@ -1,14 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Default Light Theme */
-  --primary-color: #4f46e5;
-  --primary-hover: #4338ca;
-  --bg-color: #f1f5f9;
+  /* Default Light Theme - Refined for Premium Feel */
+  --primary-color: #6366f1;
+  --primary-hover: #4f46e5;
+  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  --bg-color: #f8fafc;
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(0, 0, 0, 0.05);
+  --glass-border: rgba(99, 102, 241, 0.1);
+  --modal-bg: #ffffff;
+  --input-bg: #f1f5f9;
   --danger: #ef4444;
   --success: #10b981;
 }
@@ -16,11 +19,14 @@
 [data-theme='dark'] {
   --primary-color: #6366f1;
   --primary-hover: #4f46e5;
+  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
   --bg-color: #0f172a;
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
-  --glass-bg: rgba(30, 41, 59, 0.7);
+  --glass-bg: rgba(15, 23, 42, 0.7);
   --glass-border: rgba(255, 255, 255, 0.08);
+  --modal-bg: #1e293b;
+  --input-bg: rgba(255, 255, 255, 0.05);
   --danger: #ef4444;
   --success: #10b981;
 }

@@ -1,12 +1,14 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const Sidebar = ({ user, activeMenu, setActiveMenu }) => {
+const Sidebar = ({ user, activeMenu }) => {
+    const navigate = useNavigate();
     const navItems = [
-        { id: 'Anasayfa', icon: '🏠', label: 'Dashboard' },
-        { id: 'Faturalar', icon: '📄', label: 'Faturalar' },
-        { id: 'Raporlar', icon: '📊', label: 'Raporlar', adminOnly: true },
-        { id: 'Personel', icon: '👥', label: 'Personel Yönetimi', adminOnly: true },
-        { id: 'Ayarlar', icon: '⚙️', label: 'Ayarlar' },
+        { id: 'Anasayfa', icon: '🏠', label: 'Dashboard', path: '/dashboard' },
+        { id: 'Faturalar', icon: '📄', label: 'Faturalar', path: '/invoices' },
+        { id: 'Raporlar', icon: '📊', label: 'Raporlar', adminOnly: true, path: '/reports' },
+        { id: 'Personel Yönetimi', icon: '👥', label: 'Personel', adminOnly: true, path: '/staff' },
+        { id: 'Ayarlar', icon: '⚙️', label: 'Ayarlar', path: '/settings' },
     ];
 
     return (
@@ -17,12 +19,14 @@ const Sidebar = ({ user, activeMenu, setActiveMenu }) => {
 
             <nav className="sidebar-nav">
                 {navItems.map((item) => {
-                    if (item.adminOnly && !['ADMIN', 'MANAGER'].includes(user.role.toUpperCase())) return null;
+                    const isManagerOrAdmin = ['ADMIN', 'MANAGER'].includes(user.role?.toUpperCase());
+                    if (item.adminOnly && !isManagerOrAdmin) return null;
+
                     return (
                         <button
                             key={item.id}
                             className={`nav-item ${activeMenu === item.id ? 'active' : ''}`}
-                            onClick={() => setActiveMenu(item.id)}
+                            onClick={() => navigate(item.path)}
                         >
                             <span className="nav-icon">{item.icon}</span>
                             <span className="nav-label">{item.label}</span>

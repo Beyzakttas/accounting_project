@@ -47,9 +47,15 @@ function Register() {
         setIsLoading(true);
 
         try {
-            await registerUser(formData);
-            addToast("Kayıt başarılı! Giriş yapabilirsiniz.", "success");
-            navigate('/');
+            const response = await registerUser(formData);
+            const { user: userData, token } = response.data;
+
+            localStorage.setItem('token', token);
+            localStorage.setItem('role', userData.role);
+            localStorage.setItem('userName', userData.fullname);
+
+            addToast("Kayıt başarılı! Giriş yapıldı.", "success");
+            navigate('/dashboard');
         } catch (error) {
             console.error("Bağlantı hatası:", error);
             addToast("Hata: " + (error.message || "Kayıt işlemi başarısız."), "error");
