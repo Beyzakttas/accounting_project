@@ -45,4 +45,9 @@ const InvoiceSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Indexes for performance
+InvoiceSchema.index({ companyId: 1 });
+InvoiceSchema.index({ createdAt: -1 });
+InvoiceSchema.index({ vendor: 'text' }); // Allow text search on vendor names
+
 export default mongoose.model('Invoice', InvoiceSchema);

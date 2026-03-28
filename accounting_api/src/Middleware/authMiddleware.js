@@ -34,8 +34,8 @@ const authMiddleware = async (req, res, next) => {
     }
 
     // Aktiflik kontrolü (Şirket)
-    if (user.companyId) {
-      const company = await Company.findById(user.companyId);
+    if (user.companyId && user.role !== 'ADMIN') {
+      const company = await Company.findById(user.companyId).select('isActive').lean();
       if (!company || company.isActive === false) {
         const error = new Error(MESSAGES.AUTH.COMPANY_INACTIVE);
         error.statusCode = STATUS_CODES.FORBIDDEN;

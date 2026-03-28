@@ -1,12 +1,3 @@
-import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
-import User from '../Models/User.js';
-import MESSAGES from '../Utils/messages.js';
-import TokenService from '../Services/tokenService.js';
-import emailService from '../Services/emailService.js';
-
-// authController.js
-
 import * as authService from '../Services/authService.js';
 import { successResponse } from '../Utils/apiResponse.js';
 import MESSAGES from '../Utils/messages.js';
@@ -65,6 +56,16 @@ const authController = {
     try {
       await authService.resetPassword(token, password);
       return successResponse(res, null, MESSAGES.CONTROLLERS.AUTH.PASSWORD_RESET_SUCCESS);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  refreshToken: async (req, res, next) => {
+    try {
+      const { refreshToken: providedToken } = req.body;
+      const result = await authService.refreshToken(providedToken);
+      return successResponse(res, result, MESSAGES.CONTROLLERS.AUTH.REFRESH_TOKEN_SUCCESS);
     } catch (error) {
       next(error);
     }

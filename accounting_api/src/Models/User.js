@@ -41,7 +41,7 @@ const UserSchema = new mongoose.Schema({
   // Çalışanın hangi departmanda olduğunu belirtmek için
   department: {
     type: String,
-    enum: ['Satis', 'Pazarlama', 'Insan Kaynaklari', 'IT', 'Yonetim', 'Diger'],
+    enum: ['Muhasebe', 'Finans', 'IK', 'Satis', 'Pazarlama', 'Yazilim', 'Operasyon', 'Diger'],
     default: 'Diger'
   },
   // Hangi şirkete bağlı olduğunu tutmak için (Multi-tenant yapı)

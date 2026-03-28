@@ -2,8 +2,12 @@ import express from 'express';
 import ownerController from '../Controllers/owner.js';
 import authMiddleware from '../Middleware/authMiddleware.js';
 import roleMiddleware from '../Middleware/roleMiddleware.js';
+import validate from '../Middleware/validateMiddleware.js';
+import { createStaffSchema } from '../Utils/validators.js';
 
 const router = express.Router();
+
+router.use(authMiddleware);
 
 /**
  * @swagger
@@ -32,7 +36,7 @@ const router = express.Router();
  *       400:
  *         description: Kota dolu veya email kullanımda
  */
-router.post('/staff', roleMiddleware(['MANAGER']), ownerController.createStaff);
+router.post('/staff', roleMiddleware(['ADMIN', 'MANAGER']), validate(createStaffSchema), ownerController.createStaff);
 
 /**
  * @swagger
@@ -46,7 +50,43 @@ router.post('/staff', roleMiddleware(['MANAGER']), ownerController.createStaff);
  *       200:
  *         description: Personel listesi döndürüldü
  */
-router.get('/staff', roleMiddleware(['MANAGER']), ownerController.getCompanyStaff);
+router.get('/staff', roleMiddleware(['ADMIN', 'MANAGER']), ownerController.getCompanyStaff);
+
+/**
+ * @swagger
+ * /api/owner/staff/{id}:
+ *   put:
+ *     summary: Personel bilgilerini günceller
+ *     tags: [Owner]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Güncelleme başarılı
+ */
+router.put('/staff/:id', roleMiddleware(['ADMIN', 'MANAGER']), ownerController.updateStaff);
+
+/**
+ * @swagger
+ * /api/owner/staff/{id}:
+ *   delete:
+ *     summary: Personel hesabını siler
+ *     tags: [Owner]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Silme başarılı
+ */
+router.delete('/staff/:id', roleMiddleware(['ADMIN', 'MANAGER']), ownerController.deleteStaff);
 
 /**
  * @swagger
@@ -60,7 +100,7 @@ router.get('/staff', roleMiddleware(['MANAGER']), ownerController.getCompanyStaf
  *       200:
  *         description: Fatura listesi döndürüldü
  */
-router.get('/invoices', roleMiddleware(['MANAGER', 'USER']), ownerController.getCompanyInvoices);
+router.get('/invoices', roleMiddleware(['ADMIN', 'MANAGER', 'USER']), ownerController.getCompanyInvoices);
 
 /**
  * @swagger
@@ -84,7 +124,7 @@ router.get('/invoices', roleMiddleware(['MANAGER', 'USER']), ownerController.get
  *       200:
  *         description: Ayarlar başarıyla güncellendi
  */
-router.put('/settings', roleMiddleware(['MANAGER']), ownerController.updateSettings);
+router.put('/settings', roleMiddleware(['ADMIN', 'MANAGER']), ownerController.updateSettings);
 
 /**
  * @swagger
@@ -104,7 +144,7 @@ router.put('/settings', roleMiddleware(['MANAGER']), ownerController.updateSetti
  *       201:
  *         description: Kategori başarıyla oluşturuldu
  */
-router.post('/categories', roleMiddleware(['MANAGER']), ownerController.createCategory);
+router.post('/categories', roleMiddleware(['ADMIN', 'MANAGER']), ownerController.createCategory);
 
 /**
  * @swagger
@@ -118,6 +158,6 @@ router.post('/categories', roleMiddleware(['MANAGER']), ownerController.createCa
  *       200:
  *         description: Kategoriler listelendi
  */
-router.get('/categories', roleMiddleware(['MANAGER', 'USER']), ownerController.getCategories);
+router.get('/categories', roleMiddleware(['ADMIN', 'MANAGER', 'USER']), ownerController.getCategories);
 
 export default router;

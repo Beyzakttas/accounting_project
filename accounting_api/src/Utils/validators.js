@@ -28,3 +28,17 @@ export const loginSchema = Joi.object({
     'string.empty': 'Şifre alanı boş bırakılamaz.'
   })
 });
+
+export const createStaffSchema = Joi.object({
+  fullname: Joi.string().min(3).required().messages({
+    'string.empty': 'Ad soyad alanı zorunludur.'
+  }),
+  email: Joi.string().email().required().messages({
+    'string.email': 'Geçerli bir e-posta adresi giriniz.'
+  }),
+  password: Joi.string().min(8).required().pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=[\\]{};\':"\\\\|,.<>/?])')).messages({
+    'string.min': 'Şifre en az 8 karakter olmalıdır.',
+    'string.pattern.base': 'Şifre en az bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir.'
+  }),
+  department: Joi.string().valid('Muhasebe', 'Finans', 'IK', 'Satis', 'Pazarlama', 'Yazilim', 'Operasyon', 'Diger').optional()
+});

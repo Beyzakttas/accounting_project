@@ -35,7 +35,9 @@ const MESSAGES = {
             RESET_LINK_SENT: 'Şifre sıfırlama bağlantısı e-posta adresine gönderildi.',
             INVALID_RESET_TOKEN: 'Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş.',
             PASSWORD_RESET_SUCCESS: 'Şifreniz başarıyla güncellendi.',
-            EMAIL_NOT_FOUND: 'Bu e-posta adresiyle bir kullanıcı bulunamadı.'
+            EMAIL_NOT_FOUND: 'Bu e-posta adresiyle bir kullanıcı bulunamadı.',
+            REFRESH_TOKEN_SUCCESS: 'Token başarıyla yenilendi.',
+            INVALID_REFRESH_TOKEN: 'Geçersiz veya süresi dolmuş yenileme tokenı.'
         },
         ADMIN: {
             COMPANY_EXISTS: 'Company name already exists',

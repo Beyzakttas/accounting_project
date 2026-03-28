@@ -1,134 +1,107 @@
-import User from '../Models/User.js';
-import Company from '../Models/Company.js';
-import Invoice from '../Models/Invoice.js';
+// ownerController.js
+
+import * as ownerService from '../Services/ownerService.js';
+import { successResponse } from '../Utils/apiResponse.js';
+import STATUS_CODES from '../Utils/statusCodes.js';
 import MESSAGES from '../Utils/messages.js';
 
 const ownerController = {
-    // 1. Create Staff account
-    createStaff: async (req, res) => {
-        // Only MANAGERS should do this (enforced by roleMiddleware)
-        const { fullname, email, password, department } = req.body;
-
-        // In our authMiddleware, we set req.user from JWT
-        const ownerCompanyId = req.user.companyId;
-
-        try {
-            const existingUser = await User.findOne({ email });
-            if (existingUser) {
-                return res.status(400).json({ message: MESSAGES.CONTROLLERS.OWNER.EMAIL_EXISTS });
-            }
-
-            const newStaff = new User({
-                fullname,
-                email,
-                password,
-                role: 'USER',
-                companyId: ownerCompanyId,
-                department: department || 'Diger', // Add department option
-                isActive: true
-            });
-
-            await newStaff.save();
-            res.status(201).json({
-                message: MESSAGES.CONTROLLERS.OWNER.STAFF_CREATED,
-                staff: { id: newStaff._id, name: newStaff.name, email: newStaff.email }
-            });
-        } catch (error) {
-            res.status(500).json({ message: MESSAGES.CONTROLLERS.OWNER.SERVER_ERROR, error: error.message });
-        }
-    },
-
-    // 2. View all staff in the company
-    getCompanyStaff: async (req, res) => {
-        const ownerCompanyId = req.user.companyId;
-
-        try {
-            const staffList = await User.find({ companyId: ownerCompanyId, role: 'USER' })
-                .select('-password'); // exclude password
-            res.json(staffList);
-        } catch (error) {
-            res.status(500).json({ message: MESSAGES.CONTROLLERS.OWNER.SERVER_ERROR, error: error.message });
-        }
-    },
-
-    // 3. View all invoices belonging to their companyId only
-    getCompanyInvoices: async (req, res) => {
-        const ownerCompanyId = req.user.companyId;
-        const filter = { companyId: ownerCompanyId };
-
-        // Senaryo B: USER sadece kendi yüklediğini görsün
-        if (req.user.role === 'USER') {
-            filter.uploadedBy = req.user._id;
-        }
-
-        try {
-            // In a real app we might want pagination
-            const invoices = await Invoice.find(filter)
-                .populate('uploadedBy', 'name email')
-                .sort({ createdAt: -1 });
-            res.json(invoices);
-        } catch (error) {
-            res.status(500).json({ message: MESSAGES.CONTROLLERS.OWNER.SERVER_ERROR, error: error.message });
-        }
-    },
-
-    // 4. Update company specific settings
-    updateSettings: async (req, res) => {
-        const ownerCompanyId = req.user.companyId;
-        const { settings } = req.body;
-
-        try {
-            const company = await Company.findById(ownerCompanyId);
-            if (!company) {
-                return res.status(404).json({ message: MESSAGES.CONTROLLERS.OWNER.COMPANY_NOT_FOUND });
-            }
-
-            company.settings = { ...company.settings, ...settings };
-            await company.save();
-
-            res.json({ message: MESSAGES.CONTROLLERS.OWNER.SETTINGS_UPDATED, settings: company.settings });
-        } catch (error) {
-            res.status(500).json({ message: MESSAGES.CONTROLLERS.OWNER.SERVER_ERROR, error: error.message });
-        }
-    },
-
-    // 5. Create a new Category for the Company
-    createCategory: async (req, res) => {
-        const ownerCompanyId = req.user.companyId;
-        const { name } = req.body;
-
-        try {
-            const { default: Category } = await import('../Models/Category.js');
-            // Check if category already exists for this company
-            const existingCategory = await Category.findOne({ name, companyId: ownerCompanyId });
-            if (existingCategory) {
-                return res.status(400).json({ message: MESSAGES.CONTROLLERS.OWNER.CATEGORY_EXISTS });
-            }
-
-            const newCategory = new Category({
-                name,
-                companyId: ownerCompanyId
-            });
-            await newCategory.save();
-
-            res.status(201).json({ message: MESSAGES.CONTROLLERS.OWNER.CATEGORY_CREATED, category: newCategory });
-        } catch (error) {
-            res.status(500).json({ message: MESSAGES.CONTROLLERS.OWNER.SERVER_ERROR, error: error.message });
-        }
-    },
-
-    // 6. Get all Categories for the Company
-    getCategories: async (req, res) => {
-        const ownerCompanyId = req.user.companyId;
-
-        try {
-            const { default: Category } = await import('../Models/Category.js');
-            const categories = await Category.find({ companyId: ownerCompanyId });
-            res.json(categories);
-        } catch (error) {
-            res.status(500).json({ message: MESSAGES.CONTROLLERS.OWNER.SERVER_ERROR, error: error.message });
-        }
+  // 1. Personel hesabı oluştur
+  createStaff: async (req, res, next) => {
+    try {
+      const ownerCompanyId = req.user.companyId;
+      const staff = await ownerService.createStaff(req.body, ownerCompanyId);
+      return successResponse(res, staff, MESSAGES.CONTROLLERS.OWNER.STAFF_CREATED, STATUS_CODES.CREATED);
+    } catch (error) {
+      next(error);
     }
+  },
+
+  // 2. Şirketteki personelleri listele
+  getCompanyStaff: async (req, res, next) => {
+    try {
+      const ownerCompanyId = req.user.companyId;
+      const staffList = await ownerService.getCompanyStaff(ownerCompanyId);
+      return successResponse(res, staffList);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // 3. Personel güncelle
+  updateStaff: async (req, res, next) => {
+    try {
+      const ownerCompanyId = req.user.companyId;
+      const { id } = req.params;
+      const staff = await ownerService.updateStaff(id, req.body, ownerCompanyId);
+      return successResponse(res, staff, 'Personel bilgileri güncellendi.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // 4. Personel sil
+  deleteStaff: async (req, res, next) => {
+    try {
+      const ownerCompanyId = req.user.companyId;
+      const { id } = req.params;
+      await ownerService.deleteStaff(id, ownerCompanyId);
+      return successResponse(res, null, 'Personel başarıyla silindi.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // 3. Şirket ayarlarını güncelle
+  updateSettings: async (req, res, next) => {
+    try {
+      const ownerCompanyId = req.user.companyId;
+      const { settings } = req.body;
+      const updatedSettings = await ownerService.updateCompanySettings(ownerCompanyId, settings);
+      return successResponse(res, updatedSettings, MESSAGES.CONTROLLERS.OWNER.SETTINGS_UPDATED);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // ... (getCompanyInvoices, createCategory, getCategories will be refactored similarly if needed, but focused on Staff for now)
+  // 4. Şirkete ait tüm faturaları listele
+  getCompanyInvoices: async (req, res, next) => {
+    // Bu kısım için invoiceService de kullanılabilir ama şimdilik burada kalsın veya hızlıca refaktör edelim
+    try {
+      const { default: Invoice } = await import('../Models/Invoice.js');
+      const ownerCompanyId = req.user.companyId;
+      const filter = { companyId: ownerCompanyId };
+      if (req.user.role === 'USER') filter.uploadedBy = req.user._id;
+
+      const invoices = await Invoice.find(filter).populate('uploadedBy', 'fullname email').sort({ createdAt: -1 });
+      return successResponse(res, invoices);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // 5. Yeni kategori oluştur
+  createCategory: async (req, res, next) => {
+    try {
+      const { companyId } = req.user;
+      const category = await ownerService.createCategory(req.body, companyId);
+      return successResponse(res, category, MESSAGES.CONTROLLERS.OWNER.CATEGORY_CREATED, STATUS_CODES.CREATED);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // 6. Kategorileri listele
+  getCategories: async (req, res, next) => {
+    try {
+      const { companyId } = req.user;
+      const categories = await ownerService.getCategories(companyId);
+      return successResponse(res, categories);
+    } catch (error) {
+      next(error);
+    }
+  }
 };
 
 export default ownerController;

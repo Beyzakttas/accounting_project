@@ -1,9 +1,12 @@
 // invoice.js
 import express from 'express';
-const router = express.Router();
 import invoiceController from '../Controllers/invoice.js';
 import authMiddleware from '../Middleware/authMiddleware.js';
 import roleMiddleware from '../Middleware/roleMiddleware.js';
+
+const router = express.Router();
+
+router.use(authMiddleware);
 
 /**
  * @swagger

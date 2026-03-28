@@ -118,3 +118,36 @@ export const resetPassword = async (token, newPassword) => {
   user.resetPasswordExpires = undefined;
   await user.save();
 };
+
+/**
+ * Yeni access token üretir
+ */
+export const refreshToken = async (providedRefreshToken) => {
+  if (!providedRefreshToken) {
+    const error = new Error('Refresh token zorunludur.');
+    error.statusCode = STATUS_CODES.BAD_REQUEST;
+    throw error;
+  }
+
+  const decoded = TokenService.verifyRefreshToken(providedRefreshToken);
+  if (!decoded) {
+    const error = new Error(MESSAGES.CONTROLLERS.AUTH.INVALID_REFRESH_TOKEN);
+    error.statusCode = STATUS_CODES.UNAUTHORIZED;
+    throw error;
+  }
+
+  const user = await User.findOne({ _id: decoded.id, refreshToken: providedRefreshToken });
+  if (!user) {
+    const error = new Error(MESSAGES.CONTROLLERS.AUTH.INVALID_REFRESH_TOKEN);
+    error.statusCode = STATUS_CODES.UNAUTHORIZED;
+    throw error;
+  }
+
+  const newToken = TokenService.generateToken({ id: user._id });
+  const newRefreshToken = TokenService.generateRefreshToken({ id: user._id });
+
+  user.refreshToken = newRefreshToken;
+  await user.save();
+
+  return { token: newToken, refreshToken: newRefreshToken };
+};
