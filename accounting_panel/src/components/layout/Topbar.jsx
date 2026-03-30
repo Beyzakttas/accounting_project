@@ -9,13 +9,26 @@ const Topbar = ({
     theme,
     toggleTheme,
     onLogout,
-    onAddInvoice
+    onAddInvoice,
+    onAddStaff,
+    onDownloadReport
 }) => {
+    const getSubtitle = () => {
+        switch (activeMenu) {
+            case 'Anasayfa': return 'Sistemin genel durumu ve özet bilgiler.';
+            case 'Personel Yönetimi': return 'Şirket çalışanlarını görüntüleyin ve yönetin.';
+            case 'Faturalar': return 'Sisteme yüklenen faturaları inceleyin ve yönetin.';
+            case 'Raporlar': return 'Finansal raporları ve istatistikleri görüntüleyin.';
+            case 'Ayarlar': return 'Hesap ve sistem tercihlerinizi yapılandırın.';
+            default: return 'Detayları görüntüleyin ve yönetin.';
+        }
+    };
+
     return (
         <header className="topbar">
             <div className="page-title">
                 <h1>{activeMenu}</h1>
-                <p>Sistemin genel durumu ve özet bilgiler.</p>
+                <p>{getSubtitle()}</p>
             </div>
 
             <div className="topbar-actions">
@@ -36,6 +49,12 @@ const Topbar = ({
                 </button>
                 {activeMenu === 'Faturalar' && (
                     <button className="primary-btn" onClick={onAddInvoice}>+ Yeni Fatura</button>
+                )}
+                {activeMenu === 'Personel Yönetimi' && (
+                    <button className="primary-btn" onClick={onAddStaff}>+ Personel Ekle</button>
+                )}
+                {activeMenu === 'Raporlar' && (
+                    <button className="primary-btn" onClick={onDownloadReport}>Rapor İndir</button>
                 )}
             </div>
         </header>

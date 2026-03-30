@@ -1,4 +1,4 @@
-import apiClient from '../utils/apiClient';
+import apiClient from '../api/apiClient';
 
 export const loginUser = async (loginData) => {
     return await apiClient.post('/auth/login', loginData);

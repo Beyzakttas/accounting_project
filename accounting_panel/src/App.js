@@ -8,6 +8,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import StaffManagement from './pages/StaffManagement';
 import Invoices from './pages/Invoices';
+import Reports from './pages/Reports';
+import Settings from './pages/Settings';
 import Placeholder from './pages/Placeholder';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -49,8 +51,8 @@ function App() {
             <Route path="/dashboard" element={<Dashboard user={user} />} />
             <Route path="/staff" element={<StaffManagement user={user} />} />
             <Route path="/invoices" element={<Invoices user={user} />} />
-            <Route path="/reports" element={<Placeholder title="Raporlar" user={user} />} />
-            <Route path="/settings" element={<Placeholder title="Ayarlar" user={user} />} />
+            <Route path="/reports" element={<Reports user={user} />} />
+            <Route path="/settings" element={<Settings user={user} />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />

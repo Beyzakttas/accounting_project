@@ -4,6 +4,8 @@ import AuthLayout from '../components/common/AuthLayout';
 import LoadingButton from '../components/common/LoadingButton';
 import { useToast } from '../contexts/ToastContext';
 import { registerUser } from '../services/authService';
+import FormInput from '../components/common/FormInput';
+import { validateEmail, validatePasswordStrength, validateRequired, validateForm } from '../utils/ValidationUtils';
 import '../assets/css/Register.css';
 
 function Register() {
@@ -13,8 +15,8 @@ function Register() {
         password: '',
         confirmPassword: ''
     });
+    const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
-    const [showPasswordError, setShowPasswordError] = useState(false);
     const { addToast } = useToast();
     const navigate = useNavigate();
 
@@ -23,27 +25,35 @@ function Register() {
             ...formData,
             [e.target.name]: e.target.value
         });
-    };
-
-    const validatePassword = (pass) => {
-        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
-        return regex.test(pass);
+        
+        // Hata varsa yazarken temizle
+        if (errors[e.target.name]) {
+            setErrors({ ...errors, [e.target.name]: '' });
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!validatePassword(formData.password)) {
-            setShowPasswordError(true);
+        // Merkezi Validasyon Kontrolü
+        const { isValid, errors: validationErrors } = validateForm(formData, {
+            fullname: (val) => validateRequired(val, "Ad Soyad"),
+            email: validateEmail,
+            // Detaylı şifre kontrolü (ValidationUtils'deki regex) çalışır.
+            password: validatePasswordStrength,
+            confirmPassword: (val) => {
+                if (!val) return "Şifre tekrarı zorunludur.";
+                if (val !== formData.password) return "Şifreler birbiriyle eşleşmiyor.";
+                return "";
+            }
+        });
+
+        if (!isValid) {
+            setErrors(validationErrors);
             return;
         }
 
-        if (formData.password !== formData.confirmPassword) {
-            addToast("Şifreler birbirleriyle eşleşmiyor!", "error");
-            return;
-        }
-
-        setShowPasswordError(false);
+        setErrors({});
         setIsLoading(true);
 
         try {
@@ -78,70 +88,46 @@ function Register() {
 
                 <form onSubmit={handleSubmit} className="register-form">
                     <div className="form-grid">
-                        <div className="input-group">
-                            <label>Ad Soyad</label>
-                            <div className="input-wrapper">
-                                <input
-                                    type="text"
-                                    name="fullname"
-                                    value={formData.fullname}
-                                    onChange={handleChange}
-                                    placeholder="Ad Soyad"
-                                    required
-                                />
-                            </div>
-                        </div>
+                        <FormInput
+                            label="Ad Soyad"
+                            type="text"
+                            name="fullname"
+                            value={formData.fullname}
+                            onChange={handleChange}
+                            placeholder="Ahmet Yılmaz"
+                            error={errors.fullname}
+                        />
 
-                        <div className="input-group">
-                            <label>E-posta</label>
-                            <div className="input-wrapper">
-                                <input
-                                    type="email"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    placeholder="ornek@sirket.com"
-                                    required
-                                />
-                            </div>
-                        </div>
+                        <FormInput
+                            label="E-posta"
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            placeholder="ornek@sirket.com"
+                            error={errors.email}
+                        />
 
-                        <div className="input-group">
-                            <label>Şifre</label>
-                            <div className="input-wrapper">
-                                <input
-                                    type="password"
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    placeholder="••••••••"
-                                    required
-                                />
-                            </div>
-                        </div>
+                        <FormInput
+                            label="Şifre"
+                            type="password"
+                            name="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            placeholder="••••••••"
+                            error={errors.password}
+                        />
 
-                        <div className="input-group">
-                            <label>Şifre (Tekrar)</label>
-                            <div className="input-wrapper">
-                                <input
-                                    type="password"
-                                    name="confirmPassword"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    placeholder="••••••••"
-                                    required
-                                />
-                            </div>
-                        </div>
+                        <FormInput
+                            label="Şifre (Tekrar)"
+                            type="password"
+                            name="confirmPassword"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                            placeholder="••••••••"
+                            error={errors.confirmPassword}
+                        />
                     </div>
-
-                    {showPasswordError && (
-                        <div className="password-instruction error">
-                            <small className="password-hint">
-                                ❌ Şifre: Min. 8 karakter, büyük/küçük harf, rakam ve özel karakter içermelidir.
-                            </small>
-                        </div>
-                    )}
 
                     <LoadingButton isLoading={isLoading} className="register-btn">
                         Hesabımı Oluştur

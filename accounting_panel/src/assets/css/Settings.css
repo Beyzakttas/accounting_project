@@ -1,0 +1,129 @@
+/* src/assets/css/Settings.css */
+
+.settings-container {
+  max-width: 800px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.settings-header {
+  margin-bottom: 2rem;
+}
+
+.settings-title {
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.settings-subtitle {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.settings-card {
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+}
+
+.settings-card-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--glass-border);
+  color: var(--text-primary);
+}
+
+.settings-form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.settings-form-single {
+  margin-bottom: 1.5rem;
+  max-width: 350px;
+}
+
+.settings-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--glass-border);
+  margin-top: 1rem;
+}
+
+.settings-save-btn {
+  padding: 0.8rem 2.5rem;
+  border-radius: 12px;
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.notification-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notification-text {
+  padding-right: 2rem;
+}
+
+.notification-title {
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  margin: 0 0 0.3rem 0;
+  font-weight: 500;
+}
+
+.notification-desc {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.notification-divider {
+  height: 1px;
+  background: var(--glass-border);
+  width: 100%;
+  opacity: 0.5;
+}
+
+/* Base Toggle Switch */
+.toggle-switch {
+  width: 52px;
+  height: 28px;
+  border-radius: 25px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  background: rgba(150, 150, 150, 0.3);
+}
+
+.toggle-switch.active {
+  background: var(--primary-color);
+}
+
+.toggle-switch-thumb {
+  width: 22px;
+  height: 22px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.toggle-switch.active .toggle-switch-thumb {
+  left: 27px;
+}

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import './Toast.css';
 
 const ToastContext = createContext();
@@ -20,6 +20,16 @@ export const ToastProvider = ({ children }) => {
   const removeToast = useCallback((id) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
+
+  useEffect(() => {
+    const handleGlobalToast = (event) => {
+      const { message, type, duration } = event.detail;
+      addToast(message, type, duration);
+    };
+
+    window.addEventListener('app:toast', handleGlobalToast);
+    return () => window.removeEventListener('app:toast', handleGlobalToast);
+  }, [addToast]);
 
   return (
     <ToastContext.Provider value={{ addToast, removeToast }}>

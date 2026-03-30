@@ -4,16 +4,35 @@ import AuthLayout from '../components/common/AuthLayout';
 import LoadingButton from '../components/common/LoadingButton';
 import { useToast } from '../contexts/ToastContext';
 import { loginUser } from '../services/authService';
+import FormInput from '../components/common/FormInput';
+import { validateEmail, validateRequired, validateForm } from '../utils/ValidationUtils';
 import '../assets/css/Login.css';
 
 function Login({ setUsername, setRole }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const { addToast } = useToast();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    // Validasyon kontrolü
+    const { isValid, errors: validationErrors } = validateForm(
+      { email, password },
+      { 
+        email: validateEmail, 
+        password: (val) => validateRequired(val, "Şifre") 
+      }
+    );
+
+    if (!isValid) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setErrors({});
     setIsLoading(true);
 
     try {
@@ -39,31 +58,31 @@ function Login({ setUsername, setRole }) {
   return (
     <AuthLayout title="LOGIN">
       <form onSubmit={handleLogin} className="login-form">
-        <div className="input-group">
-          <label>E-posta</label>
-          <div className="input-wrapper">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="ornek@sirket.com"
-              required
-            />
-          </div>
-        </div>
+        <FormInput
+          label="E-posta"
+          type="email"
+          name="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (errors.email) setErrors({ ...errors, email: '' });
+          }}
+          placeholder="ornek@sirket.com"
+          error={errors.email}
+        />
 
-        <div className="input-group">
-          <label>Şifre</label>
-          <div className="input-wrapper">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-            />
-          </div>
-        </div>
+        <FormInput
+          label="Şifre"
+          type="password"
+          name="password"
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            if (errors.password) setErrors({ ...errors, password: '' });
+          }}
+          placeholder="••••••••"
+          error={errors.password}
+        />
 
         <div className="forgot-password-wrapper">
           <Link to="/forgot-password" className="primary-link small">
