@@ -32,6 +32,9 @@ Aşağıda sisteme yeni eklenen/güncellenen özelliklerin detayı yer almaktad�
 - **API Merkezileştirme:** `src/utils/apiClient.js` kurularak tüm `fetch` istekleri tek bir merkezden (otomatik Base URL ve Authorization Token eklenerek) yönetilmeye başlandı.
 - **Servis Katmanı:** Arayüz dosyalarında (Dashboard, Login vb.) kod kalabalığı yaratan ve dağınık halde bulunan API istekleri `src/services/authService.js` ve `src/services/companyService.js` dosyalarına modüler olarak taşındı. Sayfalar tamamen arayüze (UI) odaklı hale getirildi.
 - **CSS Düzeni:** `pages` klasörü altındaki tüm dağınık CSS dosyaları merkezileştirilerek `src/assets/css` klasörü altına taşındı ve import bağlantıları güncellendi.
+- **Merkezi Düzen (Layout) ve Topbar Entegrasyonu:** Tüm sayfalarda tekrar eden Sidebar/Topbar yapısı `DashboardLayout.jsx` bileşeninde birleştirildi. Eylem butonları sayfalardan alınıp Global Topbar'a taşınarak bütünlük sağlandı.
+- **UI Bileşenleri ve Clean Code Revizyonu:** `Modal.jsx` için Portallar kullanıldı (Z-Index çözüldü). `FormInput.jsx` ile formlar standartlaştırıldı ve tüm satır içi (inline) CSS'ler harici CSS dosyalarına aktarıldı.
+- **Modern Ayarlar Sayfası:** `Settings.jsx` sayfası kurumsal tasarıma kavuşturuldu; sadece güvenli şifre değiştirme ve bildirim aç/kapat (Switch) ayarlarını barındıracak şekilde optimize edildi.
 
 ---
 
@@ -46,3 +49,9 @@ Aşağıda sisteme yeni eklenen/güncellenen özelliklerin detayı yer almaktad�
 
 ### 3. Güvenli Token / Oturum Süreçleri
 - `tokenService.js` ve `authMiddleware.js` parçalarındaki süreç kontrol edilerek teyit edildi. Uygulama, `jsonwebtoken` aracılığıyla API kapısında sıkı bir güvenlik profili uyguluyor. Yalnızca süresi dolmamış ve gerçekte hesabı banlanmamış (Aktif) kullanıcıların sisteme girmesine izin veriliyor.
+
+### 4. API İletişim ve Token Hata Giderme (401 Sorunu)
+- `NetworkService.js` üzerindeki HTTP metodlarının küçük-büyük harf uyumsuzluğu (POST/Get) giderildi. Böylece login sonrası 401 (Unauthorized) hatasına düşme problemi çözüldü.
+
+### 5. Veritabanı Şifreleme (Bcrypt) İyileştirmeleri
+- Veritabanındaki şifreleme mekanizması (`bcrypt`) ve `pre-save` kancalarındaki (hook) çakışmalar giderildi. Sisteme güvenli şifreleme ve MD5 uyumluluk altyapısı sağlamlaştırıldı.
