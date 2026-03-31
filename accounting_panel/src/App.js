@@ -10,7 +10,6 @@ import StaffManagement from './pages/StaffManagement';
 import Invoices from './pages/Invoices';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
-import Placeholder from './pages/Placeholder';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
 

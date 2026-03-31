@@ -1,74 +1,69 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Formik, Form } from 'formik';
+import * as Yup from 'yup';
 import AuthLayout from '../components/common/AuthLayout';
 import LoadingButton from '../components/common/LoadingButton';
 import { useToast } from '../contexts/ToastContext';
 import { resetPassword } from '../services/authService';
+import FormInput from '../components/common/FormInput';
 import '../assets/css/Login.css';
 
 function ResetPassword() {
     const { token } = useParams();
     const navigate = useNavigate();
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
     const { addToast } = useToast();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (password !== confirmPassword) {
-            setError("Şifreler eşleşmiyor.");
-            return;
-        }
+    const validationSchema = Yup.object().shape({
+        password: Yup.string()
+            .min(6, "Şifre en az 6 karakter olmalıdır.")
+            .required("Şifre alanı zorunludur."),
+        confirmPassword: Yup.string()
+            .oneOf([Yup.ref('password'), null], "Şifreler eşleşmiyor.")
+            .required("Şifre tekrarı zorunludur.")
+    });
 
-        setIsLoading(true);
-        setError('');
-
+    const handleSubmit = async (values, { setSubmitting, setStatus }) => {
         try {
-            await resetPassword(token, password);
+            await resetPassword(token, values.password);
             addToast("Şifreniz başarıyla güncellendi!", "success");
             navigate('/');
         } catch (err) {
-            setError(err.message || "Sunucuya bağlanılamadı.");
+            setStatus({ error: err.message || "Sunucuya bağlanılamadı." });
         } finally {
-            setIsLoading(false);
+            setSubmitting(false);
         }
     };
 
     return (
         <AuthLayout title="Yeni Şifre Belirle" subtitle="Lütfen yeni şifrenizi girin.">
-            <form onSubmit={handleSubmit} className="login-form">
-                <div className="input-group">
-                    <label>Yeni Şifre</label>
-                    <div className="input-wrapper">
-                        <input
+            <Formik
+                initialValues={{ password: '', confirmPassword: '' }}
+                validationSchema={validationSchema}
+                onSubmit={handleSubmit}
+            >
+                {({ isSubmitting, status }) => (
+                    <Form className="login-form">
+                        <FormInput
+                            name="password"
+                            label="Yeni Şifre"
                             type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••"
-                            required
                         />
-                    </div>
-                </div>
 
-                <div className="input-group">
-                    <label>Şifreyi Onayla</label>
-                    <div className="input-wrapper">
-                        <input
+                        <FormInput
+                            name="confirmPassword"
+                            label="Şifreyi Onayla"
                             type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="••••••••"
-                            required
                         />
-                    </div>
-                </div>
 
-                {error && <p className="error-message">{error}</p>}
+                        {status?.error && <p className="error-message">{status.error}</p>}
 
-                <LoadingButton isLoading={isLoading}>Şifreyi Güncelle</LoadingButton>
-            </form>
+                        <LoadingButton isLoading={isSubmitting}>Şifreyi Güncelle</LoadingButton>
+                    </Form>
+                )}
+            </Formik>
         </AuthLayout>
     );
 }

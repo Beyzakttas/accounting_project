@@ -1,42 +1,28 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { Formik, Form } from 'formik';
+import * as Yup from 'yup';
 import AuthLayout from '../components/common/AuthLayout';
 import LoadingButton from '../components/common/LoadingButton';
 import { useToast } from '../contexts/ToastContext';
 import { loginUser } from '../services/authService';
 import FormInput from '../components/common/FormInput';
-import { validateEmail, validateRequired, validateForm } from '../utils/ValidationUtils';
 import '../assets/css/Login.css';
 
 function Login({ setUsername, setRole }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
   const { addToast } = useToast();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    
-    // Validasyon kontrolü
-    const { isValid, errors: validationErrors } = validateForm(
-      { email, password },
-      { 
-        email: validateEmail, 
-        password: (val) => validateRequired(val, "Şifre") 
-      }
-    );
+  const validationSchema = Yup.object().shape({
+    email: Yup.string()
+      .email('Geçersiz e-posta adresi')
+      .required('E-posta alanı zorunludur'),
+    password: Yup.string()
+      .required('Şifre alanı zorunludur'),
+  });
 
-    if (!isValid) {
-      setErrors(validationErrors);
-      return;
-    }
-
-    setErrors({});
-    setIsLoading(true);
-
+  const handleLogin = async (values, { setSubmitting }) => {
     try {
-      const response = await loginUser({ email, password });
+      const response = await loginUser(values);
       const { user: userData, token } = response.data;
       
       localStorage.setItem('token', token);
@@ -51,47 +37,43 @@ function Login({ setUsername, setRole }) {
       console.error("Bağlantı hatası:", error);
       addToast("Hata: " + (error.message || "Giriş işlemi başarısız. Sunucuyu kontrol edin."), "error");
     } finally {
-      setIsLoading(false);
+      setSubmitting(false);
     }
   };
 
   return (
     <AuthLayout title="LOGIN">
-      <form onSubmit={handleLogin} className="login-form">
-        <FormInput
-          label="E-posta"
-          type="email"
-          name="email"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            if (errors.email) setErrors({ ...errors, email: '' });
-          }}
-          placeholder="ornek@sirket.com"
-          error={errors.email}
-        />
+      <Formik
+        initialValues={{ email: '', password: '' }}
+        validationSchema={validationSchema}
+        onSubmit={handleLogin}
+      >
+        {({ isSubmitting }) => (
+          <Form className="login-form">
+            <FormInput
+              name="email"
+              label="E-posta"
+              type="email"
+              placeholder="ornek@sirket.com"
+            />
 
-        <FormInput
-          label="Şifre"
-          type="password"
-          name="password"
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            if (errors.password) setErrors({ ...errors, password: '' });
-          }}
-          placeholder="••••••••"
-          error={errors.password}
-        />
+            <FormInput
+              name="password"
+              label="Şifre"
+              type="password"
+              placeholder="••••••••"
+            />
 
-        <div className="forgot-password-wrapper">
-          <Link to="/forgot-password" className="primary-link small">
-            Şifremi Unuttum
-          </Link>
-        </div>
+            <div className="forgot-password-wrapper">
+              <Link to="/forgot-password" className="primary-link small">
+                Şifremi Unuttum
+              </Link>
+            </div>
 
-        <LoadingButton isLoading={isLoading}>Giriş Yap</LoadingButton>
-      </form>
+            <LoadingButton isLoading={isSubmitting}>Giriş Yap</LoadingButton>
+          </Form>
+        )}
+      </Formik>
 
       <div className="login-footer">
         <p>Hesabınız yok mu? <Link to="/register" className="primary-link">Kayıt Ol</Link></p>

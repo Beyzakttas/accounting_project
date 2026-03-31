@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { Formik, Form } from 'formik';
+import * as Yup from 'yup';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import FormInput from '../components/common/FormInput';
 import { useToast } from '../contexts/ToastContext';
-import { validatePasswordStrength } from '../utils/ValidationUtils';
 import '../assets/css/Settings.css';
 
 const Settings = ({ user: propUser }) => {
@@ -13,39 +14,26 @@ const Settings = ({ user: propUser }) => {
 
   const { addToast } = useToast();
 
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
-
   const [notifications, setNotifications] = useState({
     invoiceAlerts: true,
     weeklyReport: false,
     securityAlerts: true
   });
 
-  const [errors, setErrors] = useState({});
+  const validationSchema = Yup.object().shape({
+    currentPassword: Yup.string().required('Mevcut şifre zorunludur.'),
+    newPassword: Yup.string()
+      .min(6, 'Şifre en az 6 karakter olmalıdır.')
+      .required('Yeni şifre zorunludur.'),
+    confirmPassword: Yup.string()
+      .oneOf([Yup.ref('newPassword'), null], 'Şifreler eşleşmiyor.')
+      .required('Şifre tekrarı zorunludur.')
+  });
 
-  const handlePasswordUpdate = (e) => {
-    e.preventDefault();
-
-    const passError = validatePasswordStrength(passwordData.newPassword);
-    if (passError) {
-      setErrors({ ...errors, newPassword: passError });
-      return;
-    }
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setErrors({ ...errors, confirmPassword: 'Şifreler eşleşmiyor.' });
-      return;
-    }
-
-    setErrors({});
-    
+  const handlePasswordUpdate = async (values, { resetForm }) => {
     // API çağrısı buraya gelecek
     addToast('Şifreniz başarıyla değiştirildi.', 'success');
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    resetForm();
   };
 
   const toggleNotification = (key) => {
@@ -67,49 +55,45 @@ const Settings = ({ user: propUser }) => {
         <div className="glass-card settings-card">
           <h2 className="settings-card-title">Şifre Değiştir</h2>
 
-          <form onSubmit={handlePasswordUpdate}>
-            
-            <div className="settings-form-single">
-              <FormInput
-                label="Mevcut Şifre"
-                type="password"
-                value={passwordData.currentPassword}
-                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                required
-              />
-            </div>
-            
-            <div className="settings-form-row">
-              <FormInput
-                label="Yeni Şifre"
-                type="password"
-                value={passwordData.newPassword}
-                onChange={(e) => {
-                  setPasswordData({ ...passwordData, newPassword: e.target.value });
-                  setErrors({ ...errors, newPassword: '' });
-                }}
-                error={errors.newPassword}
-                required
-              />
-              <FormInput
-                label="Yeni Şifre (Tekrar)"
-                type="password"
-                value={passwordData.confirmPassword}
-                onChange={(e) => {
-                  setPasswordData({ ...passwordData, confirmPassword: e.target.value });
-                  setErrors({ ...errors, confirmPassword: '' });
-                }}
-                error={errors.confirmPassword}
-                required
-              />
-            </div>
+          <Formik
+            initialValues={{ currentPassword: '', newPassword: '', confirmPassword: '' }}
+            validationSchema={validationSchema}
+            onSubmit={handlePasswordUpdate}
+          >
+            {({ isSubmitting }) => (
+              <Form>
+                <div className="settings-form-single">
+                  <FormInput
+                    name="currentPassword"
+                    label="Mevcut Şifre"
+                    type="password"
+                    required
+                  />
+                </div>
+                
+                <div className="settings-form-row">
+                  <FormInput
+                    name="newPassword"
+                    label="Yeni Şifre"
+                    type="password"
+                    required
+                  />
+                  <FormInput
+                    name="confirmPassword"
+                    label="Yeni Şifre (Tekrar)"
+                    type="password"
+                    required
+                  />
+                </div>
 
-            <div className="settings-form-actions">
-              <button type="submit" className="primary-btn settings-save-btn">
-                Şifreyi Kaydet
-              </button>
-            </div>
-          </form>
+                <div className="settings-form-actions">
+                  <button type="submit" disabled={isSubmitting} className="primary-btn settings-save-btn">
+                    {isSubmitting ? 'Kaydediliyor...' : 'Şifreyi Kaydet'}
+                  </button>
+                </div>
+              </Form>
+            )}
+          </Formik>
         </div>
 
         {/* --- BİLDİRİM AYARLARI KARTI --- */}

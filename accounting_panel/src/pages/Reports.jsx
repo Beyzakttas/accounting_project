@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
+import { useToast } from '../contexts/ToastContext';
 
 const Reports = ({ user: propUser }) => {
   const [user] = useState({
     name: propUser?.name || localStorage.getItem('userName') || 'Yönetici',
     role: propUser?.role || localStorage.getItem('role') || 'ADMIN'
   });
+
+  const { addToast } = useToast();
 
   // Mock veri - Gerçek uygulamada API'den gelecek
   const reportStats = [
@@ -19,7 +22,7 @@ const Reports = ({ user: propUser }) => {
     <DashboardLayout 
       user={user} 
       activeMenu="Raporlar"
-      onDownloadReport={() => alert('Rapor indirme işlemi başlatıldı.')}
+      onDownloadReport={() => addToast('Rapor indirme işlemi başlatıldı.', 'info')}
     >
       <div className="reports-container">
         {/* Özet Kartları */}

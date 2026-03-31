@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Modal from '../components/common/Modal';
 import FormInput from '../components/common/FormInput';
+import { useToast } from '../contexts/ToastContext';
 import apiClient from '../api/apiClient';
 import '../assets/css/Invoices.css';
 
@@ -11,9 +12,13 @@ const Invoices = ({ user: propUser }) => {
     role: propUser?.role || localStorage.getItem('role') || 'USER'
   });
 
+  const { addToast } = useToast();
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [activeMenu] = useState('Faturalar');
 
   // Yeni fatura formu state
@@ -51,20 +56,31 @@ const Invoices = ({ user: propUser }) => {
         setShowModal(false);
         setFormData({ invoiceNumber: '', description: '', amount: '', date: new Date().toISOString().split('T')[0], type: 'Gider', status: 'Beklemede' });
         fetchInvoices();
-        alert('Fatura başarıyla oluşturuldu.');
+        addToast('Fatura başarıyla oluşturuldu.', 'success');
       }
     } catch (error) {
-      alert(error.message || 'Fatura oluşturulurken bir hata oluştu.');
+      addToast(error.message || 'Fatura oluşturulurken bir hata oluştu.', 'error');
     }
   };
 
-  const handleDeleteInvoice = async (id) => {
-    if (!window.confirm('Bu faturayı silmek istediğinize emin misiniz?')) return;
+  const handleDeleteClick = (invoice) => {
+    setInvoiceToDelete(invoice);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteInvoice = async () => {
+    if (!invoiceToDelete) return;
+    setDeleting(true);
     try {
-      await apiClient.delete(`/invoice/${id}`);
+      await apiClient.delete(`/invoice/${invoiceToDelete._id}`);
+      setShowDeleteModal(false);
+      setInvoiceToDelete(null);
       fetchInvoices();
+      addToast('Fatura başarıyla silindi.', 'success');
     } catch (error) {
-      alert(error.message || 'Silme işlemi başarısız.');
+      addToast(error.message || 'Silme işlemi başarısız.', 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -110,7 +126,7 @@ const Invoices = ({ user: propUser }) => {
                   </span>
                   <div className="invoice-actions">
                     <button className="action-btn" title="Düzenle">✏️</button>
-                    <button className="action-btn" title="Sil" onClick={() => handleDeleteInvoice(invoice._id)}>🗑️</button>
+                    <button className="action-btn" title="Sil" onClick={() => handleDeleteClick(invoice)}>🗑️</button>
                   </div>
                 </div>
               </div>
@@ -135,6 +151,7 @@ const Invoices = ({ user: propUser }) => {
         onSubmit={handleCreateInvoice}
         submitText="Faturayı Kaydet"
         submitClassName="upload-invoice-btn"
+        closeOnOverlayClick={false}
       >
         <div className="invoice-upload-form">
           <div className="form-row">
@@ -190,6 +207,30 @@ const Invoices = ({ user: propUser }) => {
               ]}
             />
           </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setInvoiceToDelete(null);
+        }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleDeleteInvoice();
+        }}
+        title="Faturayı Sil"
+        submitText={deleting ? 'Siliniyor...' : 'Evet, Sil'}
+        submitClassName="danger-btn"
+        maxWidth="450px"
+      >
+        <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.6' }}>
+            Seçili faturayı sistemden kalıcı olarak silmek istediğinize emin misiniz? <br />
+            <span style={{ color: '#ef4444', fontWeight: '600' }}>Bu işlem geri alınamaz.</span>
+          </p>
         </div>
       </Modal>
     </DashboardLayout>

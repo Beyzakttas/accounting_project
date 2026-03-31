@@ -1,63 +1,35 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Formik, Form } from 'formik';
+import * as Yup from 'yup';
 import AuthLayout from '../components/common/AuthLayout';
 import LoadingButton from '../components/common/LoadingButton';
 import { useToast } from '../contexts/ToastContext';
 import { registerUser } from '../services/authService';
 import FormInput from '../components/common/FormInput';
-import { validateEmail, validatePasswordStrength, validateRequired, validateForm } from '../utils/ValidationUtils';
 import '../assets/css/Register.css';
 
 function Register() {
-    const [formData, setFormData] = useState({
-        fullname: '',
-        email: '',
-        password: '',
-        confirmPassword: ''
-    });
-    const [errors, setErrors] = useState({});
-    const [isLoading, setIsLoading] = useState(false);
     const { addToast } = useToast();
     const navigate = useNavigate();
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
-        
-        // Hata varsa yazarken temizle
-        if (errors[e.target.name]) {
-            setErrors({ ...errors, [e.target.name]: '' });
-        }
-    };
+    const validationSchema = Yup.object().shape({
+        fullname: Yup.string()
+            .required("Ad Soyad zorunludur."),
+        email: Yup.string()
+            .email("Lütfen geçerli bir e-posta adresi giriniz.")
+            .required("E-posta alanı zorunludur."),
+        password: Yup.string()
+            .min(6, "Şifre en az 6 karakter olmalıdır.")
+            .required("Şifre alanı zorunludur."),
+        confirmPassword: Yup.string()
+            .oneOf([Yup.ref('password'), null], "Şifreler birbiriyle eşleşmiyor.")
+            .required("Şifre tekrarı zorunludur.")
+    });
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        // Merkezi Validasyon Kontrolü
-        const { isValid, errors: validationErrors } = validateForm(formData, {
-            fullname: (val) => validateRequired(val, "Ad Soyad"),
-            email: validateEmail,
-            // Detaylı şifre kontrolü (ValidationUtils'deki regex) çalışır.
-            password: validatePasswordStrength,
-            confirmPassword: (val) => {
-                if (!val) return "Şifre tekrarı zorunludur.";
-                if (val !== formData.password) return "Şifreler birbiriyle eşleşmiyor.";
-                return "";
-            }
-        });
-
-        if (!isValid) {
-            setErrors(validationErrors);
-            return;
-        }
-
-        setErrors({});
-        setIsLoading(true);
-
+    const handleSubmit = async (values, { setSubmitting }) => {
         try {
-            const response = await registerUser(formData);
+            const response = await registerUser(values);
             const { user: userData, token } = response.data;
 
             localStorage.setItem('token', token);
@@ -70,7 +42,7 @@ function Register() {
             console.error("Bağlantı hatası:", error);
             addToast("Hata: " + (error.message || "Kayıt işlemi başarısız."), "error");
         } finally {
-            setIsLoading(false);
+            setSubmitting(false);
         }
     };
 
@@ -79,67 +51,66 @@ function Register() {
             containerClass="register-glass-card"
             wrapperClass="register-wrapper"
         >
-            {/* Sağ Taraf - Form Bölümü (Şimdi solda olabilir veya tam tersi, DOM sırasına göre) */}
             <div className="register-form-container">
                 <div className="register-header">
                     <h1 className="register-title">Kayıt Ol</h1>
                     <p className="register-subtitle">Bilgilerinizi girerek hesabınızı oluşturun</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="register-form">
-                    <div className="form-grid">
-                        <FormInput
-                            label="Ad Soyad"
-                            type="text"
-                            name="fullname"
-                            value={formData.fullname}
-                            onChange={handleChange}
-                            placeholder="Ahmet Yılmaz"
-                            error={errors.fullname}
-                        />
+                <Formik
+                    initialValues={{
+                        fullname: '',
+                        email: '',
+                        password: '',
+                        confirmPassword: ''
+                    }}
+                    validationSchema={validationSchema}
+                    onSubmit={handleSubmit}
+                >
+                    {({ isSubmitting }) => (
+                        <Form className="register-form">
+                            <div className="form-grid">
+                                <FormInput
+                                    name="fullname"
+                                    label="Ad Soyad"
+                                    type="text"
+                                    placeholder="Ahmet Yılmaz"
+                                />
 
-                        <FormInput
-                            label="E-posta"
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            placeholder="ornek@sirket.com"
-                            error={errors.email}
-                        />
+                                <FormInput
+                                    name="email"
+                                    label="E-posta"
+                                    type="email"
+                                    placeholder="ornek@sirket.com"
+                                />
 
-                        <FormInput
-                            label="Şifre"
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            placeholder="••••••••"
-                            error={errors.password}
-                        />
+                                <FormInput
+                                    name="password"
+                                    label="Şifre"
+                                    type="password"
+                                    placeholder="••••••••"
+                                />
 
-                        <FormInput
-                            label="Şifre (Tekrar)"
-                            type="password"
-                            name="confirmPassword"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            placeholder="••••••••"
-                            error={errors.confirmPassword}
-                        />
-                    </div>
+                                <FormInput
+                                    name="confirmPassword"
+                                    label="Şifre (Tekrar)"
+                                    type="password"
+                                    placeholder="••••••••"
+                                />
+                            </div>
 
-                    <LoadingButton isLoading={isLoading} className="register-btn">
-                        Hesabımı Oluştur
-                    </LoadingButton>
-                </form>
+                            <LoadingButton isLoading={isSubmitting} className="register-btn">
+                                Hesabımı Oluştur
+                            </LoadingButton>
+                        </Form>
+                    )}
+                </Formik>
 
                 <div className="register-footer">
                     <p>Zaten hesabınız var mı? <Link to="/">Giriş Yap</Link></p>
                 </div>
             </div>
 
-            {/* Sol Taraf - Bilgi Bölümü (Şimdi sağda olacak) */}
             <div className="register-side-info">
                 <div className="logo-icon">🚀</div>
                 <h2 className="side-title">Muhasebe AI</h2>

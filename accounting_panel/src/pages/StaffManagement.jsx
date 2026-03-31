@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Modal from '../components/common/Modal';
 import FormInput from '../components/common/FormInput';
+import { useToast } from '../contexts/ToastContext';
 import apiClient from '../api/apiClient';
 import '../assets/css/StaffManagement.css';
 
@@ -11,9 +12,13 @@ const StaffManagement = ({ user: propUser }) => {
     role: propUser?.role || localStorage.getItem('role') || 'MANAGER'
   });
 
+  const { addToast } = useToast();
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [activeMenu] = useState('Personel Yönetimi');
 
@@ -56,21 +61,21 @@ const StaffManagement = ({ user: propUser }) => {
           setEditingId(null);
           setFormData({ fullname: '', email: '', password: '', department: 'Muhasebe' });
           fetchStaff();
-          alert('Personel bilgileri güncellendi.');
+          addToast('Personel bilgileri güncellendi.', 'success');
         }
       } else {
         // Yeni kayıt işlemi
-        if (!formData.password) return alert('Yeni personel için şifre zorunludur.');
+        if (!formData.password) return addToast('Yeni personel için şifre zorunludur.', 'warning');
         const response = await apiClient.post('/owner/staff', formData);
         if (response.success) {
           setShowModal(false);
           setFormData({ fullname: '', email: '', password: '', department: 'Muhasebe' });
           fetchStaff();
-          alert('Personel başarıyla eklendi.');
+          addToast('Personel başarıyla eklendi.', 'success');
         }
       }
     } catch (error) {
-      alert(error.message || 'Bir hata oluştu. Lütfen bilgileri kontrol edin.');
+      addToast(error.message || 'Bir hata oluştu. Lütfen bilgileri kontrol edin.', 'error');
     }
   };
 
@@ -85,16 +90,26 @@ const StaffManagement = ({ user: propUser }) => {
     setShowModal(true);
   };
 
-  const handleDeleteStaff = async (id) => {
-    if (!window.confirm('Bu personeli silmek istediğinize emin misiniz?')) return;
+  const handleDeleteClick = (staff) => {
+    setStaffToDelete(staff);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteStaff = async () => {
+    if (!staffToDelete) return;
+    setDeleting(true);
     try {
-      const response = await apiClient.delete(`/owner/staff/${id}`);
+      const response = await apiClient.delete(`/owner/staff/${staffToDelete._id}`);
       if (response.success) {
+        setShowDeleteModal(false);
+        setStaffToDelete(null);
         fetchStaff();
-        alert('Personel silindi.');
+        addToast('Personel silindi.', 'success');
       }
     } catch (error) {
-      alert(error.message || 'Silme işlemi başarısız.');
+      addToast(error.message || 'Silme işlemi başarısız.', 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -132,7 +147,7 @@ const StaffManagement = ({ user: propUser }) => {
                     </td>
                     <td className="actions-cell">
                       <button className="action-btn" title="Düzenle" onClick={() => handleEditStaff(staff)}>✏️</button>
-                      <button className="action-btn" title="Sil" onClick={() => handleDeleteStaff(staff._id)}>🗑️</button>
+                      <button className="action-btn" title="Sil" onClick={() => handleDeleteClick(staff)}>🗑️</button>
                     </td>
                   </tr>
                 ))}
@@ -161,6 +176,7 @@ const StaffManagement = ({ user: propUser }) => {
         onSubmit={handleAddStaff}
         submitText={editingId ? 'Güncelle' : 'Personeli Kaydet'}
         submitClassName="add-staff-btn"
+        closeOnOverlayClick={false}
       >
         <FormInput
           label="Ad Soyad"
@@ -208,6 +224,30 @@ const StaffManagement = ({ user: propUser }) => {
             { value: 'Diger', label: 'Diğer' }
           ]}
         />
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setStaffToDelete(null);
+        }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleDeleteStaff();
+        }}
+        title="Personeli Sil"
+        submitText={deleting ? 'Siliniyor...' : 'Evet, Sil'}
+        submitClassName="danger-btn"
+        maxWidth="450px"
+      >
+        <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.6' }}>
+            <strong>{staffToDelete?.fullname}</strong> isimli personeli sistemden kalıcı olarak silmek istediğinize emin misiniz? <br />
+            <span style={{ color: '#ef4444', fontWeight: '600' }}>Bu işlem geri alınamaz.</span>
+          </p>
+        </div>
       </Modal>
     </DashboardLayout>
   );

@@ -21,7 +21,8 @@ const Modal = ({
   onSubmit,
   submitText = 'Kaydet',
   submitClassName = 'primary-btn',
-  maxWidth = '800px'
+  maxWidth = '800px',
+  closeOnOverlayClick = true
 }) => {
 
   // Client-side hydration preventer for portals
@@ -34,7 +35,11 @@ const Modal = ({
   if (!isOpen || !mounted) return null;
 
   return ReactDOM.createPortal(
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 9999 }}>
+    <div 
+      className="modal-overlay" 
+      onClick={closeOnOverlayClick ? onClose : undefined} 
+      style={{ zIndex: 9999 }}
+    >
       {/* e.stopPropagation() prevents the modal from closing when clicking inside it */}
       <div 
         className="invoice-modal glass-card modal-content" 

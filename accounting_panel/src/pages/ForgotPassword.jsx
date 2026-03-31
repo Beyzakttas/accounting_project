@@ -1,53 +1,54 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Formik, Form } from 'formik';
+import * as Yup from 'yup';
 import AuthLayout from '../components/common/AuthLayout';
 import LoadingButton from '../components/common/LoadingButton';
 import { Link } from 'react-router-dom';
 import { forgotPassword } from '../services/authService';
+import FormInput from '../components/common/FormInput';
 import '../assets/css/Login.css';
 
 function ForgotPassword() {
-    const [email, setEmail] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
+    const validationSchema = Yup.object().shape({
+        email: Yup.string()
+            .email("Lütfen geçerli bir e-posta adresi giriniz.")
+            .required("E-posta alanı zorunludur.")
+    });
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setMessage('');
-        setError('');
-
+    const handleSubmit = async (values, { setSubmitting, setStatus }) => {
         try {
-            const data = await forgotPassword(email);
-            setMessage(data.message);
+            const data = await forgotPassword(values.email);
+            setStatus({ success: data.message });
         } catch (err) {
-            setError(err.message || "Sunucuya bağlanılamadı.");
+            setStatus({ error: err.message || "Sunucuya bağlanılamadı." });
         } finally {
-            setIsLoading(false);
+            setSubmitting(false);
         }
     };
 
     return (
         <AuthLayout title="Şifremi Unuttum" subtitle="E-posta adresinizi girin, size bir sıfırlama bağlantısı gönderelim.">
-            <form onSubmit={handleSubmit} className="login-form">
-                <div className="input-group">
-                    <label>E-posta</label>
-                    <div className="input-wrapper">
-                        <input
+            <Formik
+                initialValues={{ email: '' }}
+                validationSchema={validationSchema}
+                onSubmit={handleSubmit}
+            >
+                {({ isSubmitting, status }) => (
+                    <Form className="login-form">
+                        <FormInput
+                            name="email"
+                            label="E-posta"
                             type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
                             placeholder="ornek@sirket.com"
-                            required
                         />
-                    </div>
-                </div>
 
-                {message && <p className="success-message">{message}</p>}
-                {error && <p className="error-message">{error}</p>}
+                        {status?.success && <p className="success-message">{status.success}</p>}
+                        {status?.error && <p className="error-message">{status.error}</p>}
 
-                <LoadingButton isLoading={isLoading}>Bağlantı Gönder</LoadingButton>
-            </form>
+                        <LoadingButton isLoading={isSubmitting}>Bağlantı Gönder</LoadingButton>
+                    </Form>
+                )}
+            </Formik>
 
             <div className="login-footer">
                 <p><Link to="/" className="primary-link">Girişe Dön</Link></p>
