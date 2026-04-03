@@ -7,21 +7,22 @@ const AuthLayout = ({
     subtitle, 
     containerClass = "login-glass-card",
     wrapperClass = "login-wrapper",
-    showThemeToggle = true 
+    showThemeToggle = true,
+    ...props
 }) => {
     const { theme, toggleTheme } = useTheme();
 
     return (
-        <div className={wrapperClass}>
+        <div className={wrapperClass} {...props}>
             {showThemeToggle && (
-                <button className="theme-toggle" onClick={toggleTheme}>
+                <button type="button" className="theme-toggle" onClick={toggleTheme}>
                     {theme === 'light' ? '☀️' : '🌙'}
                 </button>
             )}
 
             <div className="blobs">
-                <div className="blob blob-1"></div>
-                <div className="blob blob-2"></div>
+                <div className="blob blob-1" />
+                <div className="blob blob-2" />
             </div>
 
             <div className={containerClass}>
@@ -36,5 +37,6 @@ const AuthLayout = ({
         </div>
     );
 };
+
 
 export default AuthLayout;

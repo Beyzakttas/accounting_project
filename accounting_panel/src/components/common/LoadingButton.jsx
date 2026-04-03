@@ -5,19 +5,18 @@ const LoadingButton = ({
     children, 
     className = "login-btn", 
     type = "submit", 
-    disabled = false,
+    disabled = false, 
     ...props 
-}) => {
-    return (
-        <button 
-            type={type} 
-            className={className} 
-            disabled={isLoading || disabled} 
-            {...props}
-        >
-            {isLoading ? <span className="loader"></span> : children}
-        </button>
-    );
-};
+}) => (
+    <button 
+        {...props} 
+        type={type} 
+        className={className} 
+        disabled={isLoading || disabled}
+    >
+        {isLoading ? <span className="loader"></span> : children}
+    </button>
+);
 
 export default LoadingButton;
+

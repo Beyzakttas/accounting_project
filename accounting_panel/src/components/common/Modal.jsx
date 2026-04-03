@@ -22,7 +22,8 @@ const Modal = ({
   submitText = 'Kaydet',
   submitClassName = 'primary-btn',
   maxWidth = '800px',
-  closeOnOverlayClick = true
+  closeOnOverlayClick = true,
+  ...props
 }) => {
 
   // Client-side hydration preventer for portals
@@ -39,6 +40,7 @@ const Modal = ({
       className="modal-overlay" 
       onClick={closeOnOverlayClick ? onClose : undefined} 
       style={{ zIndex: 9999 }}
+      {...props}
     >
       {/* e.stopPropagation() prevents the modal from closing when clicking inside it */}
       <div 
