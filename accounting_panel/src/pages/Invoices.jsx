@@ -6,7 +6,7 @@ import { useToast } from '../contexts/ToastContext';
 import apiClient from '../api/apiClient';
 import '../assets/css/Invoices.css';
 
-const Invoices = ({ user: propUser }) => {
+const Invoices = ({ user: propUser, onLogout }) => {
   const [user] = useState({
     name: propUser?.name || localStorage.getItem('userName') || 'Kullanıcı',
     role: propUser?.role || localStorage.getItem('role') || 'USER'
@@ -89,6 +89,7 @@ const Invoices = ({ user: propUser }) => {
       user={user}
       activeMenu={activeMenu}
       onAddInvoice={() => setShowModal(true)}
+      onLogout={onLogout}
     >
       <div className="invoices-container">
         {loading ? (

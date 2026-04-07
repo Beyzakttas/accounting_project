@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { getAllCompanies } from '../services/companyService';
+import { getInvoiceStats } from '../services/invoiceService';
 import '../assets/css/Dashboard.css';
 
-const Dashboard = ({ user: propUser }) => {
+const Dashboard = ({ user: propUser, onLogout }) => {
   const [user] = useState({
     name: propUser?.name || localStorage.getItem('userName') || 'Demo Kullanıcı',
     role: propUser?.role || localStorage.getItem('role') || 'ADMIN'
@@ -12,9 +13,15 @@ const Dashboard = ({ user: propUser }) => {
   const [activeMenu] = useState('Anasayfa');
   const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState('ALL');
+  const [stats, setStats] = useState({
+    totalIncome: 0,
+    totalExpense: 0,
+    pendingCount: 0
+  });
 
   useEffect(() => {
-    if (user.role.toUpperCase() === 'ADMIN') {
+    // Şirketleri getir (Admin ise)
+    if (user.role?.toUpperCase() === 'ADMIN') {
       const fetchCompanies = async () => {
         try {
           const data = await getAllCompanies();
@@ -25,6 +32,19 @@ const Dashboard = ({ user: propUser }) => {
       };
       fetchCompanies();
     }
+
+    // İstatistikleri getir
+    const fetchStats = async () => {
+      try {
+        const response = await getInvoiceStats();
+        if (response.success) {
+          setStats(response.data);
+        }
+      } catch (error) {
+        console.error('İstatistikler alınamadı:', error);
+      }
+    };
+    fetchStats();
   }, [user.role]);
 
   return (
@@ -34,6 +54,7 @@ const Dashboard = ({ user: propUser }) => {
       companies={companies}
       selectedCompanyId={selectedCompanyId}
       setSelectedCompanyId={setSelectedCompanyId}
+      onLogout={onLogout}
     >
       {activeMenu === 'Anasayfa' && (
         <>
@@ -43,8 +64,10 @@ const Dashboard = ({ user: propUser }) => {
               <div className="stat-icon income">💰</div>
               <div className="stat-details">
                 <p className="stat-title">Toplam Gelir</p>
-                <h3 className="stat-value">₺124,500.00</h3>
-                <span className="stat-change positive">↑ 12.5% geçen aydan</span>
+                <h3 className="stat-value">
+                  ₺{stats.totalIncome.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                </h3>
+                <span className="stat-change positive">Güncel toplam gelir</span>
               </div>
             </div>
 
@@ -52,8 +75,10 @@ const Dashboard = ({ user: propUser }) => {
               <div className="stat-icon expense">📉</div>
               <div className="stat-details">
                 <p className="stat-title">Toplam Gider</p>
-                <h3 className="stat-value">₺42,200.00</h3>
-                <span className="stat-change negative">↓ 4.1% geçen aydan</span>
+                <h3 className="stat-value">
+                  ₺{stats.totalExpense.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                </h3>
+                <span className="stat-change negative">Güncel toplam gider</span>
               </div>
             </div>
 
@@ -61,7 +86,7 @@ const Dashboard = ({ user: propUser }) => {
               <div className="stat-icon invoices">📄</div>
               <div className="stat-details">
                 <p className="stat-title">Bekleyen Faturalar</p>
-                <h3 className="stat-value">14</h3>
+                <h3 className="stat-value">{stats.pendingCount}</h3>
                 <span className="stat-change neutral">İncelenmeyi bekliyor</span>
               </div>
             </div>

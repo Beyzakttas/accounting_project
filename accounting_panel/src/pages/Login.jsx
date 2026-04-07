@@ -9,7 +9,7 @@ import { loginUser } from '../services/authService';
 import FormInput from '../components/common/FormInput';
 import '../assets/css/Login.css';
 
-function Login({ setUsername, setRole }) {
+function Login({ setUser }) {
   const { addToast } = useToast();
 
   const validationSchema = Yup.object().shape({
@@ -23,19 +23,24 @@ function Login({ setUsername, setRole }) {
   const handleLogin = async (values, { setSubmitting }) => {
     try {
       const response = await loginUser(values);
-      const { user: userData, token } = response.data;
+      const { user: userData, token } = response.data; // Backend wraps data in a 'data' field
       
       localStorage.setItem('token', token);
       localStorage.setItem('role', userData.role);
       localStorage.setItem('userName', userData.fullname);
 
-      if (setUsername) setUsername(userData.fullname);
-      if (setRole) setRole(userData.role);
+      if (setUser) {
+        setUser({
+          name: userData.fullname,
+          role: userData.role
+        });
+      }
 
       window.location.href = '/dashboard';
     } catch (error) {
-      console.error("Bağlantı hatası:", error);
-      addToast("Hata: " + (error.message || "Giriş işlemi başarısız. Sunucuyu kontrol edin."), "error");
+      console.error("Giriş hatası:", error);
+      const errorMessage = error.message || (error.data && error.data.message) || "Giriş işlemi başarısız. Bilgilerinizi kontrol edin.";
+      addToast(errorMessage, "error");
     } finally {
       setSubmitting(false);
     }

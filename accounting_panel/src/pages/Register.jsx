@@ -9,7 +9,7 @@ import { registerUser } from '../services/authService';
 import FormInput from '../components/common/FormInput';
 import '../assets/css/Register.css';
 
-function Register() {
+function Register({ setUser }) {
     const { addToast } = useToast();
     const navigate = useNavigate();
 
@@ -30,17 +30,25 @@ function Register() {
     const handleSubmit = async (values, { setSubmitting }) => {
         try {
             const response = await registerUser(values);
-            const { user: userData, token } = response.data;
+            const { user: userData, token } = response.data; // apiClient returns the full response object, we need .data
 
             localStorage.setItem('token', token);
             localStorage.setItem('role', userData.role);
             localStorage.setItem('userName', userData.fullname);
 
+            if (setUser) {
+                setUser({
+                    name: userData.fullname,
+                    role: userData.role
+                });
+            }
+
             addToast("Kayıt başarılı! Giriş yapıldı.", "success");
             navigate('/dashboard');
         } catch (error) {
-            console.error("Bağlantı hatası:", error);
-            addToast("Hata: " + (error.message || "Kayıt işlemi başarısız."), "error");
+            console.error("Kayıt hatası:", error);
+            const errorMessage = error.message || (error.data && error.data.message) || "Kayıt işlemi başarısız.";
+            addToast(errorMessage, "error");
         } finally {
             setSubmitting(false);
         }

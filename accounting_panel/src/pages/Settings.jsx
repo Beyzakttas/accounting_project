@@ -6,7 +6,7 @@ import FormInput from '../components/common/FormInput';
 import { useToast } from '../contexts/ToastContext';
 import '../assets/css/Settings.css';
 
-const Settings = ({ user: propUser }) => {
+const Settings = ({ user: propUser, onLogout }) => {
   const [user] = useState({
     name: propUser?.name || localStorage.getItem('userName') || 'Kullanıcı',
     role: propUser?.role || localStorage.getItem('role') || 'USER'
@@ -48,7 +48,7 @@ const Settings = ({ user: propUser }) => {
   );
 
   return (
-    <DashboardLayout user={user} activeMenu="Ayarlar">
+    <DashboardLayout user={user} activeMenu="Ayarlar" onLogout={onLogout}>
       <div className="settings-container">
 
         {/* --- ŞİFRE DEĞİŞTİR KARTI --- */}

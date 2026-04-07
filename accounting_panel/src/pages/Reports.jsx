@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { useToast } from '../contexts/ToastContext';
 
-const Reports = ({ user: propUser }) => {
+const Reports = ({ user: propUser, onLogout }) => {
   const [user] = useState({
-    name: propUser?.name || localStorage.getItem('userName') || 'Yönetici',
-    role: propUser?.role || localStorage.getItem('role') || 'ADMIN'
+    name: propUser?.name || localStorage.getItem('userName') || 'Kullanıcı',
+    role: propUser?.role || localStorage.getItem('role') || 'USER'
   });
 
   const { addToast } = useToast();
@@ -23,6 +23,7 @@ const Reports = ({ user: propUser }) => {
       user={user} 
       activeMenu="Raporlar"
       onDownloadReport={() => addToast('Rapor indirme işlemi başlatıldı.', 'info')}
+      onLogout={onLogout}
     >
       <div className="reports-container">
         {/* Özet Kartları */}

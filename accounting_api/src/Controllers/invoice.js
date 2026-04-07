@@ -52,6 +52,17 @@ const invoiceController = {
     } catch (error) {
       next(error);
     }
+  },
+
+  // 5. İstatistikleri getir
+  getInvoiceStats: async (req, res, next) => {
+    try {
+      const { companyId } = req.user;
+      const stats = await invoiceService.getInvoiceStats(companyId);
+      return successResponse(res, stats, 'İstatistikler başarıyla getirildi.');
+    } catch (error) {
+      next(error);
+    }
   }
 };
 

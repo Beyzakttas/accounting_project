@@ -6,10 +6,10 @@ import { useToast } from '../contexts/ToastContext';
 import apiClient from '../api/apiClient';
 import '../assets/css/StaffManagement.css';
 
-const StaffManagement = ({ user: propUser }) => {
+const StaffManagement = ({ user: propUser, onLogout }) => {
   const [user] = useState({
     name: propUser?.name || localStorage.getItem('userName') || 'Yönetici',
-    role: propUser?.role || localStorage.getItem('role') || 'MANAGER'
+    role: propUser?.role || localStorage.getItem('role') || 'ADMIN'
   });
 
   const { addToast } = useToast();
@@ -118,6 +118,7 @@ const StaffManagement = ({ user: propUser }) => {
       user={user}
       activeMenu={activeMenu}
       onAddStaff={() => setShowModal(true)}
+      onLogout={onLogout}
     >
       <div className="staff-management-container">
         <div className="glass-card staff-table-container">

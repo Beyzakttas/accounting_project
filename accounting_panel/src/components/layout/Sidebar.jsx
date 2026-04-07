@@ -19,7 +19,7 @@ const Sidebar = ({ user, activeMenu }) => {
 
             <nav className="sidebar-nav">
                 {navItems.map((item) => {
-                    const isManagerOrAdmin = ['ADMIN', 'MANAGER'].includes(user.role?.toUpperCase());
+                    const isManagerOrAdmin = ['ADMIN', 'MANAGER'].includes(user?.role?.toUpperCase());
                     if (item.adminOnly && !isManagerOrAdmin) return null;
 
                     return (
@@ -37,10 +37,10 @@ const Sidebar = ({ user, activeMenu }) => {
 
             <div className="sidebar-footer">
                 <div className="user-profile">
-                    <div className="avatar">{user.name.charAt(0).toUpperCase()}</div>
+                    <div className="avatar">{(user?.name || 'K')?.charAt(0).toUpperCase()}</div>
                     <div className="user-info">
-                        <span className="user-name">{user.name}</span>
-                        <span className="user-role">{user.role.toUpperCase()}</span>
+                        <span className="user-name">{user?.name || 'Kullanıcı'}</span>
+                        <span className="user-role">{(user?.role || 'USER').toUpperCase()}</span>
                     </div>
                 </div>
             </div>

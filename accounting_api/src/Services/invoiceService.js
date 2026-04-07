@@ -68,3 +68,28 @@ export const updateInvoice = async (invoiceId, updateData, userId, role) => {
 
   return await Invoice.findByIdAndUpdate(invoiceId, updateData, { new: true, runValidators: true });
 };
+
+/**
+ * Şirket bazlı gelir/gider ve fatura istatistiklerini hesaplar
+ */
+export const getInvoiceStats = async (companyId) => {
+  const stats = await Invoice.aggregate([
+    { $match: { companyId: companyId } },
+    {
+      $group: {
+        _id: null,
+        totalIncome: {
+          $sum: { $cond: [{ $eq: ['$type', 'INCOME'] }, '$amount', 0] }
+        },
+        totalExpense: {
+          $sum: { $cond: [{ $eq: ['$type', 'EXPENSE'] }, '$amount', 0] }
+        },
+        pendingCount: {
+          $sum: { $cond: [{ $eq: ['$status', 'Pending'] }, 1, 0] }
+        }
+      }
+    }
+  ]);
+
+  return stats[0] || { totalIncome: 0, totalExpense: 0, pendingCount: 0 };
+};

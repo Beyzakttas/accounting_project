@@ -31,6 +31,20 @@ router.get('/', roleMiddleware(['ADMIN', 'MANAGER', 'USER']), invoiceController.
 
 /**
  * @swagger
+ * /api/invoice/stats:
+ *   get:
+ *     summary: Fatura istatistiklerini getirir (Gelir/Gider/Bekleyen)
+ *     tags: [Invoices]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: İstatistikler başarıyla getirildi
+ */
+router.get('/stats', roleMiddleware(['ADMIN', 'MANAGER', 'USER']), invoiceController.getInvoiceStats);
+
+/**
+ * @swagger
  * /api/invoice:
  *   post:
  *     summary: Yeni bir fatura oluşturur

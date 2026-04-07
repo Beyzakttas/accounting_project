@@ -16,20 +16,15 @@ import { ToastProvider } from './contexts/ToastContext';
 // ... importlar aynı kalıyor
 
 function App() {
-  const [username, setUsername] = useState(localStorage.getItem('userName') || '');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState(localStorage.getItem('role') || 'ADMIN');
+  const [user, setUser] = useState({
+    name: localStorage.getItem('userName') || '',
+    role: localStorage.getItem('role') || 'USER', // Default to USER if not set
+  });
 
-  const handleLogin = (e) => {
-    // e.preventDefault() eklemeyi unutma, sayfa yenilenmesin
-    if (e) e.preventDefault();
-    console.log(`Giriş Denemesi -> Kullanıcı: ${username}, Şifre: ${password}, Rol: ${role}`);
-    // Buraya backend istek kodunu yazacağız
-  };
-
-  const user = {
-    name: username || 'Kullanıcı',
-    role: role,
+  const handleLogout = () => {
+    localStorage.clear();
+    setUser({ name: '', role: 'USER' });
+    window.location.href = '/';
   };
 
   return (
@@ -37,22 +32,15 @@ function App() {
       <ToastProvider>
         <Router>
           <Routes>
-            {/* Login bileşenine tüm yetkileri ve verileri gönderiyoruz */}
             <Route path="/" element={
-              <Login
-                setUsername={setUsername}
-                setPassword={setPassword}
-                setRole={setRole}
-                handleLogin={handleLogin}
-                values={{ username, password, role }}
-              />
+              <Login setUser={setUser} />
             } />
-            <Route path="/dashboard" element={<Dashboard user={user} />} />
-            <Route path="/staff" element={<StaffManagement user={user} />} />
-            <Route path="/invoices" element={<Invoices user={user} />} />
-            <Route path="/reports" element={<Reports user={user} />} />
-            <Route path="/settings" element={<Settings user={user} />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<Dashboard user={user} onLogout={handleLogout} />} />
+            <Route path="/staff" element={<StaffManagement user={user} onLogout={handleLogout} />} />
+            <Route path="/invoices" element={<Invoices user={user} onLogout={handleLogout} />} />
+            <Route path="/reports" element={<Reports user={user} onLogout={handleLogout} />} />
+            <Route path="/settings" element={<Settings user={user} onLogout={handleLogout} />} />
+            <Route path="/register" element={<Register setUser={setUser} />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
           </Routes>
