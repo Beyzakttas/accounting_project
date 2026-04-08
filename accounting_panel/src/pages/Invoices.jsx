@@ -27,8 +27,8 @@ const Invoices = ({ user: propUser, onLogout }) => {
     description: '',
     amount: '',
     date: new Date().toISOString().split('T')[0],
-    type: 'Gider',
-    status: 'Beklemede'
+    type: 'EXPENSE',
+    status: 'Pending'
   });
 
   useEffect(() => {
@@ -54,7 +54,7 @@ const Invoices = ({ user: propUser, onLogout }) => {
       const response = await apiClient.post('/invoice', formData);
       if (response.success) {
         setShowModal(false);
-        setFormData({ invoiceNumber: '', description: '', amount: '', date: new Date().toISOString().split('T')[0], type: 'Gider', status: 'Beklemede' });
+        setFormData({ invoiceNumber: '', description: '', amount: '', date: new Date().toISOString().split('T')[0], type: 'EXPENSE', status: 'Pending' });
         fetchInvoices();
         addToast('Fatura başarıyla oluşturuldu.', 'success');
       }
@@ -126,8 +126,8 @@ const Invoices = ({ user: propUser, onLogout }) => {
                     {new Date(invoice.date).toLocaleDateString('tr-TR')}
                   </span>
                   <div className="invoice-actions">
-                    <button className="action-btn" title="Düzenle">✏️</button>
-                    <button className="action-btn" title="Sil" onClick={() => handleDeleteClick(invoice)}>🗑️</button>
+                    <button className="action-btn text-btn" title="Düzenle">Düzenle</button>
+                    <button className="action-btn text-btn delete-btn" title="Sil" onClick={() => handleDeleteClick(invoice)}>Sil</button>
                   </div>
                 </div>
               </div>
@@ -203,8 +203,8 @@ const Invoices = ({ user: propUser, onLogout }) => {
               value={formData.type}
               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
               options={[
-                { value: 'Gider', label: 'Gider' },
-                { value: 'Gelir', label: 'Gelir' }
+                { value: 'EXPENSE', label: 'Gider' },
+                { value: 'INCOME', label: 'Gelir' }
               ]}
             />
           </div>
