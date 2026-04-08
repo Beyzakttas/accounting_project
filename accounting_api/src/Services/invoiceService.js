@@ -69,9 +69,6 @@ export const updateInvoice = async (invoiceId, updateData, userId, role) => {
   return await Invoice.findByIdAndUpdate(invoiceId, updateData, { new: true, runValidators: true });
 };
 
-/**
- * Şirket bazlı gelir/gider ve fatura istatistiklerini hesaplar
- */
 export const getInvoiceStats = async (companyId) => {
   const stats = await Invoice.aggregate([
     { $match: { companyId: companyId } },
@@ -91,5 +88,34 @@ export const getInvoiceStats = async (companyId) => {
     }
   ]);
 
-  return stats[0] || { totalIncome: 0, totalExpense: 0, pendingCount: 0 };
+  const dailyStats = await Invoice.aggregate([
+    { $match: { companyId: companyId, date: { $type: 'date' } } },
+    {
+      $group: {
+        _id: {
+          year: { $year: '$date' },
+          month: { $month: '$date' },
+          day: { $dayOfMonth: '$date' }
+        },
+        income: {
+          $sum: { $cond: [{ $eq: ['$type', 'INCOME'] }, '$amount', 0] }
+        },
+        expense: {
+          $sum: { $cond: [{ $eq: ['$type', 'EXPENSE'] }, '$amount', 0] }
+        }
+      }
+    },
+    { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } },
+    { $limit: 30 } // Son 30 faturalı gün
+  ]);
+
+  const formattedDailyData = dailyStats.map(item => ({
+    dateStr: `${String(item._id.day).padStart(2, '0')}/${String(item._id.month).padStart(2, '0')}`,
+    income: item.income,
+    expense: item.expense
+  }));
+
+  const result = stats[0] || { totalIncome: 0, totalExpense: 0, pendingCount: 0 };
+  result.dailyData = formattedDailyData;
+  return result;
 };
