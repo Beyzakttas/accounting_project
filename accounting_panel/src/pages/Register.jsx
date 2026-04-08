@@ -30,7 +30,7 @@ function Register({ setUser }) {
     const handleSubmit = async (values, { setSubmitting }) => {
         try {
             const response = await registerUser(values);
-            const { user: userData, token } = response.data; // apiClient returns the full response object, we need .data
+            const { user: userData, token } = response.data;
 
             localStorage.setItem('token', token);
             localStorage.setItem('role', userData.role);
@@ -113,6 +113,8 @@ function Register({ setUser }) {
                         </Form>
                     )}
                 </Formik>
+
+
 
                 <div className="register-footer">
                     <p>Zaten hesabınız var mı? <Link to="/">Giriş Yap</Link></p>

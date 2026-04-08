@@ -147,8 +147,8 @@ const StaffManagement = ({ user: propUser, onLogout }) => {
                       </span>
                     </td>
                     <td className="actions-cell">
-                      <button className="action-btn" title="Düzenle" onClick={() => handleEditStaff(staff)}>✏️</button>
-                      <button className="action-btn" title="Sil" onClick={() => handleDeleteClick(staff)}>🗑️</button>
+                      <button className="action-btn text-btn" title="Düzenle" onClick={() => handleEditStaff(staff)}>Düzenle</button>
+                      <button className="action-btn text-btn delete-btn" title="Sil" onClick={() => handleDeleteClick(staff)}>Sil</button>
                     </td>
                   </tr>
                 ))}

@@ -106,6 +106,16 @@
     gap: 1.5rem;
 }
 
+.form-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: -0.5rem;
+    margin-top: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
 .form-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);

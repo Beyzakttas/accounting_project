@@ -8,6 +8,11 @@ export const registerUser = async (registerData) => {
     return await apiClient.post('/auth/register', registerData);
 };
 
+export const registerWithCompany = async (registerData) => {
+    return await apiClient.post('/auth/register-company', registerData);
+};
+
+
 export const forgotPassword = async (email) => {
     return await apiClient.post('/auth/forgot-password', { email });
 };

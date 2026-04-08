@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import './Toast.css';
 
 const ToastContext = createContext();
@@ -34,22 +35,25 @@ export const ToastProvider = ({ children }) => {
   return (
     <ToastContext.Provider value={{ addToast, removeToast }}>
       {children}
-      <div className="toast-container">
-        {toasts.map((toast) => (
-          <div key={toast.id} className={`toast toast-${toast.type} glass-card`}>
-            <div className="toast-icon">
-              {toast.type === 'success' && '✅'}
-              {toast.type === 'error' && '❌'}
-              {toast.type === 'warning' && '⚠️'}
-              {toast.type === 'info' && 'ℹ️'}
+      {ReactDOM.createPortal(
+        <div className="toast-container" style={{ zIndex: 99999 }}>
+          {toasts.map((toast) => (
+            <div key={toast.id} className={`toast toast-${toast.type} glass-card`}>
+              <div className="toast-icon">
+                {toast.type === 'success' && '✅'}
+                {toast.type === 'error' && '❌'}
+                {toast.type === 'warning' && '⚠️'}
+                {toast.type === 'info' && 'ℹ️'}
+              </div>
+              <div className="toast-message">{toast.message}</div>
+              <button className="toast-close" onClick={() => removeToast(toast.id)}>
+                &times;
+              </button>
             </div>
-            <div className="toast-message">{toast.message}</div>
-            <button className="toast-close" onClick={() => removeToast(toast.id)}>
-              &times;
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>,
+        document.body
+      )}
     </ToastContext.Provider>
   );
 };
