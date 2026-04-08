@@ -15,6 +15,23 @@ const InvoiceSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  invoiceNumber: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  date: {
+    type: Date,
+    default: Date.now
+  },
+  type: {
+    type: String,
+    enum: ['INCOME', 'EXPENSE'],
+    required: true
+  },
   taxAmount: {
     type: Number,
     default: 0

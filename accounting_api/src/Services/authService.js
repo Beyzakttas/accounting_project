@@ -50,6 +50,25 @@ export const register = async (userData) => {
     throw error;
   }
 
+  // Şirket otomasyonu: Eğer companyId yoksa ilk şirketi ata veya varsayılan oluştur
+  if (!userData.companyId) {
+    const Company = (await import('../Models/Company.js')).default;
+    let company = await Company.findOne();
+    
+    if (!company) {
+      // Hiç şirket yoksa varsayılan bir tane oluştur
+      company = await Company.create({
+        name: 'Varsayılan Şirket',
+        taxNumber: '0000000000',
+        address: 'Sistem tarafından otomatik oluşturuldu',
+        phone: '000-000-0000',
+        email: 'default@company.com'
+      });
+    }
+    userData.companyId = company._id;
+    userData.role = userData.role || 'MANAGER'; // İlk kayıt olanı genelde yönetici yaparız
+  }
+
   const newUser = await User.create(userData);
   
   const token = TokenService.generateToken({ id: newUser._id });
@@ -61,6 +80,63 @@ export const register = async (userData) => {
   newUser.password = undefined;
   return { user: newUser, token, refreshToken };
 };
+
+
+/**
+ * Yeni şirket ve o şirkete ait yönetici hesabı oluşturur (SaaS Kayıt)
+ */
+export const registerWithCompany = async (registrationData) => {
+  const { 
+    fullname, email, password, // User details
+    companyName, taxNumber, address, phone, companyEmail // Company details
+  } = registrationData;
+
+  // 1. Üyelik kontrolü
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    const error = new Error('Bu e-posta adresi ile zaten bir hesap mevcut.');
+    error.statusCode = STATUS_CODES.BAD_REQUEST;
+    throw error;
+  }
+
+  // 2. Şirket kontrolü
+  const Company = (await import('../Models/Company.js')).default;
+  const existingCompany = await Company.findOne({ $or: [{ name: companyName }, { taxNumber }] });
+  if (existingCompany) {
+    const error = new Error('Bu şirket adı veya vergi numarası zaten kayıtlı.');
+    error.statusCode = STATUS_CODES.BAD_REQUEST;
+    throw error;
+  }
+
+  // 3. Şirketi oluştur
+  const newCompany = await Company.create({
+    name: companyName,
+    taxNumber,
+    address: address || 'Belirtilmemiş',
+    phone: phone || 'Belirtilmemiş',
+    email: companyEmail || email // Varsayılan olarak kullanıcının emaili
+  });
+
+  // 4. Kullanıcıyı oluştur (Şirkete bağlı MANAGER olarak)
+  const newUser = await User.create({
+    fullname,
+    email,
+    password,
+    role: 'MANAGER',
+    companyId: newCompany._id,
+    department: 'Yönetim'
+  });
+
+  const token = TokenService.generateToken({ id: newUser._id });
+  const refreshToken = TokenService.generateRefreshToken({ id: newUser._id });
+
+  newUser.refreshToken = refreshToken;
+  await newUser.save();
+
+  newUser.password = undefined;
+  return { user: newUser, token, refreshToken, company: newCompany };
+};
+
 
 /**
  * Şifre sıfırlama e-postası gönderir

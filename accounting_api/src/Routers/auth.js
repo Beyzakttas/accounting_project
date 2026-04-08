@@ -61,6 +61,50 @@ router.post('/register', validate(registerSchema), authController.register);
 
 /**
  * @swagger
+ * /api/auth/register-company:
+ *   post:
+ *     summary: Yeni bir şirket ve yönetici (SaaS) kaydeder
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fullname
+ *               - email
+ *               - password
+ *               - companyName
+ *               - taxNumber
+ *             properties:
+ *               fullname:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               companyName:
+ *                 type: string
+ *               taxNumber:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               companyEmail:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Şirket ve yönetici başarıyla oluşturuldu
+ *       400:
+ *         description: Geçersiz veri veya zaten mevcut kayıt
+ */
+router.post('/register-company', authController.registerWithCompany);
+
+
+/**
+ * @swagger
  * /api/auth/refresh:
  *   post:
  *     summary: Yeni bir access token almak için kullanılır

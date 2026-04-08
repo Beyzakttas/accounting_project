@@ -29,7 +29,6 @@ const authController = {
       error.statusCode = STATUS_CODES.BAD_REQUEST;
       return next(error);
     }
-
     try {
       const result = await authService.register({ fullname, email, password, role, companyId, department });
       return successResponse(res, result, MESSAGES.CONTROLLERS.AUTH.REGISTER_SUCCESS, STATUS_CODES.CREATED);
@@ -37,6 +36,17 @@ const authController = {
       next(error);
     }
   },
+
+  registerWithCompany: async (req, res, next) => {
+    try {
+      const result = await authService.registerWithCompany(req.body);
+      return successResponse(res, result, MESSAGES.CONTROLLERS.AUTH.REGISTER_SUCCESS, STATUS_CODES.CREATED);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+
 
   forgotPassword: async (req, res, next) => {
     const { email } = req.body;
