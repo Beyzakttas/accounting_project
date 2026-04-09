@@ -284,28 +284,18 @@ const Invoices = ({ user: propUser, onLogout }) => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Kategori</label>
-            <select
+            <FormInput
+              label="Kategori"
+              type="select"
               name="category"
+              options={[
+                ...categories.map(cat => ({ value: cat._id, label: cat.name })),
+                { value: 'other', label: '+ Diğer (Yeni Kategori Ekle)' }
+              ]}
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              style={{
-                width: '100%',
-                padding: '0.6rem 0.9rem',
-                borderRadius: '8px',
-                border: '1px solid var(--glass-border)',
-                background: 'var(--input-bg, var(--glass-bg))',
-                color: 'var(--text-primary)',
-                fontSize: '0.95rem',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="">-- Kategori Seçin --</option>
-              {categories.map(cat => (
-                <option key={cat._id} value={cat._id}>{cat.name}</option>
-              ))}
-              <option value="other">+ Diğer (Yeni Kategori Ekle)</option>
-            </select>
+              placeholder="-- Kategori Seçin --"
+            />
 
             {formData.category === 'other' && (
               <input

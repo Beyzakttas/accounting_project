@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useField } from 'formik';
+import CustomSelect from './CustomSelect';
 
 /**
  * Reusable Form Input Component
  * Handles standard inputs, passwords with toggle, and select dropdowns.
- * Now uses Formik's useField hook for seamless integration while maintaining
- * backward compatibility for manual use.
+ * Now uses CustomSelect for type='select' to ensure theme consistency and premium UX.
  */
 const FormInput = ({
   label,
@@ -19,9 +19,11 @@ const FormInput = ({
   
   // Formik useField integration (with fallback for manual use)
   let field = {}, meta = {};
+  let useFormik = false;
   try {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     [field, meta] = useField(props);
+    useFormik = true;
   } catch (e) {
     field = { name: props.name, value: props.value || '', onChange: props.onChange, onBlur: props.onBlur };
     meta = { error: props.error, touched: !!props.error };
@@ -37,39 +39,51 @@ const FormInput = ({
     className: `glass-input form-group-input ${isPassword ? 'has-icon' : ''} ${fieldError ? 'input-error' : ''}`
   };
 
+  const handleSelectChange = (val) => {
+    if (useFormik) {
+      if (props.onChange) props.onChange({ target: { name: props.name, value: val } });
+      else if (field.onChange) field.onChange({ target: { name: props.name, value: val } });
+    } else if (props.onChange) {
+      props.onChange({ target: { name: props.name, value: val } });
+    }
+  };
+
   return (
     <div className={`form-group-wrapper ${className}`}>
-      {label && (
-        <label className="form-group-label">
-          {label} {required && <span className="required-asterisk">*</span>}
-        </label>
+      {type === 'select' ? (
+        <CustomSelect
+          label={label}
+          options={options}
+          value={field.value || props.value}
+          onChange={handleSelectChange}
+          error={fieldError}
+          required={required}
+          placeholder={props.placeholder || "Seçiniz"}
+        />
+      ) : (
+        <>
+          {label && (
+            <label className="form-group-label">
+              {label} {required && <span className="required-asterisk">*</span>}
+            </label>
+          )}
+          <div className="input-wrapper">
+            <input {...commonProps} type={inputType} />
+
+            {isPassword && (
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex="-1"
+              >
+                {showPassword ? <EyeIcon /> : <EyeOffIcon />}
+              </button>
+            )}
+          </div>
+          {fieldError && <span className="error-text">{fieldError}</span>}
+        </>
       )}
-
-      <div className="input-wrapper">
-        {type === 'select' ? (
-          <select {...commonProps}>
-            <option value="" disabled>Seçiniz</option>
-            {options.map((opt, idx) => (
-              <option key={idx} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        ) : (
-          <input {...commonProps} type={inputType} />
-        )}
-
-        {isPassword && (
-          <button
-            type="button"
-            className="password-toggle"
-            onClick={() => setShowPassword(!showPassword)}
-            tabIndex="-1"
-          >
-            {showPassword ? <EyeIcon /> : <EyeOffIcon />}
-          </button>
-        )}
-      </div>
-
-      {fieldError && <span className="error-text">{fieldError}</span>}
     </div>
   );
 };

@@ -1,0 +1,112 @@
+.custom-select-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 0px; /* Don't add extra height */
+}
+
+.custom-select-trigger {
+  width: 100%;
+  padding: 0.8rem 1.2rem; /* Exact match with other form inputs */
+  background: var(--input-bg, rgba(255, 255, 255, 0.03));
+  border: 1.5px solid var(--glass-border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.95rem;
+}
+
+.custom-select-trigger:hover {
+  border-color: var(--primary-color);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.custom-select-trigger.active {
+  border-color: var(--primary-color);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.arrow-icon {
+  font-size: 0.7rem;
+  transition: transform 0.3s ease;
+  color: var(--text-secondary);
+}
+
+.arrow-icon.up {
+  transform: rotate(180deg);
+}
+
+.custom-select-options-container {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  background: #ffffff; /* Default light */
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  z-index: 2000;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+[data-theme='dark'] .custom-select-options-container {
+  background: #1e293b !important; /* Explicit dark background */
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+.custom-select-options-list {
+  max-height: 150px; /* Show ~3-4 items */
+  overflow-y: auto;
+  padding: 4px;
+  
+  /* Styled scrollbar to make it visible as requested */
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) transparent;
+}
+
+.custom-select-options-list::-webkit-scrollbar {
+  display: block;
+  width: 4px;
+}
+
+.custom-select-options-list::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 10px;
+}
+
+.custom-select-option {
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.custom-select-option:hover {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary-color);
+}
+
+.custom-select-option.selected {
+  background: var(--primary-gradient);
+  color: #ffffff;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

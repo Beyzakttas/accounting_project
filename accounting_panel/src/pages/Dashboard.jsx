@@ -103,7 +103,7 @@ const Dashboard = ({ user: propUser, onLogout }) => {
                 {(() => {
                   const now = new Date();
                   now.setHours(23, 59, 59, 999);
-                  
+
                   const weeklyData = [
                     { label: "4 Hafta Önce", income: 0, expense: 0, minDate: new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000), maxDate: new Date(now.getTime() - 21 * 24 * 60 * 60 * 1000) },
                     { label: "3 Hafta Önce", income: 0, expense: 0, minDate: new Date(now.getTime() - 21 * 24 * 60 * 60 * 1000), maxDate: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000) },
@@ -116,7 +116,7 @@ const Dashboard = ({ user: propUser, onLogout }) => {
                       const [day, month] = dayItem.dateStr.split('/');
                       const year = new Date().getFullYear();
                       const d = new Date(`${year}-${month}-${day}T12:00:00`);
-                      
+
                       if (!isNaN(d)) {
                         for (let week of weeklyData) {
                           if (d > week.minDate && d <= week.maxDate) {
@@ -130,7 +130,7 @@ const Dashboard = ({ user: propUser, onLogout }) => {
                   }
 
                   const rawMax = Math.max(...weeklyData.map(w => Math.max(w.income, w.expense)));
-                  
+
                   // Kesin ve temiz yuvarlama (Örn: 619 -> 700, 1450 -> 1600)
                   const maxVal = rawMax > 0 ? (Math.ceil(rawMax / 100) * 100) : 100;
                   const yLabels = [maxVal, maxVal * 0.75, maxVal * 0.5, maxVal * 0.25, 0];
@@ -138,20 +138,20 @@ const Dashboard = ({ user: propUser, onLogout }) => {
                   return (
                     <>
                       {/* Sol Cetvel */}
-                      <div style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        justifyContent: 'space-between', 
-                        height: '100%', 
-                        paddingBottom: '30px', 
-                        color: 'var(--text-secondary)', 
-                        fontSize: '11px', 
-                        width: '45px', 
-                        textAlign: 'right', 
-                        fontWeight: 700 
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        height: '100%',
+                        paddingBottom: '30px',
+                        color: 'var(--text-secondary)',
+                        fontSize: '11px',
+                        width: '45px',
+                        textAlign: 'right',
+                        fontWeight: 700
                       }}>
                         {yLabels.map((val, i) => (
-                          <span key={i}>₺{val >= 1000 ? (val/1000).toFixed(0) + 'k' : Math.floor(val)}</span>
+                          <span key={i}>₺{val >= 1000 ? (val / 1000).toFixed(0) + 'k' : Math.floor(val)}</span>
                         ))}
                       </div>
 
@@ -166,11 +166,11 @@ const Dashboard = ({ user: propUser, onLogout }) => {
                             <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'flex-end', opacity: isEmpty ? 0.3 : 1 }}>
                               <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end', height: '100%', position: 'relative' }}>
                                 {/* Gelir Çubuğu */}
-                                <div 
-                                  className="bar" 
-                                  style={{ 
-                                    height: `${Math.max(hInc, isEmpty ? 0 : 4)}%`, 
-                                    flex: 1, 
+                                <div
+                                  className="bar"
+                                  style={{
+                                    height: `${Math.max(hInc, isEmpty ? 0 : 4)}%`,
+                                    flex: 1,
                                     background: 'linear-gradient(to top, #10b981, rgba(16, 185, 129, 0.4))',
                                     borderRadius: '8px 8px 0 0',
                                     boxShadow: '0 4px 15px rgba(16, 185, 129, 0.1)',
@@ -195,17 +195,17 @@ const Dashboard = ({ user: propUser, onLogout }) => {
                                 >
                                   {week.income > 0 && (
                                     <span style={{ position: 'absolute', bottom: '100%', left: '0', width: '100%', textAlign: 'center', fontSize: '10px', fontWeight: 800, color: '#10b981', paddingBottom: '8px', textShadow: '0 0 5px rgba(16, 185, 129, 0.2)' }}>
-                                      ₺{week.income >= 1000 ? (week.income/1000).toFixed(1) + 'k' : week.income}
+                                      ₺{week.income >= 1000 ? (week.income / 1000).toFixed(1) + 'k' : week.income}
                                     </span>
                                   )}
                                 </div>
-                                
+
                                 {/* Gider Çubuğu */}
-                                <div 
-                                  className="bar" 
-                                  style={{ 
-                                    height: `${Math.max(hExp, isEmpty ? 0 : 4)}%`, 
-                                    flex: 1, 
+                                <div
+                                  className="bar"
+                                  style={{
+                                    height: `${Math.max(hExp, isEmpty ? 0 : 4)}%`,
+                                    flex: 1,
                                     background: 'linear-gradient(to top, #ef4444, rgba(239, 68, 68, 0.4))',
                                     borderRadius: '8px 8px 0 0',
                                     boxShadow: '0 4px 15px rgba(239, 68, 68, 0.1)',
@@ -230,7 +230,7 @@ const Dashboard = ({ user: propUser, onLogout }) => {
                                 >
                                   {week.expense > 0 && (
                                     <span style={{ position: 'absolute', bottom: '100%', left: '0', width: '100%', textAlign: 'center', fontSize: '10px', fontWeight: 800, color: '#ef4444', paddingBottom: '8px', textShadow: '0 0 5px rgba(239, 68, 68, 0.2)' }}>
-                                      ₺{week.expense >= 1000 ? (week.expense/1000).toFixed(1) + 'k' : week.expense}
+                                      ₺{week.expense >= 1000 ? (week.expense / 1000).toFixed(1) + 'k' : week.expense}
                                     </span>
                                   )}
                                 </div>

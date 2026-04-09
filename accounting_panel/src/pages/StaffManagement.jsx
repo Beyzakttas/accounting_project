@@ -22,6 +22,17 @@ const StaffManagement = ({ user: propUser, onLogout }) => {
   const [editingId, setEditingId] = useState(null);
   const [activeMenu] = useState('Personel Yönetimi');
 
+  const departmentLabels = {
+    'Muhasebe': 'Muhasebe',
+    'Finans': 'Finans',
+    'IK': 'İnsan Kaynakları',
+    'Satis': 'Satış',
+    'Pazarlama': 'Pazarlama',
+    'Yazilim': 'Yazılım / IT',
+    'Operasyon': 'Operasyon',
+    'Diger': 'Diğer'
+  };
+
   // Yeni personel formu state
   const [formData, setFormData] = useState({
     fullname: '',
@@ -140,7 +151,7 @@ const StaffManagement = ({ user: propUser, onLogout }) => {
                   <tr key={staff._id} className="staff-row">
                     <td>{staff.fullname}</td>
                     <td>{staff.email}</td>
-                    <td>{staff.department || 'Belirtilmemiş'}</td>
+                    <td>{departmentLabels[staff.department] || staff.department || 'Belirtilmemiş'}</td>
                     <td>
                       <span className={`status-badge ${staff.isActive ? 'active' : 'inactive'}`}>
                         {staff.isActive ? 'Aktif' : 'Pasif'}

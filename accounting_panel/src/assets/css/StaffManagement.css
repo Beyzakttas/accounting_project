@@ -44,6 +44,12 @@
 .staff-table-container {
   overflow-x: auto;
   border-radius: 16px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.staff-table-container::-webkit-scrollbar {
+  display: none;
 }
 
 .staff-table {
