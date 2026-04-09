@@ -46,8 +46,6 @@ const authController = {
     }
   },
 
-
-
   forgotPassword: async (req, res, next) => {
     const { email } = req.body;
 

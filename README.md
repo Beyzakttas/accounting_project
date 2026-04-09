@@ -36,6 +36,11 @@ Aşağıda sisteme yeni eklenen/güncellenen özelliklerin detayı yer almaktad�
 - **UI Bileşenleri ve Clean Code Revizyonu:** `Modal.jsx` için Portallar kullanıldı (Z-Index çözüldü). `FormInput.jsx` ile formlar standartlaştırıldı ve tüm satır içi (inline) CSS'ler harici CSS dosyalarına aktarıldı.
 - **Modern Ayarlar Sayfası:** `Settings.jsx` sayfası kurumsal tasarıma kavuşturuldu; sadece güvenli şifre değiştirme ve bildirim aç/kapat (Switch) ayarlarını barındıracak şekilde optimize edildi.
 
+### 6. Dinamik Kategori ve Gelişmiş Raporlama (08.04.2026)
+- **Dinamik Kategori Sistemi:** Fatura ekleme formuna kategorize edilmiş seçim kutusu (Dropdown) ve anında yeni kategori eklemeyi sağlayan "+ Diğer" akışı eklendi.
+- **Gelişmiş Analitik Grafikler:** Raporlar sayfasına "Gider Dağılımı (Daire Grafiği)" ve "Günlük Gelir/Gider Analizi (Alan Grafiği)" eklenerek finansal durumun görselleştirilmesi sağlandı.
+- **Gerçek Zamanlı Veri Senkronizasyonu:** Fatura güncellendiğinde veya silindiğinde, Raporlar sayfasındaki grafiklerin ve özetlerin sayfa yenilenmesine gerek kalmadan anlık olarak güncellenmesi (`CustomEvent` ve `visibilitychange` dinleyicileri ile) sağlandı.
+
 ---
 
 ## ⚙️ Backend (Sunucu) Güncellemeleri
@@ -55,3 +60,9 @@ Aşağıda sisteme yeni eklenen/güncellenen özelliklerin detayı yer almaktad�
 
 ### 5. Veritabanı Şifreleme (Bcrypt) İyileştirmeleri
 - Veritabanındaki şifreleme mekanizması (`bcrypt`) ve `pre-save` kancalarındaki (hook) çakışmalar giderildi. Sisteme güvenli şifreleme ve MD5 uyumluluk altyapısı sağlamlaştırıldı.
+
+### 6. Raporlama Altyapısı ve Yetkilendirme (08.04.2026)
+- **Gelişmiş Veri Toplama (Aggregation Pipeline):** `$facet` ve `$addFields` operatörleri kullanılarak, tüm finansal istatistiklerin (Gelir, Gider, Kategori Dağılımı) tek bir veritabanı isteğiyle, yüksek performanslı bir şekilde getirilmesi sağlandı.
+- **Tip Dönüşüm Güvenliği:** Eskiden string olarak tutulan kategori kimliklerinin, raporlama sırasında sorunsuz eşleşmesi için `$toObjectId` ile dinamik tip dönüşümü altyapısı kuruldu.
+- **Rol Bazlı Yetki Genişletme:** `USER` (Standart Kullanıcı) rolündeki kişilerin kendi faturalarını güncelleyememe sorunu rota seviyesinde (`roleMiddleware`) çözüldü; artık her kullanıcı kendi verisini tam olarak yönetebilmektedir.
+- **CORS ve Bağlantı Optimizasyonu:** Tarayıcı tarafındaki erişim engellerini kökten çözmek için CORS yapılandırması middleware sıralamasında en başa çekilerek sunucu yanıt kararlılığı artırıldı.

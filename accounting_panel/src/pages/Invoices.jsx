@@ -14,26 +14,58 @@ const Invoices = ({ user: propUser, onLogout }) => {
 
   const { addToast } = useToast();
   const [invoices, setInvoices] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingInvoiceId, setEditingInvoiceId] = useState(null);
   const [activeMenu] = useState('Faturalar');
+  const [customCategoryName, setCustomCategoryName] = useState('');
 
-  // Yeni fatura formu state
+  // Form state
+  const resetForm = () => {
+    setFormData({
+      invoiceNumber: '',
+      description: '',
+      amount: '',
+      date: new Date().toISOString().split('T')[0],
+      type: 'EXPENSE',
+      status: 'Pending',
+      category: ''
+    });
+    setIsEditing(false);
+    setEditingInvoiceId(null);
+    setCustomCategoryName('');
+  };
+
   const [formData, setFormData] = useState({
     invoiceNumber: '',
     description: '',
     amount: '',
     date: new Date().toISOString().split('T')[0],
     type: 'EXPENSE',
-    status: 'Pending'
+    status: 'Pending',
+    category: ''
   });
 
   useEffect(() => {
     fetchInvoices();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await apiClient.get('/category');
+      if (response.success) {
+        setCategories(response.data);
+      }
+    } catch (error) {
+      console.error('Kategoriler yüklenemedi:', error);
+    }
+  };
 
   const fetchInvoices = async () => {
     try {
@@ -48,19 +80,58 @@ const Invoices = ({ user: propUser, onLogout }) => {
     }
   };
 
-  const handleCreateInvoice = async (e) => {
+  const handleSubmitInvoice = async (e) => {
     e.preventDefault();
     try {
-      const response = await apiClient.post('/invoice', formData);
+      let categoryId = formData.category;
+
+      // Kullanıcı "Diğer" seçtiyse, önce yeni kategoriyi oluştur
+      if (formData.category === 'other') {
+        if (!customCategoryName.trim()) {
+          addToast('Lütfen kategori adı girin.', 'error');
+          return;
+        }
+        const catResponse = await apiClient.post('/category', { name: customCategoryName.trim() });
+        if (catResponse.success) {
+          categoryId = catResponse.data._id;
+          setCategories(prev => [...prev, catResponse.data]);
+        }
+      }
+
+      const invoicePayload = { ...formData, category: categoryId || null };
+      let response;
+      if (isEditing) {
+        response = await apiClient.put(`/invoice/${editingInvoiceId}`, invoicePayload);
+      } else {
+        response = await apiClient.post('/invoice', invoicePayload);
+      }
+
       if (response.success) {
         setShowModal(false);
-        setFormData({ invoiceNumber: '', description: '', amount: '', date: new Date().toISOString().split('T')[0], type: 'EXPENSE', status: 'Pending' });
+        resetForm();
         fetchInvoices();
-        addToast('Fatura başarıyla oluşturuldu.', 'success');
+        addToast(isEditing ? 'Fatura başarıyla güncellendi.' : 'Fatura başarıyla oluşturuldu.', 'success');
+        // Raporlar sayfasının veriyi yenilemesi için event gönder
+        window.dispatchEvent(new CustomEvent('invoiceUpdated'));
       }
     } catch (error) {
-      addToast(error.message || 'Fatura oluşturulurken bir hata oluştu.', 'error');
+      addToast(error.message || 'İşlem sırasında bir hata oluştu.', 'error');
     }
+  };
+
+  const handleEditClick = (invoice) => {
+    setIsEditing(true);
+    setEditingInvoiceId(invoice._id);
+    setFormData({
+      invoiceNumber: invoice.invoiceNumber,
+      description: invoice.description,
+      amount: invoice.amount,
+      date: new Date(invoice.date).toISOString().split('T')[0],
+      type: invoice.type,
+      status: invoice.status || 'Pending',
+      category: invoice.category?._id || invoice.category || ''
+    });
+    setShowModal(true);
   };
 
   const handleDeleteClick = (invoice) => {
@@ -126,7 +197,7 @@ const Invoices = ({ user: propUser, onLogout }) => {
                     {new Date(invoice.date).toLocaleDateString('tr-TR')}
                   </span>
                   <div className="invoice-actions">
-                    <button className="action-btn text-btn" title="Düzenle">Düzenle</button>
+                    <button className="action-btn text-btn" title="Düzenle" onClick={() => handleEditClick(invoice)}>Düzenle</button>
                     <button className="action-btn text-btn delete-btn" title="Sil" onClick={() => handleDeleteClick(invoice)}>Sil</button>
                   </div>
                 </div>
@@ -147,10 +218,13 @@ const Invoices = ({ user: propUser, onLogout }) => {
       {/* Upload/Create Modal */}
       <Modal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title="Yeni Fatura Ekle"
-        onSubmit={handleCreateInvoice}
-        submitText="Faturayı Kaydet"
+        onClose={() => {
+          setShowModal(false);
+          resetForm();
+        }}
+        title={isEditing ? "Faturayı Düzenle" : "Yeni Fatura Ekle"}
+        onSubmit={handleSubmitInvoice}
+        submitText={isEditing ? "Güncelle" : "Faturayı Kaydet"}
         submitClassName="upload-invoice-btn"
         closeOnOverlayClick={false}
       >
@@ -207,6 +281,51 @@ const Invoices = ({ user: propUser, onLogout }) => {
                 { value: 'INCOME', label: 'Gelir' }
               ]}
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Kategori</label>
+            <select
+              name="category"
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '0.6rem 0.9rem',
+                borderRadius: '8px',
+                border: '1px solid var(--glass-border)',
+                background: 'var(--input-bg, var(--glass-bg))',
+                color: 'var(--text-primary)',
+                fontSize: '0.95rem',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="">-- Kategori Seçin --</option>
+              {categories.map(cat => (
+                <option key={cat._id} value={cat._id}>{cat.name}</option>
+              ))}
+              <option value="other">+ Diğer (Yeni Kategori Ekle)</option>
+            </select>
+
+            {formData.category === 'other' && (
+              <input
+                type="text"
+                placeholder="Yeni kategori adı girin..."
+                value={customCategoryName}
+                onChange={(e) => setCustomCategoryName(e.target.value)}
+                style={{
+                  marginTop: '0.5rem',
+                  width: '100%',
+                  padding: '0.6rem 0.9rem',
+                  borderRadius: '8px',
+                  border: '1px solid #10b981',
+                  background: 'var(--input-bg, var(--glass-bg))',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.95rem',
+                  outline: 'none'
+                }}
+              />
+            )}
           </div>
         </div>
       </Modal>

@@ -15,7 +15,8 @@ connectDB();
 
 const app = express();
 
-// Güvenlik Middleware'leri
+// Middleware'ler
+app.use(cors()); // En başta olmalı
 app.use(helmet()); // Güvenlik başlıklarını ayarlar
 
 const limiter = rateLimit({
@@ -25,8 +26,6 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter); // Sadece API rotaları için sınırlama
 
-// Middleware'ler
-app.use(cors()); // Önce CORS gelmeli
 app.use(express.json());
 
 // API Rotalarını Kullan (Burayı ekledik)

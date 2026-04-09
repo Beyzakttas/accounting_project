@@ -1,5 +1,4 @@
-// invoiceService.js
-
+import mongoose from 'mongoose';
 import Invoice from '../Models/Invoice.js';
 import STATUS_CODES from '../Utils/statusCodes.js';
 
@@ -17,105 +16,142 @@ export const createInvoice = async (invoiceData, userId, companyId) => {
 };
 
 /**
- * Şirket veya kullanıcı bazlı faturaları listeler
+ * Tüm faturaları getirir (Filtreye göre)
  */
 export const getInvoices = async (filter) => {
   return await Invoice.find(filter)
     .populate('uploadedBy', 'fullname email')
-    .sort({ createdAt: -1 })
-    .lean(); // Faster read-only query
+    .sort({ createdAt: -1 });
 };
 
 /**
- * Faturayı siler
- */
-export const deleteInvoice = async (invoiceId, userId, role) => {
-  const invoice = await Invoice.findById(invoiceId);
-  if (!invoice) {
-    const error = new Error('Fatura bulunamadı.');
-    error.statusCode = STATUS_CODES.NOT_FOUND;
-    throw error;
-  }
-
-  // Yetki kontrolü: Sadece yükleyen veya MANAGER silebilir
-  if (role !== 'MANAGER' && invoice.uploadedBy.toString() !== userId.toString()) {
-    const error = new Error('Bu faturayı silme yetkiniz yok.');
-    error.statusCode = STATUS_CODES.FORBIDDEN;
-    throw error;
-  }
-
-  await invoice.remove();
-  return true;
-};
-
-/**
- * Faturayı günceller
+ * Fatura güncelleme
  */
 export const updateInvoice = async (invoiceId, updateData, userId, role) => {
-  const invoice = await Invoice.findById(invoiceId);
-  if (!invoice) {
-    const error = new Error('Fatura bulunamadı.');
-    error.statusCode = STATUS_CODES.NOT_FOUND;
-    throw error;
+  // MANAGER ve ADMIN her zaman güncelleyebilir, USER sadece kendi faturasını
+  const query = { _id: invoiceId };
+  if (role === 'USER') {
+    query.uploadedBy = userId;
   }
 
-  // Yetki kontrolü: Sadece yükleyen veya MANAGER güncelleyebilir
-  if (role !== 'MANAGER' && invoice.uploadedBy.toString() !== userId.toString()) {
-    const error = new Error('Bu faturayı güncelleme yetkiniz yok.');
-    error.statusCode = STATUS_CODES.FORBIDDEN;
+  const invoice = await Invoice.findOne(query);
+  if (!invoice) {
+    const error = new Error('Güncellenecek fatura bulunamadı veya yetkiniz yok.');
+    error.statusCode = STATUS_CODES.NOT_FOUND;
     throw error;
   }
 
   return await Invoice.findByIdAndUpdate(invoiceId, updateData, { new: true, runValidators: true });
 };
 
-export const getInvoiceStats = async (companyId) => {
-  const stats = await Invoice.aggregate([
+/**
+ * Fatura silme
+ */
+export const deleteInvoice = async (invoiceId, userId, role) => {
+  const query = { _id: invoiceId };
+  if (role === 'USER') {
+    query.uploadedBy = userId;
+  }
+
+  const invoice = await Invoice.findOne(query);
+  if (!invoice) {
+    const error = new Error('Silinecek fatura bulunamadı veya yetkiniz yok.');
+    error.statusCode = STATUS_CODES.NOT_FOUND;
+    throw error;
+  }
+
+  return await Invoice.findByIdAndDelete(invoiceId);
+};
+
+/**
+ * İstatistikleri getirir (Gelişmiş Raporlar İçin)
+ */
+export const getInvoiceStats = async (companyIdStr) => {
+  const companyId = new mongoose.Types.ObjectId(companyIdStr);
+
+  const results = await Invoice.aggregate([
     { $match: { companyId: companyId } },
     {
-      $group: {
-        _id: null,
-        totalIncome: {
-          $sum: { $cond: [{ $eq: ['$type', 'INCOME'] }, '$amount', 0] }
-        },
-        totalExpense: {
-          $sum: { $cond: [{ $eq: ['$type', 'EXPENSE'] }, '$amount', 0] }
-        },
-        pendingCount: {
-          $sum: { $cond: [{ $eq: ['$status', 'Pending'] }, 1, 0] }
-        }
+      $facet: {
+        // 1. Genel Özet
+        summary: [
+          {
+            $group: {
+              _id: null,
+              totalIncome: { $sum: { $cond: [{ $eq: ['$type', 'INCOME'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } },
+              totalExpense: { $sum: { $cond: [{ $eq: ['$type', 'EXPENSE'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } },
+              pendingCount: { $sum: { $cond: [{ $eq: ['$status', 'Pending'] }, 1, 0] } }
+            }
+          }
+        ],
+        // 2. Günlük Veriler (Zaman Serisi)
+        dailyData: [
+          {
+            $group: {
+              _id: {
+                year: { $year: { $toDate: '$date' } },
+                month: { $month: { $toDate: '$date' } },
+                day: { $dayOfMonth: { $toDate: '$date' } }
+              },
+              income: { $sum: { $cond: [{ $eq: ['$type', 'INCOME'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } },
+              expense: { $sum: { $cond: [{ $eq: ['$type', 'EXPENSE'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } }
+            }
+          },
+          { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } },
+          { $limit: 60 }
+        ],
+        // 3. Kategori Dağılımı
+        categoryData: [
+          {
+            $addFields: {
+              categoryObjId: {
+                $convert: {
+                  input: '$category',
+                  to: 'objectId',
+                  onError: null,
+                  onNull: null
+                }
+              }
+            }
+          },
+          {
+            $group: {
+              _id: { categoryId: '$categoryObjId', type: '$type' },
+              total: { $sum: { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } } }
+            }
+          },
+          {
+            $lookup: {
+              from: 'categories',
+              localField: '_id.categoryId',
+              foreignField: '_id',
+              as: 'categoryInfo'
+            }
+          },
+          {
+            $project: {
+              name: { $ifNull: [{ $arrayElemAt: ['$categoryInfo.name', 0] }, 'Kategorisiz'] },
+              type: '$_id.type',
+              value: '$total'
+            }
+          }
+        ]
       }
     }
   ]);
 
-  const dailyStats = await Invoice.aggregate([
-    { $match: { companyId: companyId, date: { $type: 'date' } } },
-    {
-      $group: {
-        _id: {
-          year: { $year: '$date' },
-          month: { $month: '$date' },
-          day: { $dayOfMonth: '$date' }
-        },
-        income: {
-          $sum: { $cond: [{ $eq: ['$type', 'INCOME'] }, '$amount', 0] }
-        },
-        expense: {
-          $sum: { $cond: [{ $eq: ['$type', 'EXPENSE'] }, '$amount', 0] }
-        }
-      }
-    },
-    { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } },
-    { $limit: 30 } // Son 30 faturalı gün
-  ]);
+  const facet = results[0];
+  const summary = facet.summary[0] || { totalIncome: 0, totalExpense: 0, pendingCount: 0 };
 
-  const formattedDailyData = dailyStats.map(item => ({
+  const formattedDailyData = facet.dailyData.map(item => ({
     dateStr: `${String(item._id.day).padStart(2, '0')}/${String(item._id.month).padStart(2, '0')}`,
     income: item.income,
     expense: item.expense
   }));
 
-  const result = stats[0] || { totalIncome: 0, totalExpense: 0, pendingCount: 0 };
-  result.dailyData = formattedDailyData;
-  return result;
+  return {
+    ...summary,
+    dailyData: formattedDailyData,
+    categoryData: facet.categoryData
+  };
 };

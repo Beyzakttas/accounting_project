@@ -182,8 +182,8 @@ const Dashboard = ({ user: propUser, onLogout }) => {
                                   title={`Gelir: ₺${week.income.toLocaleString()}`}
                                   onMouseEnter={(e) => {
                                     e.currentTarget.style.transform = 'scaleY(1.05) translateY(-5px)';
-                                    e.currentTarget.style.filter = 'brightness(1.3) saturate(1.5)';
-                                    e.currentTarget.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.6), 0 0 40px rgba(16, 185, 129, 0.2)';
+                                    e.currentTarget.style.filter = 'brightness(1.15) saturate(1.2)';
+                                    e.currentTarget.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.4), 0 0 30px rgba(16, 185, 129, 0.1)';
                                     e.currentTarget.style.zIndex = '10';
                                   }}
                                   onMouseLeave={(e) => {
@@ -194,7 +194,7 @@ const Dashboard = ({ user: propUser, onLogout }) => {
                                   }}
                                 >
                                   {week.income > 0 && (
-                                    <span style={{ position: 'absolute', bottom: '100%', left: '0', width: '100%', textAlign: 'center', fontSize: '10px', fontWeight: 800, color: '#10b981', paddingBottom: '8px', textShadow: '0 0 10px rgba(16, 185, 129, 0.3)' }}>
+                                    <span style={{ position: 'absolute', bottom: '100%', left: '0', width: '100%', textAlign: 'center', fontSize: '10px', fontWeight: 800, color: '#10b981', paddingBottom: '8px', textShadow: '0 0 5px rgba(16, 185, 129, 0.2)' }}>
                                       ₺{week.income >= 1000 ? (week.income/1000).toFixed(1) + 'k' : week.income}
                                     </span>
                                   )}
@@ -217,8 +217,8 @@ const Dashboard = ({ user: propUser, onLogout }) => {
                                   title={`Gider: ₺${week.expense.toLocaleString()}`}
                                   onMouseEnter={(e) => {
                                     e.currentTarget.style.transform = 'scaleY(1.05) translateY(-5px)';
-                                    e.currentTarget.style.filter = 'brightness(1.3) saturate(1.5)';
-                                    e.currentTarget.style.boxShadow = '0 0 20px rgba(239, 68, 68, 0.6), 0 0 40px rgba(239, 68, 68, 0.2)';
+                                    e.currentTarget.style.filter = 'brightness(1.15) saturate(1.2)';
+                                    e.currentTarget.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.4), 0 0 30px rgba(239, 68, 68, 0.1)';
                                     e.currentTarget.style.zIndex = '10';
                                   }}
                                   onMouseLeave={(e) => {
@@ -229,7 +229,7 @@ const Dashboard = ({ user: propUser, onLogout }) => {
                                   }}
                                 >
                                   {week.expense > 0 && (
-                                    <span style={{ position: 'absolute', bottom: '100%', left: '0', width: '100%', textAlign: 'center', fontSize: '10px', fontWeight: 800, color: '#ef4444', paddingBottom: '8px', textShadow: '0 0 10px rgba(239, 68, 68, 0.3)' }}>
+                                    <span style={{ position: 'absolute', bottom: '100%', left: '0', width: '100%', textAlign: 'center', fontSize: '10px', fontWeight: 800, color: '#ef4444', paddingBottom: '8px', textShadow: '0 0 5px rgba(239, 68, 68, 0.2)' }}>
                                       ₺{week.expense >= 1000 ? (week.expense/1000).toFixed(1) + 'k' : week.expense}
                                     </span>
                                   )}

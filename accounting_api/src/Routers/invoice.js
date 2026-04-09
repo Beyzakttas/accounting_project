@@ -87,7 +87,7 @@ router.post('/', roleMiddleware(['ADMIN', 'MANAGER', 'USER']), invoiceController
  *       200:
  *         description: Fatura güncellendi
  */
-router.put('/:id', roleMiddleware(['ADMIN', 'MANAGER']), invoiceController.updateInvoice);
+router.put('/:id', roleMiddleware(['ADMIN', 'MANAGER', 'USER']), invoiceController.updateInvoice);
 
 /**
  * @swagger
@@ -107,6 +107,6 @@ router.put('/:id', roleMiddleware(['ADMIN', 'MANAGER']), invoiceController.updat
  *       200:
  *         description: Fatura silindi
  */
-router.delete('/:id', roleMiddleware(['ADMIN', 'MANAGER']), invoiceController.deleteInvoice);
+router.delete('/:id', roleMiddleware(['ADMIN', 'MANAGER', 'USER']), invoiceController.deleteInvoice);
 
 export default router;
