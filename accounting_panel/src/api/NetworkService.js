@@ -90,6 +90,6 @@ export const request = async ({
             // Errors 500 and above
             return error.response;
         }
-        return { status: 500, message: "Internal server error!" };
+        return { status: 500, message: "Sunucu hatası oluştu!" };
     }
 }

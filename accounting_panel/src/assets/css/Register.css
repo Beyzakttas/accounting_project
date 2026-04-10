@@ -273,29 +273,49 @@
 @media (max-width: 900px) {
     .register-glass-card {
         flex-direction: column;
-        max-width: 500px;
+        max-width: 550px;
+        margin: 1rem;
+    }
+
+    .register-form-container {
+        padding: 2.5rem;
     }
 
     .register-side-info {
         padding: 2.5rem;
-        border-left: none;
+        border-right: none;
         border-top: 1px solid var(--glass-border);
-        order: 2;
-        /* Bilgi paneli mobilde altta kalsın */
+        order: 2; /* Bilgi paneli mobilde altta kalsın */
     }
 
     .form-grid {
         grid-template-columns: 1fr;
+    }
+
+    .side-title {
+        font-size: 1.8rem;
     }
 }
 
 @media (max-width: 480px) {
     .register-wrapper {
         padding: 0;
+        background: var(--bg-color);
     }
 
     .register-glass-card {
         border-radius: 0;
+        border: none;
         min-height: 100vh;
+        box-shadow: none;
     }
-}
+
+    .register-form-container, 
+    .register-side-info {
+        padding: 2rem 1.5rem;
+    }
+
+    .register-title {
+        font-size: 1.6rem;
+    }
+}

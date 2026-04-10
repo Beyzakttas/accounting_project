@@ -17,10 +17,14 @@ function Register({ setUser }) {
         fullname: Yup.string()
             .required("Ad Soyad zorunludur."),
         email: Yup.string()
-            .email("Lütfen geçerli bir e-posta adresi giriniz.")
+            .email("Geçerli bir e-posta adresi giriniz.")
             .required("E-posta alanı zorunludur."),
         password: Yup.string()
-            .min(6, "Şifre en az 6 karakter olmalıdır.")
+            .min(8, "Şifre en az 8 karakter olmalıdır.")
+            .matches(/[A-Z]/, "Şifre en az bir büyük harf içermelidir.")
+            .matches(/[a-z]/, "Şifre en az bir küçük harf içermelidir.")
+            .matches(/[0-9]/, "Şifre en az bir rakam içermelidir.")
+            .matches(/[^A-Za-z0-9]/, "Şifre en az bir özel karakter içermelidir.")
             .required("Şifre alanı zorunludur."),
         confirmPassword: Yup.string()
             .oneOf([Yup.ref('password'), null], "Şifreler birbiriyle eşleşmiyor.")
@@ -29,7 +33,9 @@ function Register({ setUser }) {
 
     const handleSubmit = async (values, { setSubmitting }) => {
         try {
-            const response = await registerUser(values);
+            // confirmPassword sadece frontend doğrulaması için — API'ye gönderilmez
+            const { confirmPassword, ...apiData } = values;
+            const response = await registerUser(apiData);
             const { user: userData, token } = response.data;
 
             localStorage.setItem('token', token);
@@ -47,8 +53,7 @@ function Register({ setUser }) {
             navigate('/dashboard');
         } catch (error) {
             console.error("Kayıt hatası:", error);
-            const errorMessage = error.message || (error.data && error.data.message) || "Kayıt işlemi başarısız.";
-            addToast(errorMessage, "error");
+            addToast(error.message || "Kayıt işlemi başarısız.", "error");
         } finally {
             setSubmitting(false);
         }

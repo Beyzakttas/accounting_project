@@ -24,7 +24,7 @@ function Login({ setUser }) {
     try {
       const response = await loginUser(values);
       const { user: userData, token } = response.data; // Backend wraps data in a 'data' field
-      
+
       localStorage.setItem('token', token);
       localStorage.setItem('role', userData.role);
       localStorage.setItem('userName', userData.fullname);
@@ -39,8 +39,7 @@ function Login({ setUser }) {
       window.location.href = '/dashboard';
     } catch (error) {
       console.error("Giriş hatası:", error);
-      const errorMessage = error.message || (error.data && error.data.message) || "Giriş işlemi başarısız. Bilgilerinizi kontrol edin.";
-      addToast(errorMessage, "error");
+      addToast(error.message || "Giriş işlemi başarısız.", "error");
     } finally {
       setSubmitting(false);
     }
