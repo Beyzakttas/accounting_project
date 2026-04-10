@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Modal from '../components/common/Modal';
 import FormInput from '../components/common/FormInput';
@@ -6,12 +6,7 @@ import { useToast } from '../contexts/ToastContext';
 import apiClient from '../api/apiClient';
 import '../assets/css/StaffManagement.css';
 
-const StaffManagement = ({ user: propUser, onLogout }) => {
-  const [user] = useState({
-    name: propUser?.name || localStorage.getItem('userName') || 'Yönetici',
-    role: propUser?.role || localStorage.getItem('role') || 'ADMIN'
-  });
-
+const StaffManagement = ({ user, onLogout }) => {
   const { addToast } = useToast();
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,11 +36,7 @@ const StaffManagement = ({ user: propUser, onLogout }) => {
     department: 'Muhasebe'
   });
 
-  useEffect(() => {
-    fetchStaff();
-  }, []);
-
-  const fetchStaff = async () => {
+  const fetchStaff = useCallback(async () => {
     try {
       const response = await apiClient.get('/owner/staff');
       if (response.success) {
@@ -53,10 +44,15 @@ const StaffManagement = ({ user: propUser, onLogout }) => {
       }
     } catch (error) {
       console.error('Personel listesi yüklenemedi:', error);
+      addToast('Personel listesi yüklenirken bir hata oluştu.', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast]);
+
+  useEffect(() => {
+    fetchStaff();
+  }, [fetchStaff]);
 
   const handleAddStaff = async (e) => {
     e.preventDefault();

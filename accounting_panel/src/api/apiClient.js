@@ -24,9 +24,28 @@ const apiClient = {
         if (res.status >= 200 && res.status < 300) {
             return res.data;
         } else {
-            throw res.data || { message: 'An error occurred' };
+            const errData = typeof res.data === 'object' ? res.data : { message: res.data };
+            const message =
+                errData.message ||
+                errData.error ||
+                (Array.isArray(errData.errors) ? errData.errors.map(e => e.msg || e.message).join(', ') : null) ||
+                'Bir hata oluştu.';
+            // eslint-disable-next-line no-throw-literal
+            throw { ...errData, message };
         }
     },
+    // Yardımcı Formatlayıcılar (Utils)
+    formatCurrency: (amount) => {
+        return new Intl.NumberFormat('tr-TR', {
+            style: 'currency',
+            currency: 'TRY',
+            minimumFractionDigits: 2
+        }).format(amount || 0);
+    },
+    formatDate: (dateString) => {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleDateString('tr-TR');
+    }
 };
 
 export default apiClient;

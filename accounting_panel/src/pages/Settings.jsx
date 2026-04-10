@@ -6,12 +6,7 @@ import FormInput from '../components/common/FormInput';
 import { useToast } from '../contexts/ToastContext';
 import '../assets/css/Settings.css';
 
-const Settings = ({ user: propUser, onLogout }) => {
-  const [user] = useState({
-    name: propUser?.name || localStorage.getItem('userName') || 'Kullanıcı',
-    role: propUser?.role || localStorage.getItem('role') || 'USER'
-  });
-
+const Settings = ({ user, onLogout }) => {
   const { addToast } = useToast();
 
   const [notifications, setNotifications] = useState({

@@ -3,7 +3,9 @@ import { createPortal } from 'react-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { useToast } from '../contexts/ToastContext';
 import { getInvoiceStats } from '../services/invoiceService';
+import apiClient from '../api/apiClient';
 import { exportToPDF, exportToExcel, exportToWord } from '../services/exportService';
+import '../assets/css/Reports.css';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell
@@ -37,55 +39,23 @@ const ExportModal = ({ isOpen, onConfirm, onCancel }) => {
   ];
 
   return createPortal(
-    <div
-      onClick={onCancel}
-      style={{
-        position: 'fixed', inset: 0,
-        background: 'rgba(15, 23, 42, 0.75)',
-        backdropFilter: 'blur(12px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 100000 // Ensure it's above everything including sidebar
-      }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: 'var(--modal-bg, #1e293b)',
-          border: '1px solid var(--glass-border)',
-          borderRadius: '24px',
-          padding: '2.5rem',
-          width: '450px',
-          maxWidth: '90vw',
-          boxShadow: '0 30px 70px rgba(0,0,0,0.5)',
-          animation: 'fadeInScale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          position: 'relative'
-        }}
-      >
-        <h3 style={{ margin: '0 0 1.5rem', color: 'var(--text-primary)', fontSize: '1.4rem', fontWeight: 800, textAlign: 'center' }}>
-          Raporu Dışa Aktar
-        </h3>
+    <div className="export-modal-overlay" onClick={onCancel}>
+      <div className="export-modal-content" onClick={e => e.stopPropagation()}>
+        <h3 className="export-modal-title">Raporu Dışa Aktar</h3>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.8rem', marginBottom: '2rem' }}>
+        <div className="export-format-grid">
           {formats.map((f) => (
             <div
               key={f.id}
+              className={`export-format-option ${format === f.id ? 'active' : ''}`}
               onClick={() => setFormat(f.id)}
               style={{
-                padding: '1rem 0.5rem',
-                borderRadius: '16px',
-                border: `2px solid ${format === f.id ? f.color : 'transparent'}`,
-                background: format === f.id ? `${f.color}15` : 'rgba(255,255,255,0.03)',
-                cursor: 'pointer',
-                textAlign: 'center',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '0.5rem'
+                borderColor: format === f.id ? f.color : 'transparent',
+                background: format === f.id ? `${f.color}15` : undefined
               }}
             >
-              <span style={{ fontSize: '1.5rem' }}>{f.icon}</span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: format === f.id ? f.color : 'var(--text-secondary)' }}>
+              <span className="export-format-icon">{f.icon}</span>
+              <span className="export-format-label" style={{ color: format === f.id ? f.color : undefined }}>
                 {f.label.split(' ')[0]}
               </span>
             </div>
@@ -93,76 +63,41 @@ const ExportModal = ({ isOpen, onConfirm, onCancel }) => {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '2rem' }}>
-            <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.6rem', paddingLeft: '4px' }}>
-              Dosya Adı
-            </label>
+          <div className="export-field-group">
+            <label className="export-field-label">Dosya Adı</label>
             <input
               ref={inputRef}
               type="text"
+              className="export-field-input"
               value={filename}
               onChange={e => setFilename(e.target.value)}
               placeholder="Dosya ismini girin..."
-              style={{
-                width: '100%',
-                padding: '1rem',
-                borderRadius: '14px',
-                border: '1.5px solid var(--glass-border)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
-                fontSize: '1rem',
-                outline: 'none',
-                transition: 'all 0.3s',
-                boxSizing: 'border-box'
-              }}
               onFocus={e => e.target.style.borderColor = formats.find(f => f.id === format).color}
               onBlur={e => e.target.style.borderColor = 'var(--glass-border)'}
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button
-              type="button"
-              onClick={onCancel}
-              style={{
-                flex: 1, padding: '1rem', borderRadius: '14px', border: '1px solid var(--glass-border)',
-                background: 'transparent', color: 'var(--text-secondary)', fontWeight: 600, cursor: 'pointer', transition: '0.2s'
-              }}
-            >
+          <div className="export-actions">
+            <button type="button" className="export-cancel-btn" onClick={onCancel}>
               İptal
             </button>
             <button
               type="submit"
-              className="primary-btn"
-              style={{
-                flex: 2, padding: '1rem', borderRadius: '14px', border: 'none',
-                background: `linear-gradient(135deg, ${formats.find(f => f.id === format).color}, #6366f1)`,
-                color: '#fff', fontWeight: 700, cursor: 'pointer'
-              }}
+              className="export-submit-btn"
+              style={{ background: `linear-gradient(135deg, ${formats.find(f => f.id === format).color}, #6366f1)` }}
             >
               İndir
             </button>
           </div>
         </form>
       </div>
-
-      <style>{`
-        @keyframes fadeInScale {
-          from { opacity: 0; transform: scale(0.9) translateY(20px); }
-          to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-      `}</style>
     </div>,
     document.body
   );
 };
 
 /* ──────────────────────────── Reports Page ──────────────────────────── */
-const Reports = ({ user: propUser, onLogout }) => {
-  const [user] = useState({
-    name: propUser?.name || localStorage.getItem('userName') || 'Kullanıcı',
-    role: propUser?.role || localStorage.getItem('role') || 'USER'
-  });
+const Reports = ({ user, onLogout }) => {
 
   const { addToast } = useToast();
   const [stats, setStats] = useState({
@@ -196,7 +131,7 @@ const Reports = ({ user: propUser, onLogout }) => {
 
   const handleConfirmExport = (filename, format) => {
     setIsModalOpen(false);
-    
+
     if (format === 'pdf') {
       exportToPDF(stats, filename);
       addToast('PDF raporu hazırlanıyor...', 'success');
@@ -212,10 +147,10 @@ const Reports = ({ user: propUser, onLogout }) => {
   const netKar = stats.totalIncome - stats.totalExpense;
 
   const reportStats = [
-    { title: 'Toplam Gelir',       value: `₺${stats.totalIncome.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`, isPositive: true },
-    { title: 'Toplam Gider',       value: `₺${stats.totalExpense.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`, isPositive: false },
-    { title: 'Net Kar',            value: `₺${netKar.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`,             isPositive: netKar >= 0 },
-    { title: 'Bekleyen Faturalar', value: stats.pendingCount.toString(),                                                   isPositive: stats.pendingCount === 0 }
+    { title: 'Toplam Gelir', value: apiClient.formatCurrency(stats.totalIncome), isPositive: true },
+    { title: 'Toplam Gider', value: apiClient.formatCurrency(stats.totalExpense), isPositive: false },
+    { title: 'Net Kar', value: apiClient.formatCurrency(netKar), isPositive: netKar >= 0 },
+    { title: 'Bekleyen Faturalar', value: stats.pendingCount.toString(), isPositive: stats.pendingCount === 0 }
   ];
 
   return (
@@ -226,38 +161,38 @@ const Reports = ({ user: propUser, onLogout }) => {
         onCancel={() => setIsModalOpen(false)}
       />
 
-      <div className="reports-container" style={{ color: 'var(--text-primary)' }}>
+      <div className="reports-container">
         {/* Summary Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+        <div className="reports-summary-grid">
           {reportStats.map((stat, idx) => (
-            <div key={idx} className="glass-card" style={{ padding: '1.8rem', borderLeft: `5px solid ${stat.isPositive ? '#10b981' : '#ef4444'}` }}>
-              <h3 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.8rem', fontWeight: 600 }}>{stat.title.toUpperCase()}</h3>
-              <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>{stat.value}</div>
+            <div key={idx} className="glass-card reports-stat-card" style={{ borderLeft: `5px solid ${stat.isPositive ? '#10b981' : '#ef4444'}` }}>
+              <h3 className="reports-stat-title">{stat.title.toUpperCase()}</h3>
+              <div className="reports-stat-value">{stat.value}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2.5rem' }}>
+        <div className="reports-charts-grid">
           {/* Daily Chart */}
-          <div className="glass-card" style={{ padding: '2rem', minHeight: '450px' }}>
-            <h2 style={{ marginBottom: '2rem', fontSize: '1.2rem', fontWeight: 700 }}>Günlük Finansal Analiz</h2>
-            <div style={{ width: '100%', height: '320px' }}>
+          <div className="glass-card reports-chart-card">
+            <h2 className="reports-chart-title">Günlük Finansal Analiz</h2>
+            <div className="reports-chart-area">
               {stats.dailyData && stats.dailyData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                   <AreaChart data={stats.dailyData}>
                     <defs>
                       <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="dateStr" stroke="var(--text-secondary)" tick={{fontSize: 11}} axisLine={false} tickLine={false} />
-                    <YAxis stroke="var(--text-secondary)" tick={{fontSize: 11}} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="dateStr" stroke="var(--text-secondary)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis stroke="var(--text-secondary)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={{ borderRadius: '15px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff' }} />
                     <Legend iconType="circle" />
                     <Area type="monotone" dataKey="income" name="Gelir" stroke="#10b981" fillOpacity={1} fill="url(#colorIncome)" />
@@ -265,30 +200,30 @@ const Reports = ({ user: propUser, onLogout }) => {
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
-                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>Veri bekleniyor...</div>
+                <div className="reports-empty-state">Veri bekleniyor...</div>
               )}
             </div>
           </div>
 
           {/* Category Pie */}
-          <div className="glass-card" style={{ padding: '2rem', minHeight: '450px' }}>
-            <h2 style={{ marginBottom: '2rem', fontSize: '1.2rem', fontWeight: 700 }}>Gider Dağılımı</h2>
-            <div style={{ width: '100%', height: '320px' }}>
+          <div className="glass-card reports-chart-card">
+            <h2 className="reports-chart-title">Gider Dağılımı</h2>
+            <div className="reports-chart-area">
               {stats.categoryData && stats.categoryData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                   <PieChart>
                     <Pie
                       data={stats.categoryData.filter(c => c.type === 'EXPENSE')}
                       cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={8} dataKey="value" nameKey="name"
                     >
-                      {stats.categoryData.map((_, i) => <Cell key={i} fill={['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6'][i%5]} />)}
+                      {stats.categoryData.map((_, i) => <Cell key={i} fill={['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'][i % 5]} />)}
                     </Pie>
-                    <Tooltip cursor={{fill: 'transparent'}} />
-                    <Legend verticalAlign="bottom" height={36}/>
+                    <Tooltip cursor={{ fill: 'transparent' }} />
+                    <Legend verticalAlign="bottom" height={36} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>Gider verisi bulunmuyor.</div>
+                <div className="reports-empty-state">Gider verisi bulunmuyor.</div>
               )}
             </div>
           </div>

@@ -1,59 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
-import { getAllCompanies } from '../services/companyService';
 import { getInvoiceStats } from '../services/invoiceService';
+import apiClient from '../api/apiClient';
+import { useToast } from '../contexts/ToastContext';
 import '../assets/css/Dashboard.css';
 
-const Dashboard = ({ user: propUser, onLogout }) => {
-  const [user] = useState({
-    name: propUser?.name || localStorage.getItem('userName') || 'Demo Kullanıcı',
-    role: propUser?.role || localStorage.getItem('role') || 'ADMIN'
-  });
+const Dashboard = ({ user, onLogout }) => {
 
+  const { addToast } = useToast();
   const [activeMenu] = useState('Anasayfa');
-  const [companies, setCompanies] = useState([]);
-  const [selectedCompanyId, setSelectedCompanyId] = useState('ALL');
   const [stats, setStats] = useState({
     totalIncome: 0,
     totalExpense: 0,
     pendingCount: 0
   });
 
-  useEffect(() => {
-    // Şirketleri getir (Admin ise)
-    if (user.role?.toUpperCase() === 'ADMIN') {
-      const fetchCompanies = async () => {
-        try {
-          const data = await getAllCompanies();
-          setCompanies(data);
-        } catch (error) {
-          console.error('Şirketler listesi alınamadı:', error);
-        }
-      };
-      fetchCompanies();
-    }
-
-    // İstatistikleri getir
-    const fetchStats = async () => {
-      try {
-        const response = await getInvoiceStats();
-        if (response.success) {
-          setStats(response.data);
-        }
-      } catch (error) {
-        console.error('İstatistikler alınamadı:', error);
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await getInvoiceStats();
+      if (response.success) {
+        setStats(response.data);
       }
-    };
+    } catch (error) {
+      console.error('İstatistikler alınamadı:', error);
+      addToast('İstatistikler yüklenirken bir hata oluştu.', 'error');
+    }
+  }, [addToast]);
+
+  useEffect(() => {
     fetchStats();
-  }, [user.role]);
+  }, [fetchStats]);
 
   return (
     <DashboardLayout
       user={user}
       activeMenu={activeMenu}
-      companies={companies}
-      selectedCompanyId={selectedCompanyId}
-      setSelectedCompanyId={setSelectedCompanyId}
       onLogout={onLogout}
     >
       {activeMenu === 'Anasayfa' && (
@@ -65,7 +46,7 @@ const Dashboard = ({ user: propUser, onLogout }) => {
               <div className="stat-details">
                 <p className="stat-title">Toplam Gelir</p>
                 <h3 className="stat-value">
-                  ₺{stats.totalIncome.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                  {apiClient.formatCurrency(stats.totalIncome)}
                 </h3>
                 <span className="stat-change positive">Güncel toplam gelir</span>
               </div>
@@ -76,7 +57,7 @@ const Dashboard = ({ user: propUser, onLogout }) => {
               <div className="stat-details">
                 <p className="stat-title">Toplam Gider</p>
                 <h3 className="stat-value">
-                  ₺{stats.totalExpense.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                  {apiClient.formatCurrency(stats.totalExpense)}
                 </h3>
                 <span className="stat-change negative">Güncel toplam gider</span>
               </div>

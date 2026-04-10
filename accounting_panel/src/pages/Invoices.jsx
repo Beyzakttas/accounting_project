@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Modal from '../components/common/Modal';
 import FormInput from '../components/common/FormInput';
@@ -6,12 +6,7 @@ import { useToast } from '../contexts/ToastContext';
 import apiClient from '../api/apiClient';
 import '../assets/css/Invoices.css';
 
-const Invoices = ({ user: propUser, onLogout }) => {
-  const [user] = useState({
-    name: propUser?.name || localStorage.getItem('userName') || 'Kullanıcı',
-    role: propUser?.role || localStorage.getItem('role') || 'USER'
-  });
-
+const Invoices = ({ user, onLogout }) => {
   const { addToast } = useToast();
   const [invoices, setInvoices] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -51,12 +46,7 @@ const Invoices = ({ user: propUser, onLogout }) => {
     category: ''
   });
 
-  useEffect(() => {
-    fetchInvoices();
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await apiClient.get('/category');
       if (response.success) {
@@ -64,10 +54,11 @@ const Invoices = ({ user: propUser, onLogout }) => {
       }
     } catch (error) {
       console.error('Kategoriler yüklenemedi:', error);
+      addToast('Kategoriler yüklenirken bir hata oluştu.', 'error');
     }
-  };
+  }, [addToast]);
 
-  const fetchInvoices = async () => {
+  const fetchInvoices = useCallback(async () => {
     try {
       const response = await apiClient.get('/invoice');
       if (response.success) {
@@ -75,10 +66,16 @@ const Invoices = ({ user: propUser, onLogout }) => {
       }
     } catch (error) {
       console.error('Faturalar yüklenemedi:', error);
+      addToast('Faturalar yüklenirken bir hata oluştu.', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast]);
+
+  useEffect(() => {
+    fetchInvoices();
+    fetchCategories();
+  }, [fetchInvoices, fetchCategories]);
 
   const handleSubmitInvoice = async (e) => {
     e.preventDefault();
@@ -176,7 +173,7 @@ const Invoices = ({ user: propUser, onLogout }) => {
                   </span>
                 </div>
                 <div className="invoice-amount">
-                  ₺{invoice.amount?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                  {apiClient.formatCurrency(invoice.amount)}
                 </div>
                 <div className="invoice-info">
                   <div className="info-row">
@@ -193,8 +190,8 @@ const Invoices = ({ user: propUser, onLogout }) => {
                   </div>
                 </div>
                 <div className="invoice-card-footer">
-                  <span className="invoice-date">
-                    {new Date(invoice.date).toLocaleDateString('tr-TR')}
+                   <span className="invoice-date">
+                    {apiClient.formatDate(invoice.date)}
                   </span>
                   <div className="invoice-actions">
                     <button className="action-btn text-btn" title="Düzenle" onClick={() => handleEditClick(invoice)}>Düzenle</button>
