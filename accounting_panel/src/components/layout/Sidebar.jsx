@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const Sidebar = ({ user, activeMenu }) => {
+const Sidebar = ({ user, activeMenu, isOpen, onClose }) => {
     const navigate = useNavigate();
     const navItems = [
         { id: 'Anasayfa', icon: '🏠', label: 'Dashboard', path: '/dashboard' },
@@ -12,9 +12,12 @@ const Sidebar = ({ user, activeMenu }) => {
     ];
 
     return (
-        <aside className="glass-sidebar">
+        <aside className={`glass-sidebar ${isOpen ? 'open' : ''}`}>
             <div className="sidebar-logo">
                 <span className="logo-text">Muhasebe AI</span>
+                <button className="sidebar-close-btn" onClick={onClose} title="Menüyü Kapat">
+                    ✕
+                </button>
             </div>
 
             <nav className="sidebar-nav">

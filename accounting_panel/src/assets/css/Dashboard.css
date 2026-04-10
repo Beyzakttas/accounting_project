@@ -17,9 +17,26 @@
 .sidebar-logo {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
   padding: 2rem 1.5rem;
   border-bottom: 1px solid var(--glass-border);
+}
+
+.sidebar-close-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.sidebar-close-btn:hover {
+  color: var(--danger);
+  transform: rotate(90deg);
 }
 
 .sidebar-logo .logo-icon {
@@ -157,15 +174,41 @@
 }
 
 
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.menu-toggle-btn {
+  display: none;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.menu-toggle-btn:hover {
+  background: var(--glass-border);
+  transform: scale(1.05);
+}
+
 .page-title h1 {
-  font-size: 1.7rem;
+  font-size: var(--title-font);
   font-weight: 700;
   margin-bottom: 0.2rem;
+  color: var(--text-primary);
 }
 
 .page-title p {
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: var(--subtitle-font);
 }
 
 .topbar-actions {
@@ -609,34 +652,51 @@
 }
 
 @media (max-width: 768px) {
-  .dashboard-layout {
-    flex-direction: column;
+  .menu-toggle-btn {
+    display: flex;
+  }
+
+  .sidebar-close-btn {
+    display: block;
   }
 
   .glass-sidebar {
-    width: auto;
-    height: auto;
-    margin: 1rem;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    height: 100vh;
+    margin: 0;
+    border-radius: 0 24px 24px 0;
+    transform: translateX(-100%);
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    background: #0f172a; /* Solid background for mobile drawer */
   }
 
-  .sidebar-nav {
-    flex-direction: row;
-    overflow-x: auto;
-    width: 100%;
+  [data-theme='light'] .glass-sidebar {
+    background: #ffffff;
   }
 
-  .sidebar-footer {
-    display: none;
-  }
-
-  .content-scroll-area {
-    padding: 0 1rem 1rem;
+  .glass-sidebar.open {
+    transform: translateX(0);
   }
 
   .topbar {
-    padding: 1rem;
+    padding: 1rem var(--responsive-padding);
   }
-}
+
+  .page-title p {
+    display: none; /* Mobilde alt metni gizle */
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .primary-btn {
+    padding: 0.8rem 1.2rem;
+    font-size: 0.9rem;
+  }
+}

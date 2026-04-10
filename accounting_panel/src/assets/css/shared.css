@@ -1,4 +1,10 @@
 /* src/assets/css/shared.css */
+:root {
+  --responsive-padding: clamp(1.2rem, 3vw, 3rem);
+  --title-font: clamp(1.4rem, 4vw, 2.2rem);
+  --subtitle-font: clamp(0.85rem, 2vw, 1rem);
+}
+
 
 /* Central Layout */
 .dashboard-layout {
@@ -7,6 +13,16 @@
   background: var(--bg-color);
   overflow: hidden;
   position: relative;
+}
+
+/* Mobile Sidebar Overlay */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 900;
+  animation: fadeIn 0.3s ease;
 }
 
 .dashboard-layout::before {
@@ -39,11 +55,12 @@
   flex-direction: column;
   height: 100vh;
   z-index: 5;
+  width: 100%;
 }
 
 .content-scroll-area {
   flex: 1;
-  padding: 1.5rem 3rem 2rem;
+  padding: 1.5rem var(--responsive-padding) 2rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -143,7 +160,8 @@
 /* Responsive Fixes */
 @media (max-width: 768px) {
   .content-scroll-area {
-    padding: 0 1rem 1rem;
+    padding: 1rem var(--responsive-padding);
+    gap: 1.5rem;
   }
 }
 
@@ -249,4 +267,14 @@
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Tarayıcının native şifre göster butonunu kaldır (Edge, Chrome) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-password-auto-fill-button {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
