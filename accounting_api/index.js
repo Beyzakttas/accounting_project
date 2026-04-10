@@ -21,7 +21,7 @@ app.use(helmet()); // Güvenlik başlıklarını ayarlar
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 dakika
-  max: 100, // Her IP için 15 dakikada max 100 istek
+  max: 1000, // Geliştirme için sınırı yükselttik (Normalde 100)
   message: 'Çok fazla istek gönderdiniz. Lütfen daha sonra tekrar deneyin.'
 });
 app.use('/api', limiter); // Sadece API rotaları için sınırlama
