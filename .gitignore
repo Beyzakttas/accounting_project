@@ -1,0 +1,12 @@
+# Docker data directory
+muhasebe_db/
+
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
