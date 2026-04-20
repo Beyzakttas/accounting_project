@@ -6,6 +6,47 @@ import STATUS_CODES from '../Utils/statusCodes.js';
  * Yeni fatura oluşturur
  */
 export const createInvoice = async (invoiceData, userId, companyId) => {
+  const { invoiceNumber, amount, date, vendor } = invoiceData;
+
+  // 1. Fatura Numarası ile Kontrol (Eğer numara varsa)
+  if (invoiceNumber && invoiceNumber.trim()) {
+    const trimmedNumber = invoiceNumber.trim();
+    const existingByNo = await Invoice.findOne({
+      companyId: companyId,
+      invoiceNumber: { $regex: new RegExp(`^${trimmedNumber}$`, 'i') }
+    });
+
+    if (existingByNo) {
+      const error = new Error(`Bu fatura numarası (${trimmedNumber}) zaten sistemde kayıtlı.`);
+      error.statusCode = STATUS_CODES.BAD_REQUEST;
+      error.data = { existingId: existingByNo._id, type: 'DUPLICATE_NUMBER' };
+      throw error;
+    }
+  }
+
+  // 2. Metadata ile Kontrol (Tutar + Tarih + Satıcı) - Numara yoksa veya farklıysa bile yakalar
+  if (amount && date && vendor) {
+    // Gelen tarihin sadece gününü kullanalım (saat farkını elemek için)
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    const existingByMeta = await Invoice.findOne({
+      companyId: companyId,
+      amount: amount,
+      vendor: { $regex: new RegExp(`^${vendor.trim()}$`, 'i') },
+      date: { $gte: startDate, $lte: endDate }
+    });
+
+    if (existingByMeta) {
+      const error = new Error(`Bu satıcıdan (${vendor}) bu tarihte (${new Date(date).toLocaleDateString()}) bu tutarda bir fatura zaten mevcut.`);
+      error.statusCode = STATUS_CODES.BAD_REQUEST;
+      error.data = { existingId: existingByMeta._id, type: 'DUPLICATE_METADATA' };
+      throw error;
+    }
+  }
+
   const newInvoice = new Invoice({
     ...invoiceData,
     uploadedBy: userId,

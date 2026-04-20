@@ -28,8 +28,8 @@ const MESSAGES = {
     },
     CONTROLLERS: {
         AUTH: {
-            USER_NOT_FOUND: 'User not found',
-            INVALID_CREDENTIALS: 'Invalid credentials',
+            USER_NOT_FOUND: 'Bu e-posta adresi ile kayıtlı bir kullanıcı bulunamadı.',
+            INVALID_CREDENTIALS: 'Girdiğiniz şifre hatalı. Lütfen tekrar deneyin.',
             SERVER_ERROR: 'Server error',
             REGISTER_SUCCESS: 'User registered successfully',
             RESET_LINK_SENT: 'Şifre sıfırlama bağlantısı e-posta adresine gönderildi.',

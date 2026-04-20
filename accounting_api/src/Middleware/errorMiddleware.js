@@ -40,6 +40,7 @@ const errorMiddleware = (err, req, res, next) => {
   res.status(statusCode).json({
     success: false,
     message,
+    data: err.data || null, // Ek verileri (örn: existingId) dönmek için
     // Sadece development ortamında stack trace gönderilebilir
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });

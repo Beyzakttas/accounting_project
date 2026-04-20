@@ -64,17 +64,11 @@ const ownerController = {
     }
   },
 
-  // ... (getCompanyInvoices, createCategory, getCategories will be refactored similarly if needed, but focused on Staff for now)
   // 4. Şirkete ait tüm faturaları listele
   getCompanyInvoices: async (req, res, next) => {
-    // Bu kısım için invoiceService de kullanılabilir ama şimdilik burada kalsın veya hızlıca refaktör edelim
     try {
-      const { default: Invoice } = await import('../Models/Invoice.js');
-      const ownerCompanyId = req.user.companyId;
-      const filter = { companyId: ownerCompanyId };
-      if (req.user.role === 'USER') filter.uploadedBy = req.user._id;
-
-      const invoices = await Invoice.find(filter).populate('uploadedBy', 'fullname email').sort({ createdAt: -1 });
+      const { companyId, _id: userId, role } = req.user;
+      const invoices = await ownerService.getCompanyInvoices(companyId, userId, role);
       return successResponse(res, invoices);
     } catch (error) {
       next(error);

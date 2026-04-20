@@ -186,7 +186,9 @@ const Invoices = ({ user, onLogout }) => {
                   </div>
                   <div className="info-row">
                     <span>Yükleyen:</span>
-                    <span className="info-value">{invoice.uploadedBy?.fullname || 'Sistem'}</span>
+                    <span className="info-value">
+                      {invoice.uploadedBy?.fullname || invoice.uploadedBy?.name || invoice.uploadedBy?.email || 'Sistem'}
+                    </span>
                   </div>
                 </div>
                 <div className="invoice-card-footer">

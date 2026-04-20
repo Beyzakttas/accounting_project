@@ -1,9 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { getInvoiceStats } from '../services/invoiceService';
+import { processInvoiceOCR } from '../services/aiService';
 import apiClient from '../api/apiClient';
 import { useToast } from '../contexts/ToastContext';
+import Modal from '../components/common/Modal';
+import ConfirmModal from '../components/common/ConfirmModal';
+import FormInput from '../components/common/FormInput';
+import DashboardStats from '../components/dashboard/DashboardStats';
+import DashboardChart from '../components/dashboard/DashboardChart';
+import DashboardAiAnalyst from '../components/dashboard/DashboardAiAnalyst';
 import '../assets/css/Dashboard.css';
+import '../assets/css/Invoices.css'; // Reuse invoice styles for modal
+
 
 const Dashboard = ({ user, onLogout }) => {
 
@@ -14,6 +23,39 @@ const Dashboard = ({ user, onLogout }) => {
     totalExpense: 0,
     pendingCount: 0
   });
+
+  // AI OCR States
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiData, setAiData] = useState({
+    invoiceNumber: '',
+    description: '',
+    amount: '',
+    date: '',
+    type: 'EXPENSE',
+    category: '',
+    vendor: ''
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [confirmState, setConfirmState] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null
+  });
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await apiClient.get('/category');
+      if (response.success) {
+        setCategories(response.data);
+      }
+    } catch (error) {
+      console.error('Kategoriler yüklenemedi:', error);
+    }
+  }, []);
+
 
   const fetchStats = useCallback(async () => {
     try {
@@ -29,7 +71,132 @@ const Dashboard = ({ user, onLogout }) => {
 
   useEffect(() => {
     fetchStats();
-  }, [fetchStats]);
+    fetchCategories();
+  }, [fetchStats, fetchCategories]);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsAnalyzing(true);
+    try {
+      const response = await processInvoiceOCR(file);
+      if (response.success) {
+        // Backend'den ID gelmiş olsa bile biz ismini gösterelim (Kullanıcı için daha anlaşılır)
+        let categoryDisplay = response.data.category || '';
+
+        // Eğer ID geldiyse ismine çevirelim
+        const found = categories.find(c => c._id === categoryDisplay);
+        if (found) {
+          categoryDisplay = found.name;
+        }
+
+        setAiData({
+          ...response.data,
+          category: categoryDisplay,
+          invoiceNumber: response.data.invoiceNumber || `AI-${Math.floor(100000 + Math.random() * 900000)}` 
+        });
+        addToast('Fatura başarıyla analiz edildi!', 'success');
+        setShowAiModal(true);
+      }
+    } catch (error) {
+      console.error('AI Analiz Hatası:', error);
+      // Backend'den gelen maskelenmiş mesajı göster veya genel bir hata ver
+      const msg = error.message || 'Fatura analiz edilirken bir hata oluştu.';
+      addToast(msg, msg.includes('yoğun') ? 'info' : 'error');
+    } finally {
+      setIsAnalyzing(false);
+      // Reset input
+      e.target.value = '';
+    }
+  };
+
+  const handleSaveAiInvoice = async (e) => {
+    if (e) e.preventDefault();
+    setIsSaving(true);
+    
+    try {
+      let finalCategoryId = null;
+      const existingCategory = categories.find(c => c.name.toLowerCase() === aiData.category.toLowerCase());
+
+      if (existingCategory) {
+        finalCategoryId = existingCategory._id;
+      } else if (aiData.category.trim()) {
+        const catResponse = await apiClient.post('/category', { name: aiData.category.trim() });
+        if (catResponse.success) {
+          finalCategoryId = catResponse.data._id;
+          fetchCategories();
+        }
+      }
+
+      const savePayload = {
+        ...aiData,
+        category: finalCategoryId || null
+      };
+
+      const response = await apiClient.post('/invoice', savePayload);
+
+      if (response.success) {
+        setShowAiModal(false);
+        addToast('Fatura kaydedildi.', 'success');
+        fetchStats();
+        window.dispatchEvent(new CustomEvent('invoiceUpdated'));
+      }
+    } catch (error) {
+      // Mükerrer kayıt durumu (Backend'den existingId geldiğinde)
+      if (error.data?.existingId) {
+        const confirmMessage = error.data.type === 'DUPLICATE_NUMBER' 
+          ? `Bu fatura numarası (${aiData.invoiceNumber}) zaten kayıtlı. Mevcut kaydı SİLİP yenisini mi eklemek istersiniz?`
+          : `Bu bilgilere (Tutar/Tarih/Satıcı) sahip bir fatura zaten mevcut. Mevcut kaydı DEĞİŞTİRMEK ister misiniz?`;
+
+        setConfirmState({
+          isOpen: true,
+          title: 'Mükerrer Fatura Tespiti',
+          message: confirmMessage,
+          onConfirm: async () => {
+            setConfirmState(prev => ({ ...prev, isOpen: false })); // Hemen kapat ki kullanıcı tıkladığını anlasın
+            try {
+              setIsSaving(true);
+              // 1. Eskisini sil
+              try {
+                await apiClient.delete(`/invoice/${error.data.existingId}`);
+              } catch (delErr) {
+                throw new Error(`Eski fatura silinemedi: ${delErr.message}`);
+              }
+
+              // 2. Yenisini kaydet
+              try {
+                const finalCategoryId = categories.find(c => c.name.toLowerCase() === aiData.category.toLowerCase())?._id;
+                const retryResponse = await apiClient.post('/invoice', {
+                  ...aiData,
+                  category: finalCategoryId || null
+                });
+                
+                if (retryResponse.success) {
+                  setShowAiModal(false);
+                  addToast('Eski fatura silindi ve yenisi başarıyla kaydedildi.', 'success');
+                  fetchStats();
+                  window.dispatchEvent(new CustomEvent('invoiceUpdated'));
+                }
+              } catch (saveErr) {
+                throw new Error(`Yeni fatura kaydedilemedi: ${saveErr.message}`);
+              }
+            } catch (overwriteError) {
+              addToast(overwriteError.message, 'error');
+              console.error('Overwrite error details:', overwriteError);
+            } finally {
+              setIsSaving(false);
+            }
+          }
+        });
+      } else {
+        addToast(error.message || 'Kaydedilirken hata oluştu.', 'error');
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
 
   return (
     <DashboardLayout
@@ -39,210 +206,83 @@ const Dashboard = ({ user, onLogout }) => {
     >
       {activeMenu === 'Anasayfa' && (
         <>
-          {/* Stats Cards */}
-          <div className="stats-grid">
-            <div className="stat-card glass-card">
-              <div className="stat-icon income">💰</div>
-              <div className="stat-details">
-                <p className="stat-title">Toplam Gelir</p>
-                <h3 className="stat-value">
-                  {apiClient.formatCurrency(stats.totalIncome)}
-                </h3>
-                <span className="stat-change positive">Güncel toplam gelir</span>
-              </div>
-            </div>
-
-            <div className="stat-card glass-card">
-              <div className="stat-icon expense">📉</div>
-              <div className="stat-details">
-                <p className="stat-title">Toplam Gider</p>
-                <h3 className="stat-value">
-                  {apiClient.formatCurrency(stats.totalExpense)}
-                </h3>
-                <span className="stat-change negative">Güncel toplam gider</span>
-              </div>
-            </div>
-
-            <div className="stat-card glass-card">
-              <div className="stat-icon invoices">📄</div>
-              <div className="stat-details">
-                <p className="stat-title">Bekleyen Faturalar</p>
-                <h3 className="stat-value">{stats.pendingCount}</h3>
-                <span className="stat-change neutral">İncelenmeyi bekliyor</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Sections */}
+          <DashboardStats stats={stats} />
+          
           <div className="dashboard-grid">
-            <div className="chart-section glass-card">
-              <div className="card-header">
-                <h2>Gelir/Gider Analizi</h2>
-                <button className="icon-btn">⋮</button>
-              </div>
-              <div className="chart-placeholder" style={{ height: '300px', width: '100%', marginTop: '1.5rem', display: 'flex', gap: '15px' }}>
-                {(() => {
-                  const now = new Date();
-                  now.setHours(23, 59, 59, 999);
-
-                  const weeklyData = [
-                    { label: "4 Hafta Önce", income: 0, expense: 0, minDate: new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000), maxDate: new Date(now.getTime() - 21 * 24 * 60 * 60 * 1000) },
-                    { label: "3 Hafta Önce", income: 0, expense: 0, minDate: new Date(now.getTime() - 21 * 24 * 60 * 60 * 1000), maxDate: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000) },
-                    { label: "Geçen Hafta", income: 0, expense: 0, minDate: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000), maxDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
-                    { label: "Bu Hafta", income: 0, expense: 0, minDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), maxDate: now }
-                  ];
-
-                  if (stats.dailyData && stats.dailyData.length > 0) {
-                    stats.dailyData.forEach(dayItem => {
-                      const [day, month] = dayItem.dateStr.split('/');
-                      const year = new Date().getFullYear();
-                      const d = new Date(`${year}-${month}-${day}T12:00:00`);
-
-                      if (!isNaN(d)) {
-                        for (let week of weeklyData) {
-                          if (d > week.minDate && d <= week.maxDate) {
-                            week.income += dayItem.income;
-                            week.expense += dayItem.expense;
-                            break;
-                          }
-                        }
-                      }
-                    });
-                  }
-
-                  const rawMax = Math.max(...weeklyData.map(w => Math.max(w.income, w.expense)));
-
-                  // Kesin ve temiz yuvarlama (Örn: 619 -> 700, 1450 -> 1600)
-                  const maxVal = rawMax > 0 ? (Math.ceil(rawMax / 100) * 100) : 100;
-                  const yLabels = [maxVal, maxVal * 0.75, maxVal * 0.5, maxVal * 0.25, 0];
-
-                  return (
-                    <>
-                      {/* Sol Cetvel */}
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        height: '100%',
-                        paddingBottom: '30px',
-                        color: 'var(--text-secondary)',
-                        fontSize: '11px',
-                        width: '45px',
-                        textAlign: 'right',
-                        fontWeight: 700
-                      }}>
-                        {yLabels.map((val, i) => (
-                          <span key={i}>₺{val >= 1000 ? (val / 1000).toFixed(0) + 'k' : Math.floor(val)}</span>
-                        ))}
-                      </div>
-
-                      {/* Grafik Alanı */}
-                      <div className="mock-chart" style={{ flex: 1, display: 'flex', gap: '20px', alignItems: 'flex-end', paddingBottom: '30px', borderBottom: '1px solid var(--glass-border)' }}>
-                        {weeklyData.map((week, idx) => {
-                          const hInc = (week.income / maxVal) * 100;
-                          const hExp = (week.expense / maxVal) * 100;
-                          const isEmpty = week.income === 0 && week.expense === 0;
-
-                          return (
-                            <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'flex-end', opacity: isEmpty ? 0.3 : 1 }}>
-                              <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end', height: '100%', position: 'relative' }}>
-                                {/* Gelir Çubuğu */}
-                                <div
-                                  className="bar"
-                                  style={{
-                                    height: `${Math.max(hInc, isEmpty ? 0 : 4)}%`,
-                                    flex: 1,
-                                    background: 'linear-gradient(to top, #10b981, rgba(16, 185, 129, 0.4))',
-                                    borderRadius: '8px 8px 0 0',
-                                    boxShadow: '0 4px 15px rgba(16, 185, 129, 0.1)',
-                                    position: 'relative',
-                                    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                                    cursor: 'pointer',
-                                    zIndex: 1
-                                  }}
-                                  title={`Gelir: ₺${week.income.toLocaleString()}`}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform = 'scaleY(1.05) translateY(-5px)';
-                                    e.currentTarget.style.filter = 'brightness(1.15) saturate(1.2)';
-                                    e.currentTarget.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.4), 0 0 30px rgba(16, 185, 129, 0.1)';
-                                    e.currentTarget.style.zIndex = '10';
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'scaleY(1) translateY(0)';
-                                    e.currentTarget.style.filter = 'none';
-                                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.1)';
-                                    e.currentTarget.style.zIndex = '1';
-                                  }}
-                                >
-                                  {week.income > 0 && (
-                                    <span style={{ position: 'absolute', bottom: '100%', left: '0', width: '100%', textAlign: 'center', fontSize: '10px', fontWeight: 800, color: '#10b981', paddingBottom: '8px', textShadow: '0 0 5px rgba(16, 185, 129, 0.2)' }}>
-                                      ₺{week.income >= 1000 ? (week.income / 1000).toFixed(1) + 'k' : week.income}
-                                    </span>
-                                  )}
-                                </div>
-
-                                {/* Gider Çubuğu */}
-                                <div
-                                  className="bar"
-                                  style={{
-                                    height: `${Math.max(hExp, isEmpty ? 0 : 4)}%`,
-                                    flex: 1,
-                                    background: 'linear-gradient(to top, #ef4444, rgba(239, 68, 68, 0.4))',
-                                    borderRadius: '8px 8px 0 0',
-                                    boxShadow: '0 4px 15px rgba(239, 68, 68, 0.1)',
-                                    position: 'relative',
-                                    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                                    cursor: 'pointer',
-                                    zIndex: 1
-                                  }}
-                                  title={`Gider: ₺${week.expense.toLocaleString()}`}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform = 'scaleY(1.05) translateY(-5px)';
-                                    e.currentTarget.style.filter = 'brightness(1.15) saturate(1.2)';
-                                    e.currentTarget.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.4), 0 0 30px rgba(239, 68, 68, 0.1)';
-                                    e.currentTarget.style.zIndex = '10';
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'scaleY(1) translateY(0)';
-                                    e.currentTarget.style.filter = 'none';
-                                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.1)';
-                                    e.currentTarget.style.zIndex = '1';
-                                  }}
-                                >
-                                  {week.expense > 0 && (
-                                    <span style={{ position: 'absolute', bottom: '100%', left: '0', width: '100%', textAlign: 'center', fontSize: '10px', fontWeight: 800, color: '#ef4444', paddingBottom: '8px', textShadow: '0 0 5px rgba(239, 68, 68, 0.2)' }}>
-                                      ₺{week.expense >= 1000 ? (week.expense / 1000).toFixed(1) + 'k' : week.expense}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <div style={{ textAlign: 'center', fontSize: '10px', color: 'var(--text-secondary)', marginTop: '10px', fontWeight: 700 }}>
-                                {week.label}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            </div>
-
-            <div className="recent-activity glass-card">
-              <div className="card-header">
-                <h2>Yapay Zeka Fatura Analizi</h2>
-              </div>
-              <div className="ai-upload-area">
-                <div className="upload-icon">☁️</div>
-                <p className="upload-text">Faturanızı sürükleyin veya <span className="highlight">dosya seçin</span></p>
-                <p className="upload-sub">PDF, JPG, PNG (Max. 10MB)</p>
-                <button className="upload-btn">Bilgisayardan Seç</button>
-              </div>
-            </div>
+            <DashboardChart stats={stats} />
+            <DashboardAiAnalyst 
+              isAnalyzing={isAnalyzing} 
+              handleFileUpload={handleFileUpload} 
+            />
           </div>
         </>
       )}
+
+      {/* AI OCR Confirmation Modal */}
+      <Modal
+        isOpen={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        title="Yapay Zeka Analiz Sonucu"
+        onSubmit={handleSaveAiInvoice}
+        submitText={isSaving ? "Kaydediliyor..." : "Verileri Onayla ve Kaydet"}
+        maxWidth="600px"
+      >
+        <div className="invoice-upload-form">
+          <div className="form-row">
+            <FormInput
+              label="Fatura No"
+              name="invoiceNumber"
+              value={aiData.invoiceNumber}
+              onChange={(e) => setAiData({ ...aiData, invoiceNumber: e.target.value })}
+              required
+            />
+            <FormInput
+              label="Tutar (₺)"
+              name="amount"
+              type="number"
+              value={aiData.amount}
+              onChange={(e) => setAiData({ ...aiData, amount: e.target.value })}
+              required
+            />
+          </div>
+
+          <FormInput
+            label="Satıcı / Kurum"
+            name="vendor"
+            value={aiData.vendor}
+            onChange={(e) => setAiData({ ...aiData, vendor: e.target.value })}
+            placeholder="Örn: Trendyol"
+          />
+
+          <FormInput
+            label="Açıklama"
+            name="description"
+            value={aiData.description}
+            onChange={(e) => setAiData({ ...aiData, description: e.target.value })}
+            required
+          />
+
+          <div className="form-row">
+            <FormInput
+              label="Tarih"
+              name="date"
+              type="date"
+              value={aiData.date ? new Date(aiData.date).toISOString().split('T')[0] : ''}
+              onChange={(e) => setAiData({ ...aiData, date: e.target.value })}
+              required
+            />
+            <FormInput
+              label="Kategori"
+              name="category"
+              type="text"
+              value={aiData.category}
+              onChange={(e) => setAiData({ ...aiData, category: e.target.value })}
+              placeholder="Fatura kategorisi (Market, Yemek vb.)"
+            />
+          </div>
+        </div>
+      </Modal>
+
 
       {activeMenu !== 'Anasayfa' && (
         <div className="glass-card empty-state">
@@ -251,6 +291,14 @@ const Dashboard = ({ user, onLogout }) => {
           <p>{activeMenu} sayfası yakında eklenecek.</p>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        onClose={() => setConfirmState({ ...confirmState, isOpen: false })}
+        onConfirm={confirmState.onConfirm}
+      />
     </DashboardLayout>
   );
 };

@@ -23,10 +23,7 @@ const roleMiddleware = (roles) => {
     const sanitizedAllowedRoles = rolesArray.map(r => r.toString().toUpperCase().trim());
 
     if (!sanitizedAllowedRoles.includes(userRole)) {
-      console.log(`[RoleMiddleware] Access Denied. User Role: ${userRole}, Allowed Roles: ${sanitizedAllowedRoles}`);
-      return res.status(403).json({ 
-        message: `${MESSAGES.AUTH.ACCESS_DENIED} (Mevcut Rol: ${userRole}, İzinliler: ${sanitizedAllowedRoles.join(', ')})` 
-      });
+      return res.status(403).json({ success: false, message: 'Bu işlem için yetkiniz bulunmamaktadır.' });
     }
 
     // Her şey yolundaysa bir sonraki adıma (Controller'a) geç

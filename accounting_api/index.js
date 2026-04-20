@@ -1,5 +1,10 @@
-import express from 'express';
 import dotenv from 'dotenv';
+import path from 'path';
+
+// .env dosyasını en başta ve tam yol belirterek yükleyelim
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
+import express from 'express';
 import connectDB from './src/Config/db.js';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -10,7 +15,6 @@ import { setupSwagger } from './src/Config/swagger.js';
 import errorMiddleware from './src/Middleware/errorMiddleware.js';
 
 // Yapılandırmayı ve Veritabanını yükle
-dotenv.config();
 connectDB();
 
 const app = express();

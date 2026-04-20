@@ -107,6 +107,19 @@ export const createCategory = async (categoryData, companyId) => {
 };
 
 /**
+ * Şirkete ait tüm faturaları listeler
+ */
+export const getCompanyInvoices = async (companyId, userId, role) => {
+  const filter = { companyId };
+  // USER rolü sadece kendi yüklediklerini görsün
+  if (role === 'USER') filter.uploadedBy = userId;
+
+  return await User.model('Invoice').find(filter)
+    .populate('uploadedBy', 'fullname email')
+    .sort({ createdAt: -1 });
+};
+
+/**
  * Şirkete ait kategorileri listeler
  */
 export const getCategories = async (companyId) => {
