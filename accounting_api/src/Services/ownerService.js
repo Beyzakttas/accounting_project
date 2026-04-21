@@ -67,7 +67,7 @@ export const updateStaff = async (staffId, updateData, ownerCompanyId) => {
 export const deleteStaff = async (staffId, ownerCompanyId) => {
   const result = await User.deleteOne({ _id: staffId, companyId: ownerCompanyId });
   if (result.deletedCount === 0) {
-    const error = new Error('Personel bulunamadı veya silinemedi');
+    const error = new Error('Personel kaydı bulunamadı veya işlem sırasında bir sorun oluştu.');
     error.statusCode = STATUS_CODES.NOT_FOUND;
     throw error;
   }

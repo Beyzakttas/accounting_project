@@ -25,7 +25,7 @@ const authController = {
     const { fullname, email, password, role, companyId, department } = req.body;
 
     if (!fullname || !email || !password) {
-      const error = new Error('İsim, e-posta ve şifre zorunludur.');
+      const error = new Error('Lütfen isim, e-posta ve şifre alanlarını eksiksiz doldurun.');
       error.statusCode = STATUS_CODES.BAD_REQUEST;
       return next(error);
     }

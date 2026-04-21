@@ -63,11 +63,11 @@ const Dashboard = ({ user, onLogout }) => {
       if (response.success) {
         setStats(response.data);
       }
-    } catch (error) {
-      console.error('İstatistikler alınamadı:', error);
-      addToast('İstatistikler yüklenirken bir hata oluştu.', 'error');
+    } catch (err) {
+      console.error('İstatistikler alınamadı:', err);
+      // Sessizce geçebiliriz veya çok kritikse toast basabiliriz
     }
-  }, [addToast]);
+  }, []);
 
   useEffect(() => {
     fetchStats();
@@ -101,9 +101,8 @@ const Dashboard = ({ user, onLogout }) => {
       }
     } catch (error) {
       console.error('AI Analiz Hatası:', error);
-      // Backend'den gelen maskelenmiş mesajı göster veya genel bir hata ver
-      const msg = error.message || 'Fatura analiz edilirken bir hata oluştu.';
-      addToast(msg, msg.includes('yoğun') ? 'info' : 'error');
+      const msg = error.message || 'Fatura analiz edilirken bir sorun oluştu. Lütfen görselin net olduğundan emin olup tekrar deneyin.';
+      addToast(msg, 'error');
     } finally {
       setIsAnalyzing(false);
       // Reset input
@@ -161,7 +160,7 @@ const Dashboard = ({ user, onLogout }) => {
               try {
                 await apiClient.delete(`/invoice/${error.data.existingId}`);
               } catch (delErr) {
-                throw new Error(`Eski fatura silinemedi: ${delErr.message}`);
+                throw new Error('Eski kayıt sistemden temizlenemedi, lütfen tekrar deneyin.');
               }
 
               // 2. Yenisini kaydet
@@ -174,12 +173,12 @@ const Dashboard = ({ user, onLogout }) => {
                 
                 if (retryResponse.success) {
                   setShowAiModal(false);
-                  addToast('Eski fatura silindi ve yenisi başarıyla kaydedildi.', 'success');
+                  addToast('Eski kayıt güncellendi ve yenisi başarıyla kaydedildi.', 'success');
                   fetchStats();
                   window.dispatchEvent(new CustomEvent('invoiceUpdated'));
                 }
               } catch (saveErr) {
-                throw new Error(`Yeni fatura kaydedilemedi: ${saveErr.message}`);
+                throw new Error('Yeni fatura bilgileri kaydedilirken bir sorun oluştu.');
               }
             } catch (overwriteError) {
               addToast(overwriteError.message, 'error');

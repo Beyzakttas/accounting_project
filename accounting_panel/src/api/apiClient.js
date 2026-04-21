@@ -24,12 +24,23 @@ const apiClient = {
         if (res.status >= 200 && res.status < 300) {
             return res.data;
         } else {
-            const errData = typeof res.data === 'object' ? res.data : { message: res.data };
-            const message =
-                errData.message ||
-                errData.error ||
-                (Array.isArray(errData.errors) ? errData.errors.map(e => e.msg || e.message).join(', ') : null) ||
-                'Bir hata oluştu.';
+            // Kullanıcıya sadece anlamlı mesajları göster, teknik detayları filtrele
+            const errData = res.data || {};
+            let message = "Beklenmedik bir hata oluştu.";
+
+            if (errData.message) {
+                message = errData.message;
+            } else if (errData.error) {
+                message = errData.error;
+            } else if (Array.isArray(errData.errors) && errData.errors.length > 0) {
+                message = errData.errors[0].msg || errData.errors[0].message;
+            }
+
+            // Teknik hata kodlarını (500, 404 vb.) içeren mesajları bastır
+            if (message.includes('Error') || message.includes('status code') || message.includes('failed')) {
+                message = "Sunucu ile iletişim kurulurken bir sorun oluştu.";
+            }
+
             // eslint-disable-next-line no-throw-literal
             throw { ...errData, message };
         }

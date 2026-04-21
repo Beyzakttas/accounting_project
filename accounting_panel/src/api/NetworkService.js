@@ -7,6 +7,7 @@ import { translate } from "./LocalizationUtils";
 
 const BaseURL = axios.create({
     baseURL: process.env.REACT_APP_API_BASE_URL,
+    timeout: 10000,
     validateStatus: function (status) {
         //An error of 500 or above is considered an error
         return status < 500;
@@ -90,6 +91,12 @@ export const request = async ({
             // Errors 500 and above
             return error.response;
         }
-        return { status: 500, message: "Sunucu hatası oluştu!" };
+        
+        // Timeout veya Network Error (Docker kapalıysa) durumunda
+        if (error.code === 'ECONNABORTED' || !error.response) {
+            return { status: 500, data: { success: false, message: "Sunucu ile bağlantı kurulamadı!" } };
+        }
+
+        return { status: 500, data: { success: false, message: "Sunucu hatası oluştu!" } };
     }
 }

@@ -45,7 +45,7 @@ export const login = async (email, password) => {
 export const register = async (userData) => {
   const existingUser = await User.findOne({ email: userData.email });
   if (existingUser) {
-    const error = new Error('Bu e-posta adresi ile zaten bir hesap mevcut.');
+    const error = new Error(MESSAGES.OWNER.EMAIL_EXISTS);
     error.statusCode = STATUS_CODES.BAD_REQUEST;
     throw error;
   }
@@ -94,7 +94,7 @@ export const registerWithCompany = async (registrationData) => {
   // 1. Üyelik kontrolü
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    const error = new Error('Bu e-posta adresi ile zaten bir hesap mevcut.');
+    const error = new Error(MESSAGES.OWNER.EMAIL_EXISTS);
     error.statusCode = STATUS_CODES.BAD_REQUEST;
     throw error;
   }
@@ -103,7 +103,7 @@ export const registerWithCompany = async (registrationData) => {
   const Company = (await import('../Models/Company.js')).default;
   const existingCompany = await Company.findOne({ $or: [{ name: companyName }, { taxNumber }] });
   if (existingCompany) {
-    const error = new Error('Bu şirket adı veya vergi numarası zaten kayıtlı.');
+    const error = new Error(MESSAGES.ADMIN.COMPANY_EXISTS);
     error.statusCode = STATUS_CODES.BAD_REQUEST;
     throw error;
   }
@@ -168,7 +168,7 @@ export const forgotPassword = async (email) => {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save({ validateBeforeSave: false });
-    throw new Error('E-posta gönderilemedi.');
+    const error = new Error('Personel kaydı bulunamadı veya işlem sırasında bir sorun oluştu.');
   }
 };
 
@@ -200,7 +200,7 @@ export const resetPassword = async (token, newPassword) => {
  */
 export const refreshToken = async (providedRefreshToken) => {
   if (!providedRefreshToken) {
-    const error = new Error('Refresh token zorunludur.');
+    const error = new Error(MESSAGES.CONTROLLERS.AUTH.INVALID_REFRESH_TOKEN);
     error.statusCode = STATUS_CODES.BAD_REQUEST;
     throw error;
   }

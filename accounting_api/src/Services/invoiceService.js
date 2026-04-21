@@ -17,7 +17,7 @@ export const createInvoice = async (invoiceData, userId, companyId) => {
     });
 
     if (existingByNo) {
-      const error = new Error(`Bu fatura numarası (${trimmedNumber}) zaten sistemde kayıtlı.`);
+      const error = new Error('Bu fatura numarası daha önce sisteme kaydedilmiş. Lütfen farklı bir numara girin.');
       error.statusCode = STATUS_CODES.BAD_REQUEST;
       error.data = { existingId: existingByNo._id, type: 'DUPLICATE_NUMBER' };
       throw error;
@@ -77,7 +77,7 @@ export const updateInvoice = async (invoiceId, updateData, userId, role) => {
 
   const invoice = await Invoice.findOne(query);
   if (!invoice) {
-    const error = new Error('Güncellenecek fatura bulunamadı veya yetkiniz yok.');
+    const error = new Error('İşlem yapmak istediğiniz fatura bulunamadı veya bu işlem için yetkiniz yetersiz.');
     error.statusCode = STATUS_CODES.NOT_FOUND;
     throw error;
   }
@@ -96,7 +96,7 @@ export const deleteInvoice = async (invoiceId, userId, role) => {
 
   const invoice = await Invoice.findOne(query);
   if (!invoice) {
-    const error = new Error('Silinecek fatura bulunamadı veya yetkiniz yok.');
+    const error = new Error('Silmek istediğiniz fatura bulunamadı veya bu işlem için yetkiniz yetersiz.');
     error.statusCode = STATUS_CODES.NOT_FOUND;
     throw error;
   }

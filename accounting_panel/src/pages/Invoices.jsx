@@ -54,7 +54,7 @@ const Invoices = ({ user, onLogout }) => {
       }
     } catch (error) {
       console.error('Kategoriler yüklenemedi:', error);
-      addToast('Kategoriler yüklenirken bir hata oluştu.', 'error');
+      addToast('Kategori listesi şu an güncellenemiyor, lütfen biraz sonra tekrar deneyin.', 'error');
     }
   }, [addToast]);
 
@@ -66,7 +66,7 @@ const Invoices = ({ user, onLogout }) => {
       }
     } catch (error) {
       console.error('Faturalar yüklenemedi:', error);
-      addToast('Faturalar yüklenirken bir hata oluştu.', 'error');
+      addToast('Faturalara şu an ulaşılamıyor, lütfen internet bağlantınızı kontrol edip tekrar deneyin.', 'error');
     } finally {
       setLoading(false);
     }
@@ -112,7 +112,7 @@ const Invoices = ({ user, onLogout }) => {
         window.dispatchEvent(new CustomEvent('invoiceUpdated'));
       }
     } catch (error) {
-      addToast(error.message || 'İşlem sırasında bir hata oluştu.', 'error');
+      addToast(error.message || 'Kaydetme işlemi sırasında bir sorun oluştu, lütfen girdiğiniz bilgileri kontrol edin.', 'error');
     }
   };
 

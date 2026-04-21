@@ -44,7 +44,7 @@ const StaffManagement = ({ user, onLogout }) => {
       }
     } catch (error) {
       console.error('Personel listesi yüklenemedi:', error);
-      addToast('Personel listesi yüklenirken bir hata oluştu.', 'error');
+      addToast('Personel listesi şu an görüntülenemiyor, lütfen sayfanızı yenileyip tekrar deneyin.', 'error');
     } finally {
       setLoading(false);
     }
@@ -82,7 +82,7 @@ const StaffManagement = ({ user, onLogout }) => {
         }
       }
     } catch (error) {
-      addToast(error.message || 'Bir hata oluştu. Lütfen bilgileri kontrol edin.', 'error');
+      addToast(error.message || 'İşleminiz kaydedilemedi, lütfen girdiğiniz bilgilerin doğruluğunu kontrol edin.', 'error');
     }
   };
 
