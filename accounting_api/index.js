@@ -22,6 +22,7 @@ const app = express();
 // Middleware'ler
 app.use(cors()); // En başta olmalı
 app.use(helmet()); // Güvenlik başlıklarını ayarlar
+app.use('/uploads', express.static('uploads')); // Statik dosya erişimi
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 dakika

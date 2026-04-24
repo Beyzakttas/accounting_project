@@ -9,8 +9,10 @@ import STATUS_CODES from '../Utils/statusCodes.js';
  * Kullanıcı girişi yapar ve tokenları döner
  */
 export const login = async (email, password) => {
+  console.log(`Giriş denemesi: ${email}`);
   const user = await User.findOne({ email }).select('+password');
   if (!user) {
+    console.log(`Hata: Kullanıcı bulunamadı (${email})`);
     const error = new Error(MESSAGES.CONTROLLERS.AUTH.USER_NOT_FOUND);
     error.statusCode = STATUS_CODES.NOT_FOUND;
     throw error;
@@ -18,12 +20,14 @@ export const login = async (email, password) => {
 
   const isMatch = await user.comparePassword(password);
   if (!isMatch) {
+    console.log(`Hata: Geçersiz şifre (${email})`);
     const error = new Error(MESSAGES.CONTROLLERS.AUTH.INVALID_CREDENTIALS);
     error.statusCode = STATUS_CODES.UNAUTHORIZED;
     throw error;
   }
 
-  if (!user.isActive) {
+  if (user.isActive === false) {
+    console.log(`Hata: Hesap askıda (${email})`);
     const error = new Error(MESSAGES.AUTH.ACCOUNT_SUSPENDED);
     error.statusCode = STATUS_CODES.FORBIDDEN;
     throw error;

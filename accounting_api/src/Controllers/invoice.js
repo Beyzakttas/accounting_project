@@ -9,7 +9,14 @@ const invoiceController = {
   createInvoice: async (req, res, next) => {
     try {
       const { companyId, _id: userId } = req.user;
-      const invoice = await invoiceService.createInvoice(req.body, userId, companyId);
+      const invoiceData = { ...req.body };
+
+      // Eğer resim yüklendiyse yolunu ekle
+      if (req.file) {
+        invoiceData.imageUrl = `/uploads/invoices/${req.file.filename}`;
+      }
+
+      const invoice = await invoiceService.createInvoice(invoiceData, userId, companyId);
       return successResponse(res, invoice, 'Fatura başarıyla oluşturuldu.', STATUS_CODES.CREATED);
     } catch (error) {
       next(error);

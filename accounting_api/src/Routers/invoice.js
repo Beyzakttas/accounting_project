@@ -3,6 +3,7 @@ import express from 'express';
 import invoiceController from '../Controllers/invoice.js';
 import authMiddleware from '../Middleware/authMiddleware.js';
 import roleMiddleware from '../Middleware/roleMiddleware.js';
+import upload from '../Middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
@@ -61,7 +62,7 @@ router.get('/stats', roleMiddleware(['ADMIN', 'MANAGER', 'USER']), invoiceContro
  *       201:
  *         description: Fatura oluşturuldu
  */
-router.post('/', roleMiddleware(['ADMIN', 'MANAGER', 'USER']), invoiceController.createInvoice);
+router.post('/', roleMiddleware(['ADMIN', 'MANAGER', 'USER']), upload.single('image'), invoiceController.createInvoice);
 
 /**
  * @swagger
