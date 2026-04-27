@@ -66,3 +66,45 @@ Aşağıda sisteme yeni eklenen/güncellenen özelliklerin detayı yer almaktad�
 - **Tip Dönüşüm Güvenliği:** Eskiden string olarak tutulan kategori kimliklerinin, raporlama sırasında sorunsuz eşleşmesi için `$toObjectId` ile dinamik tip dönüşümü altyapısı kuruldu.
 - **Rol Bazlı Yetki Genişletme:** `USER` (Standart Kullanıcı) rolündeki kişilerin kendi faturalarını güncelleyememe sorunu rota seviyesinde (`roleMiddleware`) çözüldü; artık her kullanıcı kendi verisini tam olarak yönetebilmektedir.
 - **CORS ve Bağlantı Optimizasyonu:** Tarayıcı tarafındaki erişim engellerini kökten çözmek için CORS yapılandırması middleware sıralamasında en başa çekilerek sunucu yanıt kararlılığı artırıldı.
+
+---
+
+## 📱 Mobile App (Flutter) Güncellemeleri (27.04.2026)
+
+### 1. Kullanıcı Deneyimi ve Arayüz (UI/UX) İyileştirmeleri
+- **Açılış Akışı (Startup Flow)**: Uygulama ilk açıldığında Dashboard yerine kısa süreliğine Login ekranının görünmesi (flicker) sorunu çözüldü. Artık yetki kontrolü bitene kadar şık bir yükleme ekranı gösteriliyor.
+- **Klavye Taşma (Overflow) Sorunu**: Giriş ekranında klavye açıldığında oluşan sarı çizgili (Bottom Overflow) görsel hata, formun kaydırılabilir (Scrollable) hale getirilmesiyle giderildi.
+- **Navigasyon Temizliği**: Kullanıcı zaten Dashboard üzerindeyken yan menüdeki (Drawer) gereksiz "Dashboard" linki kaldırılarak kafa karışıklığı önlendi.
+- **Dinamik Kategori Seçimi**: Fatura ekleme ekranındaki kategori listesi, çok sayıda kategori olduğunda ekranı kaplamaması için 5 öğe ile sınırlandırıldı ve kaydırılabilir (Scroll) hale getirildi.
+
+### 2. Analiz ve Raporlama (Charts)
+- **Haftalık Gelir/Gider Analizi**: Ana sayfadaki grafik, son 4 haftalık veriyi (Bu hafta, Geçen hafta, vb.) baz alacak şekilde güncellendi. Tarih bazlı akıllı gruplama sayesinde veriler arası boşluklar olsa bile grafik artık doğru takvim haftasını gösteriyor.
+- **Kategori Bazlı Raporlar**: Gelir ve gider dağılımını gösteren detaylı pasta (Pie) grafikleri ana sayfadan yeni oluşturulan "Raporlar" ekranına taşındı. Bu sayede ana sayfa daha sade, raporlar ise daha detaylı hale getirildi.
+- **Gelişmiş Görsel Estetik**: Grafikler; gradyan renk geçişleri, daha kalın sütunlar ve temizlenmiş eksenler ile mobil cihazlarda daha okunabilir hale getirildi.
+
+### 3. Profil ve Güvenlik Yönetimi
+- **Profil Güncelleme**: Kullanıcıların ad, soyad ve e-posta bilgilerini doğrudan uygulama üzerinden güncelleyebileceği yeni bir Profil ekranı eklendi.
+- **Şifre Değiştirme**: Güvenlik ayarları altında kullanıcıların mevcut şifrelerini doğrulayarak yeni şifre belirleyebilecekleri güvenli bir akış oluşturuldu.
+
+---
+
+## 🛠️ Web & Backend (Polishing & Robustness) (27.04.2026)
+
+### 1. Web Paneli Arayüz Refactoring
+- **Aydınlık Mod (Light Mode) Uyumu**: Tüm panelin aydınlık mod renkleri; Slate ve Indigo tonları kullanılarak daha premium ve göz yormayan bir yapıya kavuşturuldu.
+- **Fatura Arama ve Filtreleme**: 
+    - Fatura listesine; fno, açıklama ve firma ismine göre anlık çalışan bir **Arama Çubuğu** eklendi.
+    - Standart tarayıcı seçim kutuları yerine, modern ve temiz bir görünüm sunan **Özel Açılır Menü (Custom Dropdown)** tasarlandı.
+    - Tasarımı sadeleştirmek adına arama ve filtreleme alanlarındaki tüm gereksiz ikonlar temizlendi.
+- **Z-Index Çözümleri**: Filtre menüsünün fatura kartlarının altında kalması sorunu, katman yönetimi (Z-index) ve pozisyonlama iyileştirmeleriyle çözüldü.
+- **Personel Yönetimi**: Tablo başlıkları (th), açık modda sayfa ile daha uyumlu ve belirgin olması için hafif gri tonlu bir arka plana kavuşturuldu.
+
+### 2. Hata Yönetimi ve Performans
+- **Bildirim (Toast) Tekilleştirme**: Sunucu kapalıyken veya internet kesildiğinde üst üste binen onlarca hata bildirimini engellemek için `ToastContext` içerisine "aynı mesajı tekrar gösterme" kontrolü eklendi.
+- **Merkezi Veri Çekme**: Sayfa ilk yüklenirken atılan çoklu API istekleri birleştirildi. Artık sunucu kapalıysa onlarca ayrı hata yerine tek bir anlamlı uyarı gösteriliyor.
+
+### 3. Backend ve API Geliştirmeleri
+- **İstatistik Algoritması Fix**: Dashboard istatistiklerinin en yeni veriler yerine en eskileri getirmesine neden olan sıralama hatası düzeltildi. Artık grafikler her zaman **en güncel son 60 günü** baz alıyor.
+- **Güvenli Profil API**: Kullanıcının kendi bilgilerini güncellemesi ve şifre değiştirmesi için gerekli `update-profile` ve `change-password` uç noktaları (endpoints) yetkilendirme katmanıyla birlikte eklendi.
+- **Tarih Senkronizasyonu**: Mobil grafiklerin takvimle tam uyumlu çalışması için istatistik API'sine ham tarih (Date object) çıktısı eklendi.
+
