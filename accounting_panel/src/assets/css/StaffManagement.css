@@ -60,12 +60,18 @@
 
 .staff-table th {
   padding: 1.2rem;
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-secondary);
-  font-weight: 600;
-  font-size: 0.9rem;
+  background: rgba(0, 0, 0, 0.03);
+  color: var(--text-primary);
+  opacity: 0.9;
+  font-weight: 700;
+  font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.05rem;
+  border-bottom: 2px solid var(--glass-border);
+}
+
+[data-theme='dark'] .staff-table th {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .staff-table td {

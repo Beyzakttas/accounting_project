@@ -77,6 +77,25 @@ const authController = {
     } catch (error) {
       next(error);
     }
+  },
+
+  updateProfile: async (req, res, next) => {
+    try {
+      const result = await authService.updateProfile(req.user.id, req.body);
+      return successResponse(res, result, 'Profil başarıyla güncellendi.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  changePassword: async (req, res, next) => {
+    const { oldPassword, newPassword } = req.body;
+    try {
+      await authService.changePassword(req.user.id, oldPassword, newPassword);
+      return successResponse(res, null, 'Şifre başarıyla değiştirildi.');
+    } catch (error) {
+      next(error);
+    }
   }
 };
 

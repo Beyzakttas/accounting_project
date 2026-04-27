@@ -2,6 +2,7 @@ import express from 'express';
 const router = express.Router();
 import authController from '../Controllers/auth.js';
 import validate from '../Middleware/validateMiddleware.js';
+import authMiddleware from '../Middleware/authMiddleware.js';
 import { registerSchema, loginSchema } from '../Utils/validators.js';
 
 /**
@@ -184,5 +185,27 @@ router.post('/forgot-password', authController.forgotPassword);
  *         description: Geçersiz veya süresi dolmuş token
  */
 router.post('/reset-password/:token', authController.resetPassword);
+
+/**
+ * @swagger
+ * /api/auth/update-profile:
+ *   put:
+ *     summary: Kullanıcı profilini günceller
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.put('/update-profile', authMiddleware, authController.updateProfile);
+
+/**
+ * @swagger
+ * /api/auth/change-password:
+ *   put:
+ *     summary: Kullanıcı şifresini değiştirir
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.put('/change-password', authMiddleware, authController.changePassword);
 
 export default router;

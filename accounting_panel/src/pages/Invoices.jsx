@@ -19,6 +19,9 @@ const Invoices = ({ user, onLogout }) => {
   const [editingInvoiceId, setEditingInvoiceId] = useState(null);
   const [activeMenu] = useState('Faturalar');
   const [customCategoryName, setCustomCategoryName] = useState('');
+  const [filter, setFilter] = useState('ALL'); // 'ALL', 'INCOME', 'EXPENSE'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
 
   // Form state
   const resetForm = () => {
@@ -46,36 +49,44 @@ const Invoices = ({ user, onLogout }) => {
     category: ''
   });
 
-  const fetchCategories = useCallback(async () => {
+  const fetchData = useCallback(async () => {
+    setLoading(true);
     try {
-      const response = await apiClient.get('/category');
-      if (response.success) {
-        setCategories(response.data);
-      }
-    } catch (error) {
-      console.error('Kategoriler yüklenemedi:', error);
-      addToast('Kategori listesi şu an güncellenemiyor, lütfen biraz sonra tekrar deneyin.', 'error');
-    }
-  }, [addToast]);
+      const [invoiceRes, categoryRes] = await Promise.allSettled([
+        apiClient.get('/invoice'),
+        apiClient.get('/category')
+      ]);
 
-  const fetchInvoices = useCallback(async () => {
-    try {
-      const response = await apiClient.get('/invoice');
-      if (response.success) {
-        setInvoices(response.data);
+      if (invoiceRes.status === 'fulfilled' && invoiceRes.value.success) {
+        setInvoices(invoiceRes.value.data);
+      }
+      
+      if (categoryRes.status === 'fulfilled' && categoryRes.value.success) {
+        setCategories(categoryRes.value.data);
+      }
+
+      // Eğer her ikisi de hata verdiyse genel bir mesaj göster
+      if (invoiceRes.status === 'rejected' && categoryRes.status === 'rejected') {
+        addToast('Sunucuya şu an ulaşılamıyor, lütfen internet bağlantınızı kontrol edin.', 'error');
+      } else {
+        // Tekil hataları yönet
+        if (invoiceRes.status === 'rejected') {
+          addToast('Faturalar yüklenirken bir sorun oluştu.', 'error');
+        }
+        if (categoryRes.status === 'rejected') {
+          addToast('Kategoriler yüklenirken bir sorun oluştu.', 'error');
+        }
       }
     } catch (error) {
-      console.error('Faturalar yüklenemedi:', error);
-      addToast('Faturalara şu an ulaşılamıyor, lütfen internet bağlantınızı kontrol edip tekrar deneyin.', 'error');
+      console.error('Veri çekme hatası:', error);
     } finally {
       setLoading(false);
     }
   }, [addToast]);
 
   useEffect(() => {
-    fetchInvoices();
-    fetchCategories();
-  }, [fetchInvoices, fetchCategories]);
+    fetchData();
+  }, [fetchData]);
 
   const handleSubmitInvoice = async (e) => {
     e.preventDefault();
@@ -106,7 +117,7 @@ const Invoices = ({ user, onLogout }) => {
       if (response.success) {
         setShowModal(false);
         resetForm();
-        fetchInvoices();
+        fetchData();
         addToast(isEditing ? 'Fatura başarıyla güncellendi.' : 'Fatura başarıyla oluşturuldu.', 'success');
         // Raporlar sayfasının veriyi yenilemesi için event gönder
         window.dispatchEvent(new CustomEvent('invoiceUpdated'));
@@ -143,7 +154,7 @@ const Invoices = ({ user, onLogout }) => {
       await apiClient.delete(`/invoice/${invoiceToDelete._id}`);
       setShowDeleteModal(false);
       setInvoiceToDelete(null);
-      fetchInvoices();
+      fetchData();
       addToast('Fatura başarıyla silindi.', 'success');
     } catch (error) {
       addToast(error.message || 'Silme işlemi başarısız.', 'error');
@@ -160,11 +171,67 @@ const Invoices = ({ user, onLogout }) => {
       onLogout={onLogout}
     >
       <div className="invoices-container">
+        <div className="filter-bar glass-card">
+          <div className="search-wrapper">
+            <input 
+              type="text" 
+              placeholder="Fatura no, açıklama veya satıcı ara..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+          </div>
+          
+          <div className="custom-dropdown-container">
+            <button 
+              className={`dropdown-trigger glass-card ${isFilterDropdownOpen ? 'open' : ''}`}
+              onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+            >
+              <span className="selected-value">
+                {filter === 'ALL' ? 'Tümü' : filter === 'INCOME' ? 'Gelirler' : 'Giderler'}
+              </span>
+              <span className="dropdown-arrow"></span>
+            </button>
+
+            {isFilterDropdownOpen && (
+              <div className="dropdown-menu glass-card">
+                <div 
+                  className={`dropdown-item ${filter === 'ALL' ? 'active' : ''}`}
+                  onClick={() => { setFilter('ALL'); setIsFilterDropdownOpen(false); }}
+                >
+                  Tümü
+                </div>
+                <div 
+                  className={`dropdown-item ${filter === 'INCOME' ? 'active' : ''}`}
+                  onClick={() => { setFilter('INCOME'); setIsFilterDropdownOpen(false); }}
+                >
+                  Gelirler
+                </div>
+                <div 
+                  className={`dropdown-item ${filter === 'EXPENSE' ? 'active' : ''}`}
+                  onClick={() => { setFilter('EXPENSE'); setIsFilterDropdownOpen(false); }}
+                >
+                  Giderler
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {loading ? (
           <div className="loading-state">Yükleniyor...</div>
         ) : (
           <div className="invoice-grid">
-            {invoices.map((invoice) => (
+            {invoices
+              .filter(inv => {
+                const matchesFilter = filter === 'ALL' || inv.type === filter;
+                const matchesSearch = 
+                  (inv.invoiceNumber?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                  (inv.description?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                  (inv.vendor?.toLowerCase().includes(searchQuery.toLowerCase()));
+                return matchesFilter && matchesSearch;
+              })
+              .map((invoice) => (
               <div key={invoice._id} className="glass-card invoice-card">
                 <div className="invoice-card-header">
                   <span className="invoice-type">{invoice.type || 'Fatura'}</span>

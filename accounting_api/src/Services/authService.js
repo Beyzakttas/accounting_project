@@ -231,3 +231,46 @@ export const refreshToken = async (providedRefreshToken) => {
 
   return { token: newToken, refreshToken: newRefreshToken };
 };
+
+/**
+ * Profil bilgilerini günceller
+ */
+export const updateProfile = async (userId, updateData) => {
+  // Hassas alanların güncellenmesini engelleyelim
+  const allowedUpdates = ['fullname', 'email', 'department'];
+  const filteredData = {};
+  
+  allowedUpdates.forEach(key => {
+    if (updateData[key]) filteredData[key] = updateData[key];
+  });
+
+  const user = await User.findByIdAndUpdate(userId, filteredData, { new: true });
+  if (!user) {
+    const error = new Error(MESSAGES.CONTROLLERS.AUTH.USER_NOT_FOUND);
+    error.statusCode = STATUS_CODES.NOT_FOUND;
+    throw error;
+  }
+  return user;
+};
+
+/**
+ * Mevcut kullanıcının şifresini değiştirir
+ */
+export const changePassword = async (userId, oldPassword, newPassword) => {
+  const user = await User.findById(userId).select('+password');
+  if (!user) {
+    const error = new Error(MESSAGES.CONTROLLERS.AUTH.USER_NOT_FOUND);
+    error.statusCode = STATUS_CODES.NOT_FOUND;
+    throw error;
+  }
+
+  const isMatch = await user.comparePassword(oldPassword);
+  if (!isMatch) {
+    const error = new Error('Eski şifre hatalı.');
+    error.statusCode = STATUS_CODES.UNAUTHORIZED;
+    throw error;
+  }
+
+  user.password = newPassword;
+  await user.save();
+};

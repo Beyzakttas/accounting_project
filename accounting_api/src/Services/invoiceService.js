@@ -138,7 +138,7 @@ export const getInvoiceStats = async (companyIdStr) => {
               expense: { $sum: { $cond: [{ $eq: ['$type', 'EXPENSE'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } }
             }
           },
-          { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } },
+          { $sort: { '_id.year': -1, '_id.month': -1, '_id.day': -1 } },
           { $limit: 60 }
         ],
         // 3. Kategori Dağılımı
@@ -184,11 +184,15 @@ export const getInvoiceStats = async (companyIdStr) => {
   const facet = results[0];
   const summary = facet.summary[0] || { totalIncome: 0, totalExpense: 0, pendingCount: 0 };
 
-  const formattedDailyData = facet.dailyData.map(item => ({
-    dateStr: `${String(item._id.day).padStart(2, '0')}/${String(item._id.month).padStart(2, '0')}`,
-    income: item.income,
-    expense: item.expense
-  }));
+  const formattedDailyData = facet.dailyData
+    .map(item => ({
+      dateStr: `${String(item._id.day).padStart(2, '0')}/${String(item._id.month).padStart(2, '0')}`,
+      income: item.income,
+      expense: item.expense,
+      date: new Date(item._id.year, item._id.month - 1, item._id.day),
+      sortKey: item._id.year * 10000 + item._id.month * 100 + item._id.day
+    }))
+    .sort((a, b) => a.sortKey - b.sortKey);
 
   return {
     ...summary,

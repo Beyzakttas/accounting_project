@@ -13,7 +13,12 @@ export const ToastProvider = ({ children }) => {
 
   const addToast = useCallback((message, type = 'info', duration = 3000) => {
     const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
-    setToasts((prev) => [...prev, { id, message, type }]);
+    
+    setToasts((prev) => {
+      // Eğer aynı mesaj zaten ekrandaysa tekrar ekleme
+      if (prev.some(t => t.message === message)) return prev;
+      return [...prev, { id, message, type }];
+    });
 
     if (duration > 0) {
       setTimeout(() => {
