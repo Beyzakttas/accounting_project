@@ -35,6 +35,13 @@ class MuhasebeApp extends StatelessWidget {
       themeMode: themeProvider.themeMode,
       home: Consumer<AuthProvider>(
         builder: (context, auth, _) {
+          if (!auth.isInitialized) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
           if (auth.isAuthenticated) {
             return const DashboardScreen();
           }

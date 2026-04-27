@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
 import '../../providers/invoice_provider.dart';
 
@@ -133,10 +134,14 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
               const SizedBox(height: 24),
               TextFormField(
                 controller: _amountController,
-                keyboardType: TextInputType.number,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                ],
                 decoration: InputDecoration(
                   labelText: 'Miktar (₺)',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  prefixIcon: const Icon(Icons.attach_money),
                 ),
                 validator: (v) => v!.isEmpty ? 'Gerekli' : null,
               ),
@@ -169,6 +174,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _selectedCategory,
+                menuMaxHeight: 250, // Yaklaşık 5 öğe yüksekliği
                 decoration: InputDecoration(
                   labelText: 'Kategori',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

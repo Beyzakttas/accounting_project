@@ -12,10 +12,12 @@ class AuthProvider with ChangeNotifier {
   bool _isAuthenticated = false;
   Map<String, dynamic>? _user;
   bool _isLoading = false;
+  bool _isInitialized = false;
 
   bool get isAuthenticated => _isAuthenticated;
   Map<String, dynamic>? get user => _user;
   bool get isLoading => _isLoading;
+  bool get isInitialized => _isInitialized;
 
   Future<void> checkAuthStatus() async {
     final token = await _storage.read(key: AppConstants.tokenKey);
@@ -28,6 +30,7 @@ class AuthProvider with ChangeNotifier {
       _isAuthenticated = false;
       _user = null;
     }
+    _isInitialized = true;
     notifyListeners();
   }
 
@@ -101,5 +104,56 @@ class AuthProvider with ChangeNotifier {
     _isAuthenticated = false;
     _user = null;
     notifyListeners();
+  }
+
+  Future<bool> updateProfile(String fullname, String email) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _apiService.dio.put('/auth/update-profile', data: {
+        'fullname': fullname,
+        'email': email,
+      });
+
+      if (response.statusCode == 200) {
+        final updatedUser = response.data['data'];
+        await _storage.write(key: AppConstants.userKey, value: json.encode(updatedUser));
+        _user = updatedUser;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      print('Profil Güncelleme Hatası: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> changePassword(String oldPassword, String newPassword) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _apiService.dio.put('/auth/change-password', data: {
+        'oldPassword': oldPassword,
+        'newPassword': newPassword,
+      });
+
+      if (response.statusCode == 200) {
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      print('Şifre Değiştirme Hatası: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
   }
 }

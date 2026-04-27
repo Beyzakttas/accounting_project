@@ -12,7 +12,7 @@ class NotificationsScreen extends StatelessWidget {
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: 5,
-        separatorBuilder: (context, index) => const Divider(color: Colors.white10),
+        separatorBuilder: (context, index) => Divider(color: Theme.of(context).dividerColor),
         itemBuilder: (context, index) {
           return ListTile(
             leading: const CircleAvatar(
@@ -24,9 +24,9 @@ class NotificationsScreen extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: const Text('Yeni bir fatura oluşturuldu veya güncelleme yapıldı.'),
-            trailing: const Text(
+            trailing: Text(
               '10 dk önce',
-              style: TextStyle(fontSize: 12, color: Colors.white54),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.54)),
             ),
             onTap: () {},
           );

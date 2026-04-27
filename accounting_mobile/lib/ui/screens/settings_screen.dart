@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
+import 'profile_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -20,7 +21,12 @@ class SettingsScreen extends StatelessWidget {
             context,
             'Profil Ayarları',
             Icons.person_outline,
-            () {},
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
           ),
           _buildSettingsTile(
             context,
@@ -43,9 +49,14 @@ class SettingsScreen extends StatelessWidget {
             context,
             'Güvenlik ve Şifre',
             Icons.lock_outline,
-            () {},
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
           ),
-          const Divider(height: 32, color: Colors.white24),
+          Divider(height: 32, color: Theme.of(context).dividerColor),
           _buildSettingsTile(
             context,
             'Uygulama Hakkında',
@@ -62,7 +73,7 @@ class SettingsScreen extends StatelessWidget {
     return ListTile(
       leading: Icon(icon, color: Colors.blueAccent),
       title: Text(title, style: const TextStyle(fontSize: 16)),
-      trailing: const Icon(Icons.chevron_right, size: 20, color: Colors.white54),
+      trailing: Icon(Icons.chevron_right, size: 20, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.54)),
       onTap: onTap,
     );
   }

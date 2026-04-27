@@ -4,6 +4,8 @@ import 'package:animate_do/animate_do.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/invoice_provider.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/dashboard_chart.dart';
+import '../widgets/category_pie_chart.dart';
 import 'invoice_list_screen.dart';
 import 'package:intl/intl.dart';
 
@@ -64,26 +66,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     FadeInLeft(
                       child: Text(
                         'Hoş geldin, $displayName 👋',
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                     const SizedBox(height: 24),
-                    _buildStatCard(
-                      context,
-                      'Toplam Gelir',
-                      stats?['totalIncome']?.toDouble() ?? 0.0,
-                      Colors.greenAccent,
-                      Icons.trending_up,
+                    // Summary Stats Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildCompactStatCard(
+                            context,
+                            'Gelir',
+                            stats?['totalIncome']?.toDouble() ?? 0.0,
+                            Colors.greenAccent,
+                            Icons.trending_up,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildCompactStatCard(
+                            context,
+                            'Gider',
+                            stats?['totalExpense']?.toDouble() ?? 0.0,
+                            Colors.redAccent,
+                            Icons.trending_down,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    _buildStatCard(
-                      context,
-                      'Toplam Gider',
-                      stats?['totalExpense']?.toDouble() ?? 0.0,
-                      Colors.redAccent,
-                      Icons.trending_down,
-                    ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     _buildStatCard(
                       context,
                       'Net Bakiye',
@@ -91,6 +102,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           (stats?['totalExpense']?.toDouble() ?? 0.0),
                       Colors.blueAccent,
                       Icons.account_balance_wallet,
+                    ),
+                    const SizedBox(height: 32),
+                    FadeInUp(
+                      delay: const Duration(milliseconds: 600),
+                      child: DashboardChart(dailyData: stats?['dailyData']),
                     ),
                     const SizedBox(height: 32),
                     Row(
@@ -163,6 +179,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                 ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactStatCard(BuildContext context, String title, double amount,
+      Color color, IconData icon) {
+    return FadeInUp(
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, color: color, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                currencyFormat.format(amount),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

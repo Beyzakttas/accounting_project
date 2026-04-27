@@ -4,6 +4,7 @@ import '../../providers/auth_provider.dart';
 import '../screens/invoice_list_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/notifications_screen.dart';
+import '../screens/reports_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -52,12 +53,6 @@ class AppDrawer extends StatelessWidget {
             // Menu Items
             _buildDrawerItem(
               context: context,
-              icon: Icons.dashboard_outlined,
-              title: 'Dashboard',
-              onTap: () => Navigator.pop(context),
-            ),
-            _buildDrawerItem(
-              context: context,
               icon: Icons.receipt_long_outlined,
               title: 'Faturalar',
               onTap: () {
@@ -65,6 +60,18 @@ class AppDrawer extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const InvoiceListScreen()),
+                );
+              },
+            ),
+            _buildDrawerItem(
+              context: context,
+              icon: Icons.pie_chart_outline,
+              title: 'Raporlar',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ReportsScreen()),
                 );
               },
             ),
@@ -94,7 +101,7 @@ class AppDrawer extends StatelessWidget {
             ),
             
             const Spacer(),
-            const Divider(color: Colors.white10),
+            Divider(color: Theme.of(context).dividerColor),
             
             // Logout
             _buildDrawerItem(

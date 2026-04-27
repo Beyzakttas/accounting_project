@@ -19,6 +19,11 @@ dependencies:
   flutter_svg: ^2.0.9
   shared_preferences: ^2.2.2
   image_picker: ^1.0.4
+  path_provider: ^2.1.1
+  gal: ^2.0.2
+  pdf: ^3.10.7
+  printing: ^5.11.1
+  share_plus: ^7.2.2
 
 dev_dependencies:
   flutter_test:
