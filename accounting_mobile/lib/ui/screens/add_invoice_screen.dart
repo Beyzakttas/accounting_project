@@ -6,7 +6,9 @@ import 'dart:io';
 import '../../providers/invoice_provider.dart';
 
 class AddInvoiceScreen extends StatefulWidget {
-  const AddInvoiceScreen({super.key});
+  final Map<String, dynamic>? invoiceToEdit;
+
+  const AddInvoiceScreen({super.key, this.invoiceToEdit});
 
   @override
   State<AddInvoiceScreen> createState() => _AddInvoiceScreenState();
@@ -26,6 +28,24 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
   void initState() {
     super.initState();
     context.read<InvoiceProvider>().fetchCategories();
+    
+    if (widget.invoiceToEdit != null) {
+      final inv = widget.invoiceToEdit!;
+      _amountController.text = inv['amount']?.toString() ?? '';
+      _descController.text = inv['description'] ?? '';
+      _vendorController.text = inv['vendor'] ?? '';
+      _invoiceNoController.text = inv['invoiceNumber'] ?? '';
+      _type = inv['type'] ?? 'EXPENSE';
+      
+      // Kategori nesne mi yoksa string id mi kontrol et (Eğer populate edilmişse nesnedir)
+      if (inv['category'] != null) {
+        if (inv['category'] is Map) {
+          _selectedCategory = inv['category']['_id'];
+        } else {
+          _selectedCategory = inv['category'];
+        }
+      }
+    }
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -42,11 +62,45 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Yeni Fatura Ekle'),
+        title: Text(widget.invoiceToEdit == null ? 'Yeni Fatura Ekle' : 'Fatura Düzenle'),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          if (widget.invoiceToEdit != null)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Faturayı Sil'),
+                    content: const Text('Bu faturayı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Vazgeç'),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          final success = await invoiceProvider.deleteInvoice(widget.invoiceToEdit!['_id']);
+                          if (success && mounted) {
+                            Navigator.pop(context); // Düzenleme ekranını kapat
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Fatura başarıyla silindi!')),
+                            );
+                          }
+                        },
+                        child: const Text('Sil', style: TextStyle(color: Colors.redAccent)),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -134,16 +188,23 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
               const SizedBox(height: 24),
               TextFormField(
                 controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                ],
+                keyboardType: TextInputType.text, // Harflerin girilebilmesine izin ver, böylece uyarıyı görebilirler
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 decoration: InputDecoration(
                   labelText: 'Miktar (₺)',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   prefixIcon: const Icon(Icons.attach_money),
                 ),
-                validator: (v) => v!.isEmpty ? 'Gerekli' : null,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Gerekli';
+                  
+                  // İçinde harf veya geçersiz karakter var mı kontrol et
+                  final isNumeric = double.tryParse(v.replaceAll(',', '.'));
+                  if (isNumeric == null) {
+                    return 'Hatalı giriş! Lütfen sadece rakam kullanın.';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -197,26 +258,38 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                           ? null
                           : () async {
                               if (_formKey.currentState!.validate()) {
-                                final success = await invoiceProvider.addInvoice({
-                                  'amount': _amountController.text,
+                                final payload = {
+                                  'amount': _amountController.text.replaceAll(',', '.'),
                                   'description': _descController.text,
                                   'vendor': _vendorController.text,
                                   'invoiceNumber': _invoiceNoController.text,
                                   'type': _type,
                                   'category': _selectedCategory,
-                                  'date': DateTime.now().toIso8601String(),
-                                }, image: _image);
+                                  'date': widget.invoiceToEdit?['date'] ?? DateTime.now().toIso8601String(),
+                                };
+
+                                bool success;
+                                if (widget.invoiceToEdit == null) {
+                                  success = await invoiceProvider.addInvoice(payload, image: _image);
+                                } else {
+                                  success = await invoiceProvider.updateInvoice(widget.invoiceToEdit!['_id'], payload, image: _image);
+                                }
+
                                 if (success && mounted) {
                                   Navigator.pop(context);
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Fatura başarıyla eklendi!')),
+                                    SnackBar(content: Text(widget.invoiceToEdit == null ? 'Fatura başarıyla eklendi!' : 'Fatura başarıyla güncellendi!')),
+                                  );
+                                } else if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Fatura eklenirken bir hata oluştu! Lütfen bilgileri kontrol edin.')),
                                   );
                                 }
                               }
                             },
                       child: invoiceProvider.isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Kaydet'),
+                          : Text(widget.invoiceToEdit == null ? 'Kaydet' : 'Güncelle'),
                     ),
                   ),
                   const SizedBox(width: 12),

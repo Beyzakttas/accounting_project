@@ -45,23 +45,37 @@ class SettingsScreen extends StatelessWidget {
               themeProvider.toggleTheme();
             },
           ),
-          _buildSettingsTile(
-            context,
-            'Güvenlik ve Şifre',
-            Icons.lock_outline,
-            () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfileScreen()),
-              );
-            },
-          ),
+
           Divider(height: 32, color: Theme.of(context).dividerColor),
           _buildSettingsTile(
             context,
             'Uygulama Hakkında',
             Icons.info_outline,
-            () {},
+            () {
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.blueAccent),
+                      SizedBox(width: 8),
+                      Text('Muhasebe AI'),
+                    ],
+                  ),
+                  content: const Text(
+                    'İşletmenizin gelir, gider ve fatura süreçlerini güvenli, akıllı ve pratik bir şekilde yönetmenizi sağlayan yeni nesil mobil muhasebe uygulamasıdır.\n\n'
+                    'Sürüm: 1.0.0',
+                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Kapat'),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),

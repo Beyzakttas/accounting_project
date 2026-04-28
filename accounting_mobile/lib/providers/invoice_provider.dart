@@ -100,6 +100,62 @@ class InvoiceProvider with ChangeNotifier {
     return false;
   }
 
+  Future<bool> updateInvoice(String id, Map<String, dynamic> invoiceData, {XFile? image}) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      dynamic data;
+      
+      if (image != null) {
+        data = FormData.fromMap({
+          ...invoiceData,
+          'image': await MultipartFile.fromFile(
+            image.path,
+            filename: image.name,
+          ),
+        });
+      } else {
+        data = invoiceData;
+      }
+
+      final response = await _apiService.dio.put('/invoice/$id', data: data);
+      if (response.statusCode == 200) {
+        _isLoading = false;
+        fetchInvoices();
+        fetchStats();
+        return true;
+      }
+    } catch (e) {
+      print('Update Invoice Error: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> deleteInvoice(String id) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _apiService.dio.delete('/invoice/$id');
+      if (response.statusCode == 200) {
+        _isLoading = false;
+        fetchInvoices();
+        fetchStats();
+        return true;
+      }
+    } catch (e) {
+      print('Delete Invoice Error: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
   Future<bool> downloadInvoice(String imageUrl) async {
     try {
       // Get the full URL (imageUrl starts with /uploads)

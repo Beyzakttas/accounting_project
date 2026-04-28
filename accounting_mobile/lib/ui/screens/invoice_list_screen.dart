@@ -85,6 +85,14 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                               child: Card(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 child: ListTile(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => AddInvoiceScreen(invoiceToEdit: invoice),
+                                      ),
+                                    );
+                                  },
                                   leading: CircleAvatar(
                                     backgroundColor: isIncome
                                         ? Colors.greenAccent.withOpacity(0.1)
@@ -117,7 +125,40 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                                       PopupMenuButton<String>(
                                         icon: const Icon(Icons.more_vert, color: Colors.blueAccent),
                                         onSelected: (value) async {
-                                          if (value == 'share') {
+                                          if (value == 'edit') {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => AddInvoiceScreen(invoiceToEdit: invoice),
+                                              ),
+                                            );
+                                          } else if (value == 'delete') {
+                                            showDialog(
+                                              context: context,
+                                              builder: (ctx) => AlertDialog(
+                                                title: const Text('Faturayı Sil'),
+                                                content: const Text('Bu faturayı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () => Navigator.pop(ctx),
+                                                    child: const Text('Vazgeç'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () async {
+                                                      Navigator.pop(ctx);
+                                                      final success = await context.read<InvoiceProvider>().deleteInvoice(invoice['_id']);
+                                                      if (success && mounted) {
+                                                        ScaffoldMessenger.of(context).showSnackBar(
+                                                          const SnackBar(content: Text('Fatura başarıyla silindi!')),
+                                                        );
+                                                      }
+                                                    },
+                                                    child: const Text('Sil', style: TextStyle(color: Colors.redAccent)),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          } else if (value == 'share') {
                                             context.read<InvoiceProvider>().shareInvoice(invoice);
                                           } else if (value == 'download') {
                                             if (invoice['imageUrl'] != null) {
@@ -144,6 +185,16 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                                         },
                                         itemBuilder: (context) => [
                                           const PopupMenuItem(
+                                            value: 'edit',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.edit_rounded, size: 20, color: Colors.blueAccent),
+                                                SizedBox(width: 8),
+                                                Text('Düzenle'),
+                                              ],
+                                            ),
+                                          ),
+                                          const PopupMenuItem(
                                             value: 'share',
                                             child: Row(
                                               children: [
@@ -160,6 +211,16 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                                                 Icon(Icons.download_rounded, size: 20, color: Colors.blueAccent),
                                                 SizedBox(width: 8),
                                                 Text('İndir'),
+                                              ],
+                                            ),
+                                          ),
+                                          const PopupMenuItem(
+                                            value: 'delete',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.delete_rounded, size: 20, color: Colors.redAccent),
+                                                SizedBox(width: 8),
+                                                Text('Sil', style: TextStyle(color: Colors.redAccent)),
                                               ],
                                             ),
                                           ),
