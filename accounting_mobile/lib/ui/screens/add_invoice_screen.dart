@@ -7,8 +7,10 @@ import '../../providers/invoice_provider.dart';
 
 class AddInvoiceScreen extends StatefulWidget {
   final Map<String, dynamic>? invoiceToEdit;
+  final Map<String, dynamic>? initialData;
+  final XFile? initialImage;
 
-  const AddInvoiceScreen({super.key, this.invoiceToEdit});
+  const AddInvoiceScreen({super.key, this.invoiceToEdit, this.initialData, this.initialImage});
 
   @override
   State<AddInvoiceScreen> createState() => _AddInvoiceScreenState();
@@ -29,6 +31,11 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
     super.initState();
     context.read<InvoiceProvider>().fetchCategories();
     
+    // Resim varsa ilklendirelim
+    if (widget.initialImage != null) {
+      _image = widget.initialImage;
+    }
+    
     if (widget.invoiceToEdit != null) {
       final inv = widget.invoiceToEdit!;
       _amountController.text = inv['amount']?.toString() ?? '';
@@ -37,12 +44,26 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
       _invoiceNoController.text = inv['invoiceNumber'] ?? '';
       _type = inv['type'] ?? 'EXPENSE';
       
-      // Kategori nesne mi yoksa string id mi kontrol et (Eğer populate edilmişse nesnedir)
       if (inv['category'] != null) {
         if (inv['category'] is Map) {
           _selectedCategory = inv['category']['_id'];
         } else {
           _selectedCategory = inv['category'];
+        }
+      }
+    } else if (widget.initialData != null) {
+      final data = widget.initialData!;
+      _amountController.text = data['amount']?.toString() ?? '';
+      _descController.text = data['description'] ?? '';
+      _vendorController.text = data['vendor'] ?? '';
+      _invoiceNoController.text = data['invoiceNumber'] ?? '';
+      _type = data['type'] ?? 'EXPENSE';
+      
+      if (data['category'] != null) {
+        if (data['category'] is Map) {
+          _selectedCategory = data['category']['_id'];
+        } else {
+          _selectedCategory = data['category'];
         }
       }
     }
@@ -258,15 +279,16 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                           ? null
                           : () async {
                               if (_formKey.currentState!.validate()) {
-                                final payload = {
-                                  'amount': _amountController.text.replaceAll(',', '.'),
-                                  'description': _descController.text,
-                                  'vendor': _vendorController.text,
-                                  'invoiceNumber': _invoiceNoController.text,
-                                  'type': _type,
-                                  'category': _selectedCategory,
-                                  'date': widget.invoiceToEdit?['date'] ?? DateTime.now().toIso8601String(),
-                                };
+                                  final payload = {
+                                    'amount': _amountController.text.replaceAll(',', '.'),
+                                    'description': _descController.text,
+                                    'vendor': _vendorController.text,
+                                    'invoiceNumber': _invoiceNoController.text,
+                                    'type': _type,
+                                    'category': _selectedCategory,
+                                    'taxAmount': widget.initialData?['taxAmount'] ?? 0,
+                                    'date': widget.invoiceToEdit?['date'] ?? DateTime.now().toIso8601String(),
+                                  };
 
                                 bool success;
                                 if (widget.invoiceToEdit == null) {
@@ -275,16 +297,19 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                                   success = await invoiceProvider.updateInvoice(widget.invoiceToEdit!['_id'], payload, image: _image);
                                 }
 
-                                if (success && mounted) {
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(widget.invoiceToEdit == null ? 'Fatura başarıyla eklendi!' : 'Fatura başarıyla güncellendi!')),
-                                  );
-                                } else if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Fatura eklenirken bir hata oluştu! Lütfen bilgileri kontrol edin.')),
-                                  );
-                                }
+                                  if (success && mounted) {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(widget.invoiceToEdit == null ? 'Fatura başarıyla eklendi!' : 'Fatura başarıyla güncellendi!')),
+                                    );
+                                  } else if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(invoiceProvider.lastError ?? 'Fatura eklenirken bir hata oluştu! Lütfen bilgileri kontrol edin.'),
+                                        backgroundColor: Colors.redAccent,
+                                      ),
+                                    );
+                                  }
                               }
                             },
                       child: invoiceProvider.isLoading

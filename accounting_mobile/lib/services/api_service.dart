@@ -5,8 +5,8 @@ import '../core/constants.dart';
 class ApiService {
   final Dio _dio = Dio(BaseOptions(
     baseUrl: AppConstants.baseUrl,
-    connectTimeout: const Duration(seconds: 5),
-    receiveTimeout: const Duration(seconds: 3),
+    connectTimeout: const Duration(seconds: 15),
+    receiveTimeout: const Duration(seconds: 30),
   ));
 
   final _storage = const FlutterSecureStorage();

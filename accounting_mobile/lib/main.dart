@@ -4,6 +4,7 @@ import 'core/theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/invoice_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/ai_provider.dart';
 import 'ui/screens/login_screen.dart';
 import 'ui/screens/dashboard_screen.dart';
 
@@ -14,6 +15,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()..checkAuthStatus()),
         ChangeNotifierProvider(create: (_) => InvoiceProvider()),
+        ChangeNotifierProvider(create: (_) => AiProvider()),
       ],
       child: const MuhasebeApp(),
     ),

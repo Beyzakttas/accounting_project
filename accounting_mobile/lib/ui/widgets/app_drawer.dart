@@ -5,6 +5,7 @@ import '../screens/invoice_list_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/reports_screen.dart';
+import '../screens/ai_chat_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -59,7 +60,19 @@ class AppDrawer extends StatelessWidget {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const InvoiceListScreen()),
+                  MaterialPageRoute(builder: (context) => InvoiceListScreen()),
+                );
+              },
+            ),
+            _buildDrawerItem(
+              context: context,
+              icon: Icons.smart_toy_outlined,
+              title: 'AI Asistan',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AiChatScreen()),
                 );
               },
             ),
@@ -71,7 +84,7 @@ class AppDrawer extends StatelessWidget {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ReportsScreen()),
+                  MaterialPageRoute(builder: (context) => ReportsScreen()),
                 );
               },
             ),
@@ -83,7 +96,7 @@ class AppDrawer extends StatelessWidget {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                  MaterialPageRoute(builder: (context) => NotificationsScreen()),
                 );
               },
             ),
@@ -95,7 +108,7 @@ class AppDrawer extends StatelessWidget {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                  MaterialPageRoute(builder: (context) => SettingsScreen()),
                 );
               },
             ),

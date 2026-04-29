@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/invoice_provider.dart';
+import '../../providers/ai_provider.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/dashboard_chart.dart';
 import '../widgets/category_pie_chart.dart';
 import 'invoice_list_screen.dart';
+import 'add_invoice_screen.dart';
+import 'ai_chat_screen.dart';
 import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -47,6 +51,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: const Text('Dashboard'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.smart_toy_outlined, color: Color(0xFF6366F1)),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AiChatScreen()),
+              );
+            },
+            tooltip: 'AI Asistan',
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => authProvider.logout(),
           ),
@@ -70,6 +84,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
+                    
                     // Summary Stats Row
                     Row(
                       children: [
@@ -108,6 +123,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       delay: const Duration(milliseconds: 600),
                       child: DashboardChart(dailyData: stats?['dailyData']),
                     ),
+                    const SizedBox(height: 24),
+                    FadeInUp(
+                      delay: const Duration(milliseconds: 800),
+                      child: CategoryPieChart(
+                        categoryData: stats?['categoryData'],
+                        type: 'EXPENSE',
+                      ),
+                    ),
                     const SizedBox(height: 32),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -121,7 +144,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const InvoiceListScreen(),
+                                builder: (context) => InvoiceListScreen(),
                               ),
                             );
                           },

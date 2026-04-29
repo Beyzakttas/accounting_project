@@ -9,13 +9,36 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
  * AI Modelini dinamik olarak başlatır
  * (API Key yüklendikten sonra emin olmak için)
  */
-const getAiModel = () => {
+const getAiModel = (modelName = "gemini-pro") => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
         throw new Error('GEMINI_API_KEY .env dosyasında bulunamadı. Lütfen anahtarınızı ekleyin.');
     }
     const genAI = new GoogleGenerativeAI(apiKey);
-    return genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+    return genAI.getGenerativeModel({ model: modelName });
+};
+
+/**
+ * Metin içindeki JSON bloğunu ayıklar ve objeye çevirir
+ */
+const parseAiJson = (text) => {
+    console.log('AI Ham Yanıt:', text);
+    try {
+        const start = text.indexOf('{');
+        const end = text.lastIndexOf('}');
+        
+        if (start === -1 || end === -1) {
+            throw new Error('Metin içinde geçerli bir JSON bloğu bulunamadı.');
+        }
+        
+        const jsonStr = text.substring(start, end + 1);
+        const parsed = JSON.parse(jsonStr);
+        console.log('AI Parse Edilen Veri:', parsed);
+        return parsed;
+    } catch (error) {
+        console.error('JSON Parse Hatası:', error, 'Orijinal Metin:', text);
+        throw new Error('Yapay zeka cevabı anlaşılamadı (Geçersiz format).');
+    }
 };
 
 /**
@@ -87,6 +110,7 @@ const callGroqLlama = async (prompt, imageBuffer = null, mimeType = null, isJson
  * @param {string} mimeType - Görsel tipi (image/jpeg, image/png vb.)
  */
 export const extractInvoiceData = async (imageBuffer, mimeType) => {
+  console.log('OCR İşlemi başlatıldı, MIME:', mimeType);
   const prompt = `
     Sen profesyonel bir muhasebe asistanısın. Gönderilen fatura/fiş görselini analiz et ve aşağıdaki bilgileri JSON formatında döndür.
     Sadece JSON döndür, başka açıklama yapma.
@@ -115,33 +139,27 @@ export const extractInvoiceData = async (imageBuffer, mimeType) => {
   `;
 
   try {
-    // 1. Önce Gemini'yi dene
-    const model = getAiModel();
+    // OCR için Gemini 1.5 Flash kullanalım (Vision desteği için)
+    const model = getAiModel("gemini-1.5-flash");
     const imageParts = [{ inlineData: { data: imageBuffer.toString("base64"), mimeType } }];
     const result = await model.generateContent([prompt, ...imageParts]);
     const response = await result.response;
     const text = response.text();
     
-    const jsonStr = text.replace(/```json|```/g, "").trim();
-    return JSON.parse(jsonStr);
+    return parseAiJson(text);
 
   } catch (error) {
-    const errMsg = error.message?.toLowerCase() || '';
+    console.error("Gemini OCR Hatası (Yedeğe geçiliyor):", error);
     
-    // Kota veya Hız Sınırı Hatası Alındıysa Llama'ya Geç
-    if (errMsg.includes('quota') || errMsg.includes('429') || errMsg.includes('limit') || errMsg.includes('too many requests')) {
-      console.warn("Gemini limiti doldu, Llama (Groq) yedeği devreye giriyor...");
-      try {
-          const llamaText = await callGroqLlama(prompt, imageBuffer, mimeType, true);
-          return JSON.parse(llamaText);
-      } catch (llamaError) {
-          console.error("Llama yedeği de başarısız:", llamaError);
-          throw new Error('Yapay zeka servislerinin tümü şu an meşgul. Lütfen biraz bekleyip tekrar deneyin.');
-      }
+    // Herhangi bir hata durumunda Llama'ya geçelim (Daha dayanıklı bir deneyim için)
+    try {
+        console.warn("Llama (Groq) yedeği devreye giriyor...");
+        const llamaText = await callGroqLlama(prompt, imageBuffer, mimeType, true);
+        return JSON.parse(llamaText);
+    } catch (llamaError) {
+        console.error("Llama yedeği de başarısız:", llamaError);
+        throw new Error('Yapay zeka servisleri şu an yanıt vermiyor. Lütfen görselin net olduğundan ve internet bağlantınızın olduğundan emin olun.');
     }
-    
-    console.error("AI OCR Hatası:", error);
-    throw new Error(`Fatura analiz edilemedi. Lütfen görselin net olduğundan emin olun.`);
   }
 };
 
@@ -171,27 +189,25 @@ export const getFinancialChat = async (context, userQuestion) => {
   `;
 
   try {
-    // 1. Önce Gemini'yi dene
-    const model = getAiModel();
+    console.log('Chat asistanı çağrıldı, Soru:', userQuestion);
+    // Sohbet için Gemini Pro kullanalım
+    const model = getAiModel("gemini-pro");
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    return response.text();
+    const answer = response.text();
+    console.log('Chat asistanı yanıtı:', answer);
+    return answer;
   } catch (error) {
-    const errMsg = error.message?.toLowerCase() || '';
+    console.error("Gemini Chat Hatası (Yedeğe geçiliyor):", error);
 
-    // Kota hatası varsa Llama'ya geç
-    if (errMsg.includes('quota') || errMsg.includes('429') || errMsg.includes('limit')) {
+    // Herhangi bir hata durumunda Llama'ya geçelim
+    try {
         console.warn("Asistan yedeği (Llama) devreye giriyor...");
-        try {
-            return await callGroqLlama(prompt, null, null, false);
-        } catch (llamaError) {
-            console.error("Llama sohbet yedeği başarısız:", llamaError);
-            throw new Error('Asistan şu an çok yoğun, lütfen 1 dakika bekleyip tekrar deneyin.');
-        }
+        return await callGroqLlama(prompt, null, null, false);
+    } catch (llamaError) {
+        console.error("Llama sohbet yedeği başarısız:", llamaError);
+        throw new Error('Asistan şu an çok yoğun, lütfen 1 dakika bekleyip tekrar deneyin.');
     }
-
-    console.error("AI Chat Hatası:", error);
-    throw new Error(`Asistan teknik bir sorun nedeniyle cevap veremiyor.`);
   }
 };
 

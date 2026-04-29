@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../providers/invoice_provider.dart';
+import '../../providers/ai_provider.dart';
 import 'add_invoice_screen.dart';
 import '../core/utils/formatters.dart';
 
@@ -22,6 +24,79 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
         context.read<InvoiceProvider>().fetchInvoices());
   }
 
+  Future<void> _scanInvoiceWithAi() async {
+    final aiProvider = context.read<AiProvider>();
+    final ImagePicker picker = ImagePicker();
+    
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Kamera ile Çek'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final XFile? image = await picker.pickImage(source: ImageSource.camera);
+                if (image != null) _processImage(image, aiProvider);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Galeriden Seç'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                if (image != null) _processImage(image, aiProvider);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _processImage(XFile image, AiProvider aiProvider) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Yapay Zeka faturayı analiz ediyor...'),
+          ],
+        ),
+      ),
+    );
+
+    final data = await aiProvider.analyzeInvoice(image);
+    
+    if (mounted) {
+      Navigator.pop(context); // Close loading dialog
+      
+      if (data != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AddInvoiceScreen(
+              initialData: data,
+              initialImage: image,
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Fatura analiz edilemedi. Lütfen tekrar deneyin.')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final invoiceProvider = Provider.of<InvoiceProvider>(context);
@@ -35,6 +110,13 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Faturalar'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.document_scanner_outlined),
+            onPressed: _scanInvoiceWithAi,
+            tooltip: 'AI ile Tara',
+          ),
+        ],
       ),
       body: Column(
         children: [

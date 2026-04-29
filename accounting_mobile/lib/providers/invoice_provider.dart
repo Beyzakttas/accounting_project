@@ -18,11 +18,13 @@ class InvoiceProvider with ChangeNotifier {
   List<dynamic> _invoices = [];
   List<dynamic> _categories = [];
   bool _isLoading = false;
-
+  String? _lastError;
+  
   Map<String, dynamic>? get stats => _stats;
   List<dynamic> get invoices => _invoices;
   List<dynamic> get categories => _categories;
   bool get isLoading => _isLoading;
+  String? get lastError => _lastError;
 
   Future<void> fetchStats() async {
     try {
@@ -67,6 +69,7 @@ class InvoiceProvider with ChangeNotifier {
 
   Future<bool> addInvoice(Map<String, dynamic> invoiceData, {XFile? image}) async {
     _isLoading = true;
+    _lastError = null;
     notifyListeners();
 
     try {
@@ -93,6 +96,11 @@ class InvoiceProvider with ChangeNotifier {
       }
     } catch (e) {
       print('Add Invoice Error: $e');
+      if (e is DioException && e.response != null) {
+        _lastError = e.response?.data['message'] ?? 'Sunucu hatası oluştu.';
+      } else {
+        _lastError = 'Bağlantı hatası oluştu.';
+      }
     }
 
     _isLoading = false;
@@ -102,6 +110,7 @@ class InvoiceProvider with ChangeNotifier {
 
   Future<bool> updateInvoice(String id, Map<String, dynamic> invoiceData, {XFile? image}) async {
     _isLoading = true;
+    _lastError = null;
     notifyListeners();
 
     try {
@@ -128,6 +137,11 @@ class InvoiceProvider with ChangeNotifier {
       }
     } catch (e) {
       print('Update Invoice Error: $e');
+      if (e is DioException && e.response != null) {
+        _lastError = e.response?.data['message'] ?? 'Sunucu hatası oluştu.';
+      } else {
+        _lastError = 'Bağlantı hatası oluştu.';
+      }
     }
 
     _isLoading = false;
