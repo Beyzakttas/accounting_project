@@ -20,16 +20,21 @@ class AuthProvider with ChangeNotifier {
   bool get isInitialized => _isInitialized;
 
   Future<void> checkAuthStatus() async {
+    // Otomatik giriş devredışı bırakıldı (Kullanıcı isteği üzerine her açılışta login ekranı gelsin)
+    _isAuthenticated = false;
+    _user = null;
+    
+    /* 
+    // Eski otomatik giriş mantığı:
     final token = await _storage.read(key: AppConstants.tokenKey);
     final userData = await _storage.read(key: AppConstants.userKey);
 
     if (token != null && userData != null) {
       _isAuthenticated = true;
       _user = json.decode(userData);
-    } else {
-      _isAuthenticated = false;
-      _user = null;
     }
+    */
+    
     _isInitialized = true;
     notifyListeners();
   }

@@ -176,6 +176,21 @@ export const getInvoiceStats = async (companyIdStr) => {
               value: '$total'
             }
           }
+        ],
+        // 4. Aylık Veriler (Yıllık Analiz İçin)
+        monthlyData: [
+          {
+            $group: {
+              _id: {
+                year: { $year: { $toDate: '$date' } },
+                month: { $month: { $toDate: '$date' } }
+              },
+              income: { $sum: { $cond: [{ $eq: ['$type', 'INCOME'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } },
+              expense: { $sum: { $cond: [{ $eq: ['$type', 'EXPENSE'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } }
+            }
+          },
+          { $sort: { '_id.year': -1, '_id.month': -1 } },
+          { $limit: 12 }
         ]
       }
     }
@@ -194,9 +209,22 @@ export const getInvoiceStats = async (companyIdStr) => {
     }))
     .sort((a, b) => a.sortKey - b.sortKey);
 
+  const months = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+  const formattedMonthlyData = facet.monthlyData
+    .map(item => ({
+      monthStr: months[item._id.month - 1],
+      income: item.income,
+      expense: item.expense,
+      year: item._id.year,
+      month: item._id.month,
+      sortKey: item._id.year * 100 + item._id.month
+    }))
+    .sort((a, b) => a.sortKey - b.sortKey);
+
   return {
     ...summary,
     dailyData: formattedDailyData,
+    monthlyData: formattedMonthlyData,
     categoryData: facet.categoryData
   };
 };

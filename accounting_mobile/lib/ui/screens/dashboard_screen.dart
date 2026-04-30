@@ -119,46 +119,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Icons.account_balance_wallet,
                     ),
                     const SizedBox(height: 32),
+                    
                     FadeInUp(
                       delay: const Duration(milliseconds: 600),
-                      child: DashboardChart(dailyData: stats?['dailyData']),
+                      child: DashboardChart(stats: stats),
                     ),
-                    const SizedBox(height: 24),
-                    FadeInUp(
-                      delay: const Duration(milliseconds: 800),
-                      child: CategoryPieChart(
-                        categoryData: stats?['categoryData'],
-                        type: 'EXPENSE',
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Son İşlemler',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => InvoiceListScreen(),
-                              ),
-                            );
-                          },
-                          child: const Text('Tümünü Gör'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    const Center(
-                      child: Text(
-                        'İşlem listesi yakında eklenecek...',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
+                    const SizedBox(height: 40),
+                    
+                    // Diğer detaylar artık raporlar sayfasında
                   ],
                 ),
               ),
