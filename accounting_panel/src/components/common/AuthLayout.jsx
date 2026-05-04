@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
+import '../../assets/css/AuthLayout.css';
 
 const AuthLayout = ({ 
     children, 
@@ -15,7 +16,7 @@ const AuthLayout = ({
     return (
         <div className={wrapperClass} {...props}>
             {showThemeToggle && (
-                <button type="button" className="theme-toggle" onClick={toggleTheme}>
+                <button type="button" className="theme-toggle" onClick={toggleTheme} style={{ zIndex: 100 }}>
                     {theme === 'light' ? '☀️' : '🌙'}
                 </button>
             )}
@@ -37,6 +38,5 @@ const AuthLayout = ({
         </div>
     );
 };
-
 
 export default AuthLayout;

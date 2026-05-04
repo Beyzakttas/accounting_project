@@ -46,7 +46,7 @@ function Login({ setUser }) {
   };
 
   return (
-    <AuthLayout title="LOGIN">
+    <AuthLayout title="Login">
       <Formik
         initialValues={{ email: '', password: '' }}
         validationSchema={validationSchema}
@@ -68,7 +68,12 @@ function Login({ setUser }) {
               placeholder="••••••••"
             />
 
-            <div className="forgot-password-wrapper">
+            <div className="form-actions-row">
+              <label className="remember-me">
+                <input type="checkbox" name="rememberMe" />
+                <span className="checkmark"></span>
+                Beni Hatırla
+              </label>
               <Link to="/forgot-password" className="primary-link small">
                 Şifremi Unuttum
               </Link>
