@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-enum ChartPeriod { daily, weekly, yearly }
+enum ChartPeriod { daily, weekly, monthly, yearly }
 
 class DashboardChart extends StatefulWidget {
   final Map<String, dynamic>? stats;
@@ -34,15 +34,19 @@ class _DashboardChartState extends State<DashboardChart> {
     switch (_selectedPeriod) {
       case ChartPeriod.daily:
         chartData = _processDailyData(dailyData);
-        title = 'Günlük Analiz (Son 7 Gün)';
+        title = 'Günlük Analiz';
         break;
       case ChartPeriod.weekly:
         chartData = _processWeeklyData(dailyData);
-        title = 'Haftalık Analiz (Son 4 Hafta)';
+        title = 'Haftalık Analiz';
+        break;
+      case ChartPeriod.monthly:
+        chartData = _processMonthlyData(monthlyData);
+        title = 'Aylık Analiz';
         break;
       case ChartPeriod.yearly:
         chartData = _processYearlyData(monthlyData);
-        title = 'Yıllık Analiz (Aylık)';
+        title = 'Yıllık Analiz';
         break;
     }
 
@@ -169,57 +173,48 @@ class _DashboardChartState extends State<DashboardChart> {
   }
 
   Widget _buildPeriodSelector() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).dividerColor.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildPeriodButton('G', ChartPeriod.daily),
-          _buildPeriodButton('H', ChartPeriod.weekly),
-          _buildPeriodButton('Y', ChartPeriod.yearly),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPeriodButton(String label, ChartPeriod period) {
-    final isSelected = _selectedPeriod == period;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedPeriod = period),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+    return PopupMenuButton<ChartPeriod>(
+      icon: Icon(Icons.more_vert, size: 20, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+      onSelected: (ChartPeriod result) {
+        setState(() {
+          _selectedPeriod = result;
+        });
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<ChartPeriod>>[
+        const PopupMenuItem<ChartPeriod>(
+          value: ChartPeriod.daily,
+          child: Text('Günlük'),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-          ),
+        const PopupMenuItem<ChartPeriod>(
+          value: ChartPeriod.weekly,
+          child: Text('Haftalık'),
         ),
-      ),
+        const PopupMenuItem<ChartPeriod>(
+          value: ChartPeriod.monthly,
+          child: Text('Aylık'),
+        ),
+        const PopupMenuItem<ChartPeriod>(
+          value: ChartPeriod.yearly,
+          child: Text('Yıllık'),
+        ),
+      ],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
     );
   }
 
   List<Map<String, dynamic>> _processDailyData(List<dynamic> dailyData) {
-    // Son 7 günü alalım
     if (dailyData.length > 7) {
       return dailyData.sublist(dailyData.length - 7).map((e) => {
         'label': e['dateStr'],
-        'income': e['income'],
-        'expense': e['expense'],
+        'income': (e['income'] ?? 0).toDouble(),
+        'expense': (e['expense'] ?? 0).toDouble(),
       }).toList();
     }
     return dailyData.map((e) => {
       'label': e['dateStr'],
-      'income': e['income'],
-      'expense': e['expense'],
+      'income': (e['income'] ?? 0).toDouble(),
+      'expense': (e['expense'] ?? 0).toDouble(),
     }).toList();
   }
 
@@ -258,12 +253,33 @@ class _DashboardChartState extends State<DashboardChart> {
     return weeks;
   }
 
-  List<Map<String, dynamic>> _processYearlyData(List<dynamic> monthlyData) {
-    return monthlyData.map((e) => {
+  List<Map<String, dynamic>> _processMonthlyData(List<dynamic> monthlyData) {
+    if (monthlyData.isEmpty) return [];
+    var data = monthlyData;
+    if (data.length > 6) {
+      data = data.sublist(data.length - 6);
+    }
+    return data.map((e) => {
       'label': e['monthStr'],
-      'income': e['income'],
-      'expense': e['expense'],
+      'income': (e['income'] ?? 0).toDouble(),
+      'expense': (e['expense'] ?? 0).toDouble(),
     }).toList();
+  }
+
+  List<Map<String, dynamic>> _processYearlyData(List<dynamic> monthlyData) {
+    if (monthlyData.isEmpty) return [];
+    Map<int, Map<String, dynamic>> yearMap = {};
+    for (var m in monthlyData) {
+      int year = m['year'];
+      if (!yearMap.containsKey(year)) {
+        yearMap[year] = {'label': year.toString(), 'income': 0.0, 'expense': 0.0};
+      }
+      yearMap[year]!['income'] += (m['income'] ?? 0).toDouble();
+      yearMap[year]!['expense'] += (m['expense'] ?? 0).toDouble();
+    }
+    var list = yearMap.values.toList();
+    list.sort((a, b) => a['label'].toString().compareTo(b['label'].toString()));
+    return list;
   }
 
   Widget _buildLegendItem(String label, Color color) {
