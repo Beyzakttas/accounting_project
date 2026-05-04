@@ -107,4 +107,21 @@ Aşağıda sisteme yeni eklenen/güncellenen özelliklerin detayı yer almaktad�
 - **İstatistik Algoritması Fix**: Dashboard istatistiklerinin en yeni veriler yerine en eskileri getirmesine neden olan sıralama hatası düzeltildi. Artık grafikler her zaman **en güncel son 60 günü** baz alıyor.
 - **Güvenli Profil API**: Kullanıcının kendi bilgilerini güncellemesi ve şifre değiştirmesi için gerekli `update-profile` ve `change-password` uç noktaları (endpoints) yetkilendirme katmanıyla birlikte eklendi.
 - **Tarih Senkronizasyonu**: Mobil grafiklerin takvimle tam uyumlu çalışması için istatistik API'sine ham tarih (Date object) çıktısı eklendi.
+---
 
+## 🤖 Yapay Zeka ve Mobil Dashboard Güncellemeleri (29.04.2026)
+
+### 1. Yapay Zeka Destekli Finansal Asistan (AI Chat)
+- **AI Asistan Entegrasyonu**: Uygulamanın sağ üst köşesine eklenen robot ikonu ile erişilebilen, şirketin güncel finansal verilerini (gelir, gider, bakiye) analiz edebilen akıllı sohbet asistanı eklendi.
+- **Hibrit Model Altyapısı**: Sohbet için yüksek zekalı `Gemini Pro`, fatura analizi için ise hızlı ve görsel odaklı `Gemini 1.5 Flash` modelleri ayrıştırılarak maksimum performans sağlandı.
+- **Hata Toleransı (Resiliency)**: Herhangi bir AI servisinde kesinti olması durumunda sistem otomatik olarak **Llama (Groq)** yedeğine geçerek kesintisiz hizmet vermeye devam eder.
+
+### 2. Gelişmiş Fatura Analizi (AI OCR)
+- **Faturalar Ekranı Entegrasyonu**: Fatura tarama özelliği, mantıksal olarak daha uygun olan "Faturalar" ekranına taşındı ve "AI Tara" ikonu ile kolay erişim sağlandı.
+- **Otomatik Form Doldurma ve Resim Eşleme**: Taranan faturadaki veriler (firma adı, tutar, fatura no, tarih) otomatik olarak forma dolarken, tarama yapılan fotoğraf da faturaya otomatik olarak iliştirilir.
+- **Görsel Tanıma Güçlendirmesi**: JPEG ve PNG formatındaki tüm faturalar için optimize edilmiş görsel gönderme altyapısı kuruldu.
+
+### 3. Mobil Dashboard ve Performans
+- **Grafik Restorasyonu**: Dashboard'a haftalık bakiye analizinin yanı sıra, giderlerin kategori bazlı dağılımını gösteren interaktif pasta (Pie) grafiği geri getirildi.
+- **Bağlantı Stabilizasyonu**: Yapay zeka gibi yoğun işlem gerektiren servisler için mobil uygulamadaki zaman aşımı (timeout) süreleri 3 saniyeden 30 saniyeye çıkarılarak "Bağlantı Hatası" sorunları kökten çözüldü.
+- **Hata Mesajı İyileştirmeleri**: Kayıt veya analiz sırasında oluşan hatalar artık kullanıcıya "Sunucu Hatası" gibi genel mesajlar yerine, sorunun tam nedenini (örn: "Bu fatura numarası zaten kayıtlı") belirten açıklayıcı bildirimler olarak sunuluyor.
