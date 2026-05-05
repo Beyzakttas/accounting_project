@@ -60,11 +60,11 @@
 
 .content-scroll-area {
   flex: 1;
-  padding: 1.5rem var(--responsive-padding) 2rem;
+  padding: 1rem var(--responsive-padding) 1.5rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.2rem;
   scrollbar-width: none;
   /* Firefox */
   -ms-overflow-style: none;

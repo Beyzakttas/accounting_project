@@ -63,8 +63,9 @@ class CategoryPieChart extends StatelessWidget {
           Wrap(
             spacing: 16,
             runSpacing: 8,
-            children: filteredData.map((item) {
-              final index = filteredData.indexOf(item);
+            children: filteredData.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
               return _buildLegendItem(
                 item['name'] ?? 'Kategorisiz',
                 _getColor(index),

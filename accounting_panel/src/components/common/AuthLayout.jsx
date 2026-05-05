@@ -2,10 +2,10 @@ import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import '../../assets/css/AuthLayout.css';
 
-const AuthLayout = ({ 
-    children, 
-    title, 
-    subtitle, 
+const AuthLayout = ({
+    children,
+    title,
+    subtitle,
     containerClass = "login-glass-card",
     wrapperClass = "login-wrapper",
     showThemeToggle = true,

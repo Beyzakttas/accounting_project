@@ -19,12 +19,24 @@ class InvoiceProvider with ChangeNotifier {
   List<dynamic> _categories = [];
   bool _isLoading = false;
   String? _lastError;
+  String _filter = 'ALL';
   
   Map<String, dynamic>? get stats => _stats;
   List<dynamic> get invoices => _invoices;
   List<dynamic> get categories => _categories;
   bool get isLoading => _isLoading;
   String? get lastError => _lastError;
+  String get filter => _filter;
+
+  List<dynamic> get filteredInvoices {
+    if (_filter == 'ALL') return _invoices;
+    return _invoices.where((invoice) => invoice['type'] == _filter).toList();
+  }
+
+  void setFilter(String filter) {
+    _filter = filter;
+    notifyListeners();
+  }
 
   Future<void> fetchStats() async {
     try {

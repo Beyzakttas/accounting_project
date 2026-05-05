@@ -444,17 +444,17 @@
 /* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.2rem;
   animation: fadeIn 0.6s ease 0.1s both;
 }
 
 
 .stat-card {
-  padding: 1.5rem;
+  padding: 1.2rem;
   display: flex;
   align-items: flex-start;
-  gap: 1.5rem;
+  gap: 1.2rem;
   transition: all 0.3s ease;
 }
 
@@ -533,7 +533,7 @@
 .dashboard-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 1.5rem;
+  gap: 1.2rem;
   animation: fadeIn 0.6s ease 0.2s both;
 }
 
@@ -541,7 +541,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .card-header h2 {
@@ -565,7 +565,7 @@
 }
 
 .chart-section {
-  padding: 1.5rem;
+  padding: 1.2rem;
 }
 
 .chart-placeholder {
@@ -814,23 +814,23 @@
 .dashboard-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 1.5rem;
-  margin-top: 1.5rem;
+  gap: 1.2rem;
+  margin-top: 1rem;
 }
 
 /* Chart Styles - Extracting from inline */
 .chart-section {
-  padding: 1.5rem;
+  padding: 1.2rem;
   display: flex;
   flex-direction: column;
 }
 
 .chart-container {
-  height: 300px;
+  height: 250px;
   width: 100%;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   display: flex;
-  gap: 15px;
+  gap: 12px;
 }
 
 .chart-y-axis {

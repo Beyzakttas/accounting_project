@@ -33,7 +33,6 @@ function Register({ setUser }) {
 
     const handleSubmit = async (values, { setSubmitting }) => {
         try {
-            // confirmPassword sadece frontend doğrulaması için — API'ye gönderilmez
             const { confirmPassword, ...apiData } = values;
             const response = await registerUser(apiData);
             const { user: userData, token } = response.data;
@@ -119,15 +118,12 @@ function Register({ setUser }) {
                     )}
                 </Formik>
 
-
-
                 <div className="register-footer">
                     <p>Zaten hesabınız var mı? <Link to="/">Giriş Yap</Link></p>
                 </div>
             </div>
 
             <div className="register-side-info">
-                <div className="logo-icon">🚀</div>
                 <h2 className="side-title">Muhasebe AI</h2>
                 <p className="side-text">
                     Yapay zeka destekli fatura analizi ve modern muhasebe deneyimine hoş geldiniz.

@@ -82,7 +82,7 @@
 
 /* Transitions for theme change */
 * {
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 @keyframes slideUp {
@@ -116,7 +116,6 @@
 }
 
 .login-glass-card:hover {
-  transform: translateY(-5px);
   box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
   border-color: rgba(99, 102, 241, 0.3);
 }
@@ -320,9 +319,11 @@
   .login-wrapper.split-layout {
     grid-template-columns: 1fr;
   }
+
   .auth-hero-section {
     display: none;
   }
+
   .login-glass-card {
     padding: 2.5rem;
     max-width: 100%;
@@ -341,6 +342,7 @@
     box-shadow: none;
     background: transparent;
   }
+
   .auth-form-section {
     padding: 0;
   }
@@ -383,16 +385,16 @@
   transition: all 0.2s;
 }
 
-.remember-me:hover input ~ .checkmark {
+.remember-me:hover input~.checkmark {
   border-color: #8A2BE2;
 }
 
-.remember-me input:checked ~ .checkmark {
+.remember-me input:checked~.checkmark {
   background-color: #8A2BE2;
   border-color: #8A2BE2;
 }
 
-.remember-me input:checked ~ .checkmark:after {
+.remember-me input:checked~.checkmark:after {
   content: "";
   display: block;
   width: 4px;

@@ -15,7 +15,6 @@ class InvoiceListScreen extends StatefulWidget {
 }
 
 class _InvoiceListScreenState extends State<InvoiceListScreen> {
-  String _filter = 'ALL'; // 'ALL', 'INCOME', 'EXPENSE'
 
   @override
   void initState() {
@@ -100,12 +99,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
   @override
   Widget build(BuildContext context) {
     final invoiceProvider = Provider.of<InvoiceProvider>(context);
-    
-    // Filtreleme mantığı
-    final invoices = invoiceProvider.invoices.where((invoice) {
-      if (_filter == 'ALL') return true;
-      return invoice['type'] == _filter;
-    }).toList();
+    final invoices = invoiceProvider.filteredInvoices;
 
     return Scaffold(
       appBar: AppBar(
@@ -139,11 +133,11 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  _buildFilterChip('Tümü', 'ALL', Icons.list),
+                  _buildFilterChip(context, 'Tümü', 'ALL', Icons.list),
                   const SizedBox(width: 10),
-                  _buildFilterChip('Gelirler', 'INCOME', Icons.trending_up),
+                  _buildFilterChip(context, 'Gelirler', 'INCOME', Icons.trending_up),
                   const SizedBox(width: 10),
-                  _buildFilterChip('Giderler', 'EXPENSE', Icons.trending_down),
+                  _buildFilterChip(context, 'Giderler', 'EXPENSE', Icons.trending_down),
                 ],
               ),
             ),
@@ -163,7 +157,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                             final isIncome = invoice['type'] == 'INCOME';
 
                             return FadeInUp(
-                              delay: Duration(milliseconds: index * 50),
+                              duration: const Duration(milliseconds: 300),
                               child: Card(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 child: ListTile(
@@ -331,8 +325,9 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label, String value, IconData icon) {
-    final isSelected = _filter == value;
+  Widget _buildFilterChip(BuildContext context, String label, String value, IconData icon) {
+    final provider = context.read<InvoiceProvider>();
+    final isSelected = provider.filter == value;
     final color = value == 'INCOME' 
         ? Colors.greenAccent 
         : (value == 'EXPENSE' ? Colors.redAccent : Colors.blueAccent);
@@ -346,9 +341,9 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
       label: Text(label),
       selected: isSelected,
       onSelected: (bool selected) {
-        setState(() {
-          _filter = value;
-        });
+        if (selected) {
+          provider.setFilter(value);
+        }
       },
       selectedColor: color,
       backgroundColor: Theme.of(context).cardTheme.color,

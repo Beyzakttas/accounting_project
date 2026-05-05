@@ -25,6 +25,15 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
   String _type = 'EXPENSE';
   String? _selectedCategory;
   XFile? _image;
+  
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _descController.dispose();
+    _vendorController.dispose();
+    _invoiceNoController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
