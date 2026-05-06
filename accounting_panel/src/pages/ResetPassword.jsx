@@ -35,8 +35,45 @@ function ResetPassword() {
         }
     };
 
+    const leftPanelContent = (
+        <>
+            <div className="left-brand-header">
+                Finans Pro
+            </div>
+
+            <h1 className="left-main-title">
+                Güvenli erişim<br />
+                <span>her zaman</span> önceliğimiz
+            </h1>
+
+            <p className="left-subtitle" style={{ marginBottom: '8rem' }}>
+                Hesabınızı doğrulanmış e-posta adresiniz üzerinden kurtarabilirsiniz.
+            </p>
+
+            <div className="left-stats-row">
+                <div className="stat-item">
+                    <h3>12.400+</h3>
+                    <p>AKTİF<br />FİRMA</p>
+                </div>
+                <div className="stat-item">
+                    <h3>99.8%</h3>
+                    <p>KESİNTİ<br />YOK</p>
+                </div>
+                <div className="stat-item">
+                    <h3 style={{ color: '#10b981' }}>ISO</h3>
+                    <p>27001</p>
+                </div>
+            </div>
+        </>
+    );
+
     return (
-        <AuthLayout title="Yeni Şifre Belirle" subtitle="Lütfen yeni şifrenizi girin.">
+        <AuthLayout leftPanelContent={leftPanelContent}>
+            <div className="login-header">
+                <h1 className="login-title">Yeni Şifre Belirle</h1>
+                <p className="login-subtitle">Lütfen yeni şifrenizi girin.</p>
+            </div>
+
             <Formik
                 initialValues={{ password: '', confirmPassword: '' }}
                 validationSchema={validationSchema}
@@ -46,14 +83,14 @@ function ResetPassword() {
                     <Form className="login-form">
                         <FormInput
                             name="password"
-                            label="Yeni Şifre"
+                            label="YENİ ŞİFRE"
                             type="password"
                             placeholder="••••••••"
                         />
 
                         <FormInput
                             name="confirmPassword"
-                            label="Şifreyi Onayla"
+                            label="ŞİFREYİ ONAYLA"
                             type="password"
                             placeholder="••••••••"
                         />

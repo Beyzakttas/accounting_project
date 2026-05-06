@@ -7,7 +7,7 @@ import LoadingButton from '../components/common/LoadingButton';
 import { useToast } from '../contexts/ToastContext';
 import { registerUser } from '../services/authService';
 import FormInput from '../components/common/FormInput';
-import '../assets/css/Register.css';
+import '../assets/css/Login.css'; // Re-use the unified form styles
 
 function Register({ setUser }) {
     const { addToast } = useToast();
@@ -58,81 +58,94 @@ function Register({ setUser }) {
         }
     };
 
-    return (
-        <AuthLayout
-            containerClass="register-glass-card"
-            wrapperClass="register-wrapper"
-        >
-            <div className="register-form-container">
-                <div className="register-header">
-                    <h1 className="register-title">Kayıt Ol</h1>
-                    <p className="register-subtitle">Bilgilerinizi girerek hesabınızı oluşturun</p>
-                </div>
-
-                <Formik
-                    initialValues={{
-                        fullname: '',
-                        email: '',
-                        password: '',
-                        confirmPassword: ''
-                    }}
-                    validationSchema={validationSchema}
-                    onSubmit={handleSubmit}
-                >
-                    {({ isSubmitting }) => (
-                        <Form className="register-form">
-                            <div className="form-grid">
-                                <FormInput
-                                    name="fullname"
-                                    label="Ad Soyad"
-                                    type="text"
-                                    placeholder="Ahmet Yılmaz"
-                                />
-
-                                <FormInput
-                                    name="email"
-                                    label="E-posta"
-                                    type="email"
-                                    placeholder="ornek@sirket.com"
-                                />
-
-                                <FormInput
-                                    name="password"
-                                    label="Şifre"
-                                    type="password"
-                                    placeholder="••••••••"
-                                />
-
-                                <FormInput
-                                    name="confirmPassword"
-                                    label="Şifre (Tekrar)"
-                                    type="password"
-                                    placeholder="••••••••"
-                                />
-                            </div>
-
-                            <LoadingButton isLoading={isSubmitting} className="register-btn">
-                                Hesabımı Oluştur
-                            </LoadingButton>
-                        </Form>
-                    )}
-                </Formik>
-
-                <div className="register-footer">
-                    <p>Zaten hesabınız var mı? <Link to="/">Giriş Yap</Link></p>
-                </div>
+    const leftPanelContent = (
+        <>
+            <div className="left-brand-header">
+                Finans Pro
             </div>
 
-            <div className="register-side-info">
-                <h2 className="side-title">Muhasebe AI</h2>
-                <p className="side-text">
-                    Yapay zeka destekli fatura analizi ve modern muhasebe deneyimine hoş geldiniz.
-                </p>
-                <ul className="side-features">
-                    <li>✅ AI ile Otomatik Fatura Okuma</li>
-                    <li>📊 Gelişmiş Raporlama Sistemleri</li>
-                    <li>☁️ Güvenli Bulut Altyapısı</li>
-                </ul>
+            <h1 className="left-main-title">
+                İşinizi büyütmeye<br />
+                <span>bugün</span> başlayın
+            </h1>
+
+            <p className="left-subtitle">
+                Yapay zeka destekli ön-muhasebe sistemine hemen katılın, finansal süreçlerinizi tek tıkla otomatikleştirin.
+            </p>
+
+            <ul className="left-feature-list">
+                <li className="left-feature-item">
+                    <div className="feature-icon-box">🚀</div>
+                    Ücretsiz ve anında kurulum
+                </li>
+                <li className="left-feature-item">
+                    <div className="feature-icon-box">🤖</div>
+                    Sınırsız yapay zeka asistanı
+                </li>
+                <li className="left-feature-item">
+                    <div className="feature-icon-box">📱</div>
+                    Tüm cihazlardan anlık erişim
+                </li>
+            </ul>
+        </>
+    );
+
+    return (
+        <AuthLayout leftPanelContent={leftPanelContent}>
+            <div className="login-header">
+                <h1 className="login-title">Kayıt Ol</h1>
+                <p className="login-subtitle">Bilgilerinizi girerek hesabınızı oluşturun.</p>
+            </div>
+
+            <Formik
+                initialValues={{
+                    fullname: '',
+                    email: '',
+                    password: '',
+                    confirmPassword: ''
+                }}
+                validationSchema={validationSchema}
+                onSubmit={handleSubmit}
+            >
+                {({ isSubmitting }) => (
+                    <Form className="login-form" style={{ gap: '0.75rem' }}>
+                        <FormInput
+                            name="fullname"
+                            label="AD SOYAD"
+                            type="text"
+                            placeholder="Ahmet Yılmaz"
+                        />
+
+                        <FormInput
+                            name="email"
+                            label="E-POSTA"
+                            type="email"
+                            placeholder="ornek@firma.com"
+                        />
+
+                        <FormInput
+                            name="password"
+                            label="ŞİFRE"
+                            type="password"
+                            placeholder="••••••••"
+                        />
+
+                        <FormInput
+                            name="confirmPassword"
+                            label="ŞİFRE (TEKRAR)"
+                            type="password"
+                            placeholder="••••••••"
+                        />
+
+                        <LoadingButton isLoading={isSubmitting} className="login-btn" style={{ marginTop: '0.5rem' }}>
+                            Hesabımı Oluştur
+                        </LoadingButton>
+                    </Form>
+                )}
+            </Formik>
+
+            <div className="login-footer">
+                <p>Zaten hesabınız var mı? <Link to="/" className="auth-border-btn">Giriş yapın</Link></p>
             </div>
         </AuthLayout>
     );

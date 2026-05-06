@@ -4,36 +4,35 @@ import '../../assets/css/AuthLayout.css';
 
 const AuthLayout = ({
     children,
-    title,
-    subtitle,
-    containerClass = "login-glass-card",
-    wrapperClass = "login-wrapper",
+    leftPanelContent,
     showThemeToggle = true,
     ...props
 }) => {
     const { theme, toggleTheme } = useTheme();
 
     return (
-        <div className={wrapperClass} {...props}>
+        <div className="auth-split-wrapper" {...props}>
             {showThemeToggle && (
-                <button type="button" className="theme-toggle" onClick={toggleTheme} style={{ zIndex: 100 }}>
+                <button type="button" className="theme-toggle" onClick={toggleTheme} title="Tema Değiştir">
                     {theme === 'light' ? '☀️' : '🌙'}
                 </button>
             )}
 
-            <div className="blobs">
-                <div className="blob blob-1" />
-                <div className="blob blob-2" />
+            {/* Left Panel - Information / Branding */}
+            <div className="auth-left-panel">
+                <div className="auth-left-content">
+                    {leftPanelContent}
+                </div>
+                {/* Background decorative elements for the left panel */}
+                <div className="auth-left-decoration circle-1"></div>
+                <div className="auth-left-decoration circle-2"></div>
             </div>
 
-            <div className={containerClass}>
-                {(title || subtitle) && (
-                    <div className="login-header">
-                        {title && <h1 className="login-title">{title}</h1>}
-                        {subtitle && <p className="login-subtitle">{subtitle}</p>}
-                    </div>
-                )}
-                {children}
+            {/* Right Panel - Form Area */}
+            <div className="auth-right-panel">
+                <div className="auth-form-container">
+                    {children}
+                </div>
             </div>
         </div>
     );
