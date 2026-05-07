@@ -4,6 +4,7 @@ import * as Yup from 'yup';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import FormInput from '../components/common/FormInput';
 import { useToast } from '../contexts/ToastContext';
+import apiClient from '../api/apiClient';
 import '../assets/css/Settings.css';
 
 const Settings = ({ user, onLogout }) => {
@@ -18,17 +19,29 @@ const Settings = ({ user, onLogout }) => {
   const validationSchema = Yup.object().shape({
     currentPassword: Yup.string().required('Mevcut şifre zorunludur.'),
     newPassword: Yup.string()
-      .min(6, 'Şifre en az 6 karakter olmalıdır.')
+      .min(8, 'Şifre en az 8 karakter olmalıdır ve karmaşık olmalıdır.')
       .required('Yeni şifre zorunludur.'),
     confirmPassword: Yup.string()
       .oneOf([Yup.ref('newPassword'), null], 'Şifreler eşleşmiyor.')
       .required('Şifre tekrarı zorunludur.')
   });
 
-  const handlePasswordUpdate = async (values, { resetForm }) => {
-    // API çağrısı buraya gelecek
-    addToast('Şifreniz başarıyla değiştirildi.', 'success');
-    resetForm();
+  const handlePasswordUpdate = async (values, { resetForm, setSubmitting }) => {
+    try {
+      const response = await apiClient.put('/auth/change-password', {
+        oldPassword: values.currentPassword,
+        newPassword: values.newPassword
+      });
+
+      if (response.success) {
+        addToast('Şifreniz başarıyla değiştirildi.', 'success');
+        resetForm();
+      }
+    } catch (error) {
+      addToast(error.message || 'Şifre değiştirilirken bir hata oluştu. Eski şifrenizi doğru girdiğinizden ve yeni şifrenizin kurallara uyduğundan emin olun.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const toggleNotification = (key) => {

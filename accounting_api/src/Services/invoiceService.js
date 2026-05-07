@@ -61,18 +61,21 @@ export const createInvoice = async (invoiceData, userId, companyId) => {
  */
 export const getInvoices = async (filter) => {
   return await Invoice.find(filter)
-    .populate('uploadedBy', 'fullname email')
+    .populate('uploadedBy', 'fullname email role department')
     .sort({ createdAt: -1 });
 };
 
 /**
  * Fatura güncelleme
  */
-export const updateInvoice = async (invoiceId, updateData, userId, role) => {
-  // MANAGER ve ADMIN her zaman güncelleyebilir, USER sadece kendi faturasını
+export const updateInvoice = async (invoiceId, updateData, userId, role, department) => {
+  // MANAGER ve ADMIN her zaman güncelleyebilir, USER kendi yüklediklerini veya kendi departmanına atanan faturaları
   const query = { _id: invoiceId };
   if (role === 'USER') {
-    query.uploadedBy = userId;
+    query.$or = [
+      { uploadedBy: userId },
+      { department: department || 'Diger' }
+    ];
   }
 
   const invoice = await Invoice.findOne(query);

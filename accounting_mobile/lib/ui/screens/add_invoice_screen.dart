@@ -24,6 +24,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
   final _invoiceNoController = TextEditingController();
   String _type = 'EXPENSE';
   String? _selectedCategory;
+  String _department = 'Diger';
   XFile? _image;
   
   @override
@@ -52,6 +53,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
       _vendorController.text = inv['vendor'] ?? '';
       _invoiceNoController.text = inv['invoiceNumber'] ?? '';
       _type = inv['type'] ?? 'EXPENSE';
+      _department = inv['department'] ?? 'Diger';
       
       if (inv['category'] != null) {
         if (inv['category'] is Map) {
@@ -67,6 +69,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
       _vendorController.text = data['vendor'] ?? '';
       _invoiceNoController.text = data['invoiceNumber'] ?? '';
       _type = data['type'] ?? 'EXPENSE';
+      _department = data['department'] ?? 'Diger';
       
       if (data['category'] != null) {
         if (data['category'] is Map) {
@@ -278,6 +281,25 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                 }).toList(),
                 onChanged: (v) => setState(() => _selectedCategory = v),
               ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _department,
+                decoration: InputDecoration(
+                  labelText: 'Departman',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'Muhasebe', child: Text('Muhasebe')),
+                  DropdownMenuItem(value: 'Finans', child: Text('Finans')),
+                  DropdownMenuItem(value: 'IK', child: Text('İnsan Kaynakları (IK)')),
+                  DropdownMenuItem(value: 'Satis', child: Text('Satış')),
+                  DropdownMenuItem(value: 'Pazarlama', child: Text('Pazarlama')),
+                  DropdownMenuItem(value: 'Yazilim', child: Text('Yazılım')),
+                  DropdownMenuItem(value: 'Operasyon', child: Text('Operasyon')),
+                  DropdownMenuItem(value: 'Diger', child: Text('Diğer')),
+                ],
+                onChanged: (v) => setState(() => _department = v ?? 'Diger'),
+              ),
               const SizedBox(height: 32),
               Row(
                 children: [
@@ -295,6 +317,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                                     'invoiceNumber': _invoiceNoController.text,
                                     'type': _type,
                                     'category': _selectedCategory,
+                                    'department': _department,
                                     'taxAmount': widget.initialData?['taxAmount'] ?? 0,
                                     'date': widget.invoiceToEdit?['date'] ?? DateTime.now().toIso8601String(),
                                   };

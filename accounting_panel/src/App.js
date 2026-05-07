@@ -12,6 +12,7 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
+import NotificationWatcher from './components/NotificationWatcher';
 
 // ... importlar aynı kalıyor
 
@@ -19,6 +20,8 @@ function App() {
   const [user, setUser] = useState({
     name: localStorage.getItem('userName') || '',
     role: localStorage.getItem('role') || 'USER', // Default to USER if not set
+    id: localStorage.getItem('userId') || '',
+    department: localStorage.getItem('department') || 'Diger',
   });
 
   const handleLogout = () => {
@@ -30,6 +33,7 @@ function App() {
   return (
     <ThemeProvider>
       <ToastProvider>
+        <NotificationWatcher user={user} />
         <Router>
           <Routes>
             <Route path="/" element={

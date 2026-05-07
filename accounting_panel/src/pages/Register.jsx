@@ -40,11 +40,15 @@ function Register({ setUser }) {
             localStorage.setItem('token', token);
             localStorage.setItem('role', userData.role);
             localStorage.setItem('userName', userData.fullname);
+            localStorage.setItem('userId', userData._id);
+            localStorage.setItem('department', userData.department || 'Diger');
 
             if (setUser) {
                 setUser({
                     name: userData.fullname,
-                    role: userData.role
+                    role: userData.role,
+                    id: userData._id,
+                    department: userData.department || 'Diger'
                 });
             }
 

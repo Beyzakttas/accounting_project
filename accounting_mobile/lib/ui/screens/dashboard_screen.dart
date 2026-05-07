@@ -26,8 +26,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() =>
-        context.read<InvoiceProvider>().fetchStats());
+    Future.microtask(() {
+      context.read<InvoiceProvider>().fetchStats();
+      context.read<InvoiceProvider>().startNotificationPolling(context);
+    });
+  }
+
+  @override
+  void dispose() {
+    // Arka plan sorgulamasını sonlandıralım
+    context.read<InvoiceProvider>().stopNotificationPolling();
+    super.dispose();
   }
 
   @override

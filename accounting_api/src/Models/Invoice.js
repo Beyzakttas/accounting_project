@@ -57,6 +57,11 @@ const InvoiceSchema = new mongoose.Schema({
   n8nSource: {
     type: Boolean,
     default: false // Faturanın n8n mail webhook'undan gelip gelmediğini tutar
+  },
+  department: {
+    type: String,
+    enum: ['Muhasebe', 'Finans', 'IK', 'Satis', 'Pazarlama', 'Yazilim', 'Operasyon', 'Diger'],
+    default: 'Diger'
   }
 }, {
   timestamps: true

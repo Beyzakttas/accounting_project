@@ -26,11 +26,16 @@ const invoiceController = {
   // 2. Faturaları listele (Yetkiye göre)
   getAllInvoices: async (req, res, next) => {
     try {
-      const { companyId, _id: userId, role } = req.user;
+      const { companyId, _id: userId, role, department } = req.user;
       const filter = { companyId };
 
-      // USER rolü sadece kendi yüklediklerini görsün
-      if (role === 'USER') filter.uploadedBy = userId;
+      // USER rolü hem kendi yüklediklerini hem de kendi departmanına atanan faturaları görsün
+      if (role === 'USER') {
+        filter.$or = [
+          { uploadedBy: userId },
+          { department: department || 'Diger' }
+        ];
+      }
 
       const invoices = await invoiceService.getInvoices(filter);
       return successResponse(res, invoices);
@@ -42,8 +47,8 @@ const invoiceController = {
   // 3. Fatura güncelle
   updateInvoice: async (req, res, next) => {
     try {
-      const { _id: userId, role } = req.user;
-      const invoice = await invoiceService.updateInvoice(req.params.id, req.body, userId, role);
+      const { _id: userId, role, department } = req.user;
+      const invoice = await invoiceService.updateInvoice(req.params.id, req.body, userId, role, department);
       return successResponse(res, invoice, 'Fatura başarıyla güncellendi.');
     } catch (error) {
       next(error);

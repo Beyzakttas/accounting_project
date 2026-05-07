@@ -8,8 +8,11 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'dart:async';
+import 'package:provider/provider.dart';
 import '../services/api_service.dart';
 import '../core/constants.dart';
+import 'auth_provider.dart';
 
 class InvoiceProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -20,6 +23,145 @@ class InvoiceProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _lastError;
   String _filter = 'ALL';
+  
+  Timer? _pollingTimer;
+  Set<String> _knownInvoiceIds = {};
+  bool _isFirstPoll = true;
+
+  void startNotificationPolling(BuildContext context) {
+    if (_pollingTimer != null) return; // Zaten çalışıyorsa ikinciyi başlatma
+    
+    _isFirstPoll = true;
+    _knownInvoiceIds.clear();
+
+    // İlk sorguyu yap ve bilinenleri doldur
+    _checkNewInvoices(context);
+
+    // Her 5 dakikada bir (geliştirici ortamında test için 15 saniyede bir!)
+    const interval = bool.fromEnvironment('dart.vm.product') 
+        ? Duration(minutes: 5) 
+        : Duration(seconds: 15);
+
+    _pollingTimer = Timer.periodic(interval, (timer) {
+      _checkNewInvoices(context);
+    });
+  }
+
+  void stopNotificationPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
+  }
+
+  Future<void> _checkNewInvoices(BuildContext context) async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final loggedInUserId = authProvider.user?['_id'] as String?;
+      if (loggedInUserId == null) return;
+
+      final response = await _apiService.dio.get('/invoice');
+      if (response.statusCode == 200) {
+        final List<dynamic> fetchedInvoices = response.data['data'];
+        final currentIds = fetchedInvoices.map((inv) => inv['_id'] as String).toSet();
+
+        if (_isFirstPoll) {
+          _knownInvoiceIds = currentIds;
+          _isFirstPoll = false;
+          return;
+        }
+
+        // Yeni eklenen faturaları bul ve akıllı bildirim kurallarına göre filtrele
+        final newInvoices = fetchedInvoices.where((inv) {
+          final isNew = !_knownInvoiceIds.contains(inv['_id']);
+          if (!isNew) return false;
+
+          final uploader = inv['uploadedBy'] is Map ? inv['uploadedBy'] : {};
+          final uploaderId = uploader['_id'] as String? ?? '';
+          final uploaderRole = uploader['role'] as String? ?? 'USER';
+
+          // 1. Kendi eklediğimiz fatura için kendimize bildirim göndermeyelim
+          if (uploaderId == loggedInUserId) return false;
+
+          final userRole = authProvider.user?['role'] as String? ?? 'USER';
+          final userDepartment = authProvider.user?['department'] as String? ?? 'Diger';
+          final invDepartment = inv['department'] as String? ?? 'Diger';
+
+          // 2. YÖNETİCİ/ADMİN eklediyse -> Sadece o departmanın çalışanlarına (USER rolündeki kişilere) bildirim gitsin
+          if (uploaderRole == 'MANAGER' || uploaderRole == 'ADMIN') {
+            return userRole == 'USER' && invDepartment == userDepartment;
+          }
+
+          // 3. STANDART ÇALIŞAN (USER) eklediyse -> Tüm YÖNETİCİ/ADMİN'lere bildirim gitsin
+          if (uploaderRole == 'USER') {
+            return userRole == 'MANAGER' || userRole == 'ADMIN';
+          }
+
+          return false;
+        }).toList();
+
+        if (newInvoices.isNotEmpty) {
+          for (var inv in newInvoices) {
+            final vendor = inv['vendor'] ?? 'Genel';
+            final amount = inv['amount']?.toString() ?? '0';
+            final uploader = inv['uploadedBy'] is Map ? inv['uploadedBy'] : {};
+            final uploaderName = uploader['fullname'] ?? 'Bir personel';
+            final uploaderRole = uploader['role'] ?? 'USER';
+            final department = inv['department'] ?? 'Diger';
+
+            String snackTitle = 'Yeni Fatura Geldi! 🔔';
+            String snackBody = '$vendor firmasından $amount ₺ tutarında fatura yüklendi.';
+
+            if (uploaderRole == 'MANAGER' || uploaderRole == 'ADMIN') {
+              snackTitle = 'Yeni Fatura Atandı! 🔔';
+              snackBody = 'Yöneticiniz $uploaderName, $department departmanı için $vendor firmasından $amount ₺ tutarında yeni bir fatura ekledi.';
+            } else {
+              snackTitle = 'Yeni Fatura Yüklendi! 📄';
+              snackBody = '$uploaderName, $department departmanı adına $vendor firmasından $amount ₺ tutarında yeni bir fatura ekledi.';
+            }
+            
+            // Flutter içinde şık bir snackbar bildirimi tetikleyelim
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: const Color(0xFF6366F1), // Premium indigo rengi
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  margin: const EdgeInsets.all(16),
+                  duration: const Duration(seconds: 7),
+                  content: Row(
+                    children: [
+                      const Icon(Icons.notifications_active, color: Colors.white),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              snackTitle,
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                            Text(
+                              snackBody,
+                              style: const TextStyle(fontSize: 12, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+          }
+
+          // Bilinenler listesini güncelle
+          _knownInvoiceIds.addAll(newInvoices.map((inv) => inv['_id'] as String));
+        }
+      }
+    } catch (e) {
+      print('Polling Error: $e');
+    }
+  }
   
   Map<String, dynamic>? get stats => _stats;
   List<dynamic> get invoices => _invoices;

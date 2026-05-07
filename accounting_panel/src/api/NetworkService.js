@@ -2,8 +2,6 @@ import { deleteAccessToken, deleteRefreshToken, getAccessToken, getRefreshToken,
 import { HTTP_STATUS } from "../constants/Constants";
 import { RequestTypes } from "../enums/RequestType";
 import axios from "axios";
-import { showToast } from "./ToastUtils";
-import { translate } from "./LocalizationUtils";
 
 const BaseURL = axios.create({
     baseURL: process.env.REACT_APP_API_BASE_URL,
@@ -74,14 +72,21 @@ export const request = async ({
                     } else {
                         deleteAccessToken();
                         deleteRefreshToken();
-                        window.location.reload();
+                        localStorage.clear();
+                        window.location.href = '/';
                     }
                 } catch (error) {
                     console.error("Refresh token request failed:", error);
-                    showToast(translate("errors.session_expired"), "error");
+                    deleteAccessToken();
+                    deleteRefreshToken();
+                    localStorage.clear();
+                    window.location.href = '/';
                 }
             } else {
-                window.location.reload();
+                deleteAccessToken();
+                deleteRefreshToken();
+                localStorage.clear();
+                window.location.href = '/';
             }
         } else {
             return res;

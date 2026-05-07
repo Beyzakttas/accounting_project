@@ -32,7 +32,8 @@ const Invoices = ({ user, onLogout }) => {
       date: new Date().toISOString().split('T')[0],
       type: 'EXPENSE',
       status: 'Pending',
-      category: ''
+      category: '',
+      department: 'Diger'
     });
     setIsEditing(false);
     setEditingInvoiceId(null);
@@ -46,7 +47,8 @@ const Invoices = ({ user, onLogout }) => {
     date: new Date().toISOString().split('T')[0],
     type: 'EXPENSE',
     status: 'Pending',
-    category: ''
+    category: '',
+    department: 'Diger'
   });
 
   const fetchData = useCallback(async () => {
@@ -137,7 +139,8 @@ const Invoices = ({ user, onLogout }) => {
       date: new Date(invoice.date).toISOString().split('T')[0],
       type: invoice.type,
       status: invoice.status || 'Pending',
-      category: invoice.category?._id || invoice.category || ''
+      category: invoice.category?._id || invoice.category || '',
+      department: invoice.department || 'Diger'
     });
     setShowModal(true);
   };
@@ -349,7 +352,7 @@ const Invoices = ({ user, onLogout }) => {
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-row">
             <FormInput
               label="Kategori"
               type="select"
@@ -363,14 +366,33 @@ const Invoices = ({ user, onLogout }) => {
               placeholder="-- Kategori Seçin --"
             />
 
-            {formData.category === 'other' && (
+            <FormInput
+              label="Departman"
+              type="select"
+              name="department"
+              options={[
+                { value: 'Muhasebe', label: 'Muhasebe' },
+                { value: 'Finans', label: 'Finans' },
+                { value: 'IK', label: 'İnsan Kaynakları (IK)' },
+                { value: 'Satis', label: 'Satış' },
+                { value: 'Pazarlama', label: 'Pazarlama' },
+                { value: 'Yazilim', label: 'Yazılım' },
+                { value: 'Operasyon', label: 'Operasyon' },
+                { value: 'Diger', label: 'Diğer' }
+              ]}
+              value={formData.department}
+              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+            />
+          </div>
+
+          {formData.category === 'other' && (
+            <div className="form-group" style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
               <input
                 type="text"
                 placeholder="Yeni kategori adı girin..."
                 value={customCategoryName}
                 onChange={(e) => setCustomCategoryName(e.target.value)}
                 style={{
-                  marginTop: '0.5rem',
                   width: '100%',
                   padding: '0.6rem 0.9rem',
                   borderRadius: '8px',
@@ -381,8 +403,8 @@ const Invoices = ({ user, onLogout }) => {
                   outline: 'none'
                 }}
               />
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </Modal>
 
