@@ -23,10 +23,19 @@ const Invoices = ({ user, onLogout }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
 
+  const generateInvoiceNumber = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const random = Math.floor(1000 + Math.random() * 9000);
+    return `FT-${yyyy}${mm}${dd}-${random}`;
+  };
+
   // Form state
   const resetForm = () => {
     setFormData({
-      invoiceNumber: '',
+      invoiceNumber: generateInvoiceNumber(),
       description: '',
       amount: '',
       date: new Date().toISOString().split('T')[0],
@@ -41,7 +50,7 @@ const Invoices = ({ user, onLogout }) => {
   };
 
   const [formData, setFormData] = useState({
-    invoiceNumber: '',
+    invoiceNumber: generateInvoiceNumber(),
     description: '',
     amount: '',
     date: new Date().toISOString().split('T')[0],
@@ -62,7 +71,7 @@ const Invoices = ({ user, onLogout }) => {
       if (invoiceRes.status === 'fulfilled' && invoiceRes.value.success) {
         setInvoices(invoiceRes.value.data);
       }
-      
+
       if (categoryRes.status === 'fulfilled' && categoryRes.value.success) {
         setCategories(categoryRes.value.data);
       }
@@ -166,6 +175,19 @@ const Invoices = ({ user, onLogout }) => {
     }
   };
 
+  const handlePayInvoice = async (invoiceId) => {
+    try {
+      const response = await apiClient.put(`/invoice/${invoiceId}/pay`);
+      if (response.success) {
+        fetchData();
+        addToast('Fatura başarıyla ödendi ve işlendi.', 'success');
+        window.dispatchEvent(new CustomEvent('invoiceUpdated'));
+      }
+    } catch (error) {
+      addToast(error.message || 'Ödeme işlemi başarısız oldu.', 'error');
+    }
+  };
+
   return (
     <DashboardLayout
       user={user}
@@ -176,45 +198,45 @@ const Invoices = ({ user, onLogout }) => {
       <div className="invoices-container">
         <div className="filter-bar glass-card">
           <div className="search-wrapper">
-            <input 
-              type="text" 
-              placeholder="Fatura no, açıklama veya satıcı ara..." 
+            <input
+              type="text"
+              placeholder="Fatura no, açıklama veya satıcı ara..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="search-input"
             />
           </div>
-          
+
           <div className="custom-dropdown-container">
-            <button 
+            <button
               className={`dropdown-trigger glass-card ${isFilterDropdownOpen ? 'open' : ''}`}
               onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
             >
               <span className="selected-value">
-                {filter === 'ALL' ? 'Tümü' : filter === 'INCOME' ? 'Gelirler' : 'Giderler'}
+                {filter === 'ALL' ? 'Tüm Faturalar' : filter === 'PENDING' ? 'Bekleyen Faturalar' : 'Ödenen Faturalar'}
               </span>
               <span className="dropdown-arrow"></span>
             </button>
 
             {isFilterDropdownOpen && (
               <div className="dropdown-menu glass-card">
-                <div 
+                <div
                   className={`dropdown-item ${filter === 'ALL' ? 'active' : ''}`}
                   onClick={() => { setFilter('ALL'); setIsFilterDropdownOpen(false); }}
                 >
-                  Tümü
+                  Tüm Faturalar
                 </div>
-                <div 
-                  className={`dropdown-item ${filter === 'INCOME' ? 'active' : ''}`}
-                  onClick={() => { setFilter('INCOME'); setIsFilterDropdownOpen(false); }}
+                <div
+                  className={`dropdown-item ${filter === 'PENDING' ? 'active' : ''}`}
+                  onClick={() => { setFilter('PENDING'); setIsFilterDropdownOpen(false); }}
                 >
-                  Gelirler
+                  Bekleyen Faturalar
                 </div>
-                <div 
-                  className={`dropdown-item ${filter === 'EXPENSE' ? 'active' : ''}`}
-                  onClick={() => { setFilter('EXPENSE'); setIsFilterDropdownOpen(false); }}
+                <div
+                  className={`dropdown-item ${filter === 'PAID' ? 'active' : ''}`}
+                  onClick={() => { setFilter('PAID'); setIsFilterDropdownOpen(false); }}
                 >
-                  Giderler
+                  Ödenen Faturalar
                 </div>
               </div>
             )}
@@ -227,51 +249,57 @@ const Invoices = ({ user, onLogout }) => {
           <div className="invoice-grid">
             {invoices
               .filter(inv => {
-                const matchesFilter = filter === 'ALL' || inv.type === filter;
-                const matchesSearch = 
+                const matchesFilter =
+                  filter === 'ALL' ||
+                  (filter === 'PENDING' && inv.status === 'Pending') ||
+                  (filter === 'PAID' && inv.status === 'Processed');
+                const matchesSearch =
                   (inv.invoiceNumber?.toLowerCase().includes(searchQuery.toLowerCase())) ||
                   (inv.description?.toLowerCase().includes(searchQuery.toLowerCase())) ||
                   (inv.vendor?.toLowerCase().includes(searchQuery.toLowerCase()));
                 return matchesFilter && matchesSearch;
               })
               .map((invoice) => (
-              <div key={invoice._id} className="glass-card invoice-card">
-                <div className="invoice-card-header">
-                  <span className="invoice-type">{invoice.type || 'Fatura'}</span>
-                  <span className={`invoice-status status-${(invoice.status || 'pending').toLowerCase()}`}>
-                    {invoice.status || 'Beklemede'}
-                  </span>
-                </div>
-                <div className="invoice-amount">
-                  {apiClient.formatCurrency(invoice.amount)}
-                </div>
-                <div className="invoice-info">
-                  <div className="info-row">
-                    <span>No:</span>
-                    <span className="info-value">{invoice.invoiceNumber || '-'}</span>
-                  </div>
-                  <div className="info-row">
-                    <span>Açıklama:</span>
-                    <span className="info-value">{invoice.description}</span>
-                  </div>
-                  <div className="info-row">
-                    <span>Yükleyen:</span>
-                    <span className="info-value">
-                      {invoice.uploadedBy?.fullname || invoice.uploadedBy?.name || invoice.uploadedBy?.email || 'Sistem'}
+                <div key={invoice._id} className="glass-card invoice-card">
+                  <div className="invoice-card-header">
+                    <span className="invoice-type">{invoice.category?.name || 'Fatura'}</span>
+                    <span className={`invoice-status status-${(invoice.status || 'pending').toLowerCase()}`}>
+                      {invoice.status === 'Pending' ? 'Beklemede' : 'Ödendi'}
                     </span>
                   </div>
-                </div>
-                <div className="invoice-card-footer">
-                   <span className="invoice-date">
-                    {apiClient.formatDate(invoice.date)}
-                  </span>
-                  <div className="invoice-actions">
-                    <button className="action-btn text-btn" title="Düzenle" onClick={() => handleEditClick(invoice)}>Düzenle</button>
-                    <button className="action-btn text-btn delete-btn" title="Sil" onClick={() => handleDeleteClick(invoice)}>Sil</button>
+                  <div className="invoice-amount">
+                    {apiClient.formatCurrency(invoice.amount)}
+                  </div>
+                  <div className="invoice-info">
+                    <div className="info-row">
+                      <span>No:</span>
+                      <span className="info-value">{invoice.invoiceNumber || '-'}</span>
+                    </div>
+                    <div className="info-row">
+                      <span>Açıklama:</span>
+                      <span className="info-value">{invoice.description}</span>
+                    </div>
+                    <div className="info-row">
+                      <span>Yükleyen:</span>
+                      <span className="info-value">
+                        {invoice.uploadedBy?.fullname || invoice.uploadedBy?.name || invoice.uploadedBy?.email || 'Sistem'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="invoice-card-footer">
+                    <span className="invoice-date">
+                      {apiClient.formatDate(invoice.date)}
+                    </span>
+                    <div className="invoice-actions">
+                      {invoice.status === 'Pending' && (
+                        <button className="action-btn text-btn pay-btn" title="Öde" style={{ color: '#10b981', marginRight: '8px' }} onClick={() => handlePayInvoice(invoice._id)}>Öde</button>
+                      )}
+                      <button className="action-btn text-btn" title="Düzenle" onClick={() => handleEditClick(invoice)}>Düzenle</button>
+                      <button className="action-btn text-btn delete-btn" title="Sil" onClick={() => handleDeleteClick(invoice)}>Sil</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
             {invoices.length === 0 && (
               <div className="glass-card no-invoices">
@@ -305,7 +333,7 @@ const Invoices = ({ user, onLogout }) => {
               name="invoiceNumber"
               value={formData.invoiceNumber}
               onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
-              placeholder="INV-2024-001"
+              placeholder="FT-YYYYMMDD-XXXX"
               required
             />
             <FormInput
@@ -340,15 +368,12 @@ const Invoices = ({ user, onLogout }) => {
               required
             />
             <FormInput
-              label="Tip"
-              type="select"
-              name="type"
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              options={[
-                { value: 'EXPENSE', label: 'Gider' },
-                { value: 'INCOME', label: 'Gelir' }
-              ]}
+              label="Satıcı / Kurum"
+              type="text"
+              name="vendor"
+              value={formData.vendor || ''}
+              onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+              placeholder="Örn: Trendyol, Hepsiburada"
             />
           </div>
 

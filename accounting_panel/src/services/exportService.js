@@ -29,19 +29,19 @@ export const exportToExcel = (stats, filename) => {
 
   // 1. Prepare Summary Part
   const rows = [
-    ['FINANSAL OZET RAPORU'],
+    ['FATURA OZET RAPORU'],
     ['-------------------'],
     ['Detay', 'Tutar'],
-    ['Toplam Gelir', `TL ${totalIncome.toFixed(2)}`],
-    ['Toplam Gider', `TL ${totalExpense.toFixed(2)}`],
-    ['Net Kar', `TL ${(totalIncome - totalExpense).toFixed(2)}`],
+    ['Odenen Faturalar', `TL ${totalIncome.toFixed(2)}`],
+    ['Bekleyen Faturalar', `TL ${totalExpense.toFixed(2)}`],
+    ['Toplam Tutar', `TL ${(totalIncome + totalExpense).toFixed(2)}`],
     ['Rapor Tarihi', new Date().toLocaleDateString('tr-TR')],
     [''], // Spacer
     
     // 2. Prepare Categories Part
     ['KATEGORI BAZLI DAGILIM'],
     ['----------------------'],
-    ['Kategori Adi', 'Tur', 'Tutar']
+    ['Kategori Adi', 'Durum', 'Tutar']
   ];
 
   // Alphabetically sort categories
@@ -52,7 +52,7 @@ export const exportToExcel = (stats, filename) => {
   sortedCategories.forEach(c => {
     rows.push([
       c.name,
-      c.type === 'INCOME' ? 'Gelir' : 'Gider',
+      c.type === 'INCOME' ? 'Odenen' : 'Bekleyen',
       `TL ${Number(c.value).toFixed(2)}`
     ]);
   });
@@ -61,9 +61,9 @@ export const exportToExcel = (stats, filename) => {
   
   // 3. Prepare Daily Analysis Part
   if (dailyData && dailyData.length > 0) {
-    rows.push(['GUNLUK FINANSAL ANALIZ']);
+    rows.push(['GUNLUK FATURA ANALIZI']);
     rows.push(['-----------------------']);
-    rows.push(['Tarih', 'Gelir (TL)', 'Gider (TL)']);
+    rows.push(['Tarih', 'Odenen (TL)', 'Bekleyen (TL)']);
     
     dailyData.forEach(d => {
       rows.push([d.dateStr, d.income.toFixed(2), d.expense.toFixed(2)]);
@@ -93,8 +93,7 @@ export const exportToPDF = (stats, filename) => {
   const primaryColor = [99, 102, 241];
   const successColor = [16, 185, 129];
   const dangerColor  = [239, 68, 68];
-  const netProfit    = totalIncome - totalExpense;
-  const profitColor  = netProfit >= 0 ? successColor : dangerColor;
+  const totalAmount  = totalIncome + totalExpense;
 
   doc.setFillColor(30, 41, 59);
   doc.rect(0, 0, 210, 38, 'F');
@@ -104,7 +103,7 @@ export const exportToPDF = (stats, filename) => {
   doc.text('Beyza Muhasebe AI', 14, 18);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text('Finansal Durum Raporu', 14, 27);
+  doc.text('Fatura Ozet Raporu', 14, 27);
   doc.text(`Tarih: ${timestamp}`, 196, 27, { align: 'right' });
 
   const boxY = 48, boxH = 26;
@@ -119,9 +118,9 @@ export const exportToPDF = (stats, filename) => {
     doc.setFontSize(13);
     doc.text(value, x + 4, boxY + 20);
   };
-  drawBox(14,  56, successColor, 'TOPLAM GELIR',    formatCurrency(totalIncome));
-  drawBox(77,  56, dangerColor,  'TOPLAM GIDER',    formatCurrency(totalExpense));
-  drawBox(140, 56, profitColor,  'NET KAR / ZARAR', formatCurrency(netProfit));
+  drawBox(14,  56, successColor, 'ODENEN FATURALAR', formatCurrency(totalIncome));
+  drawBox(77,  56, dangerColor,  'BEKLEYEN FATURALAR', formatCurrency(totalExpense));
+  drawBox(140, 56, primaryColor,  'TOPLAM TUTAR',       formatCurrency(totalAmount));
 
   doc.setTextColor(30, 41, 59);
   doc.setFontSize(13);
@@ -134,13 +133,13 @@ export const exportToPDF = (stats, filename) => {
 
   const tableData = sortedCategories.map(c => [
     toSafeText(c.name),
-    c.type === 'INCOME' ? 'Gelir' : 'Gider',
+    c.type === 'INCOME' ? 'Odenen' : 'Bekleyen',
     formatCurrency(c.value)
   ]);
 
   autoTable(doc, {
     startY: 95,
-    head: [['Kategori Adi', 'Tur', 'Tutar']],
+    head: [['Kategori Adi', 'Durum', 'Tutar']],
     body: tableData,
     headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold', fontSize: 10 },
     bodyStyles: { fontSize: 9 },
@@ -158,11 +157,11 @@ export const exportToPDF = (stats, filename) => {
  */
 export const exportToWord = (stats, filename) => {
   const { totalIncome, totalExpense, categoryData } = stats;
-  const netProfit = totalIncome - totalExpense;
+  const totalAmount = totalIncome + totalExpense;
 
   const htmlContent = `
     <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-    <head><meta charset='utf-8'><title>Muhasebe Raporu</title>
+    <head><meta charset='utf-8'><title>Fatura Raporu</title>
     <style>
       body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; }
       .header { background-color: #1e293b; color: white; padding: 20px; text-align: center; border-radius: 10px; }
@@ -170,7 +169,7 @@ export const exportToWord = (stats, filename) => {
       .summary-box { display: table-cell; padding: 15px; border: 1px solid #ccc; border-radius: 8px; text-align: center; }
       .income { color: #10b981; border-color: #10b981; }
       .expense { color: #ef4444; border-color: #ef4444; }
-      .profit { color: ${netProfit >= 0 ? '#10b981' : '#ef4444'}; border-color: ${netProfit >= 0 ? '#10b981' : '#ef4444'}; }
+      .profit { color: #6366f1; border-color: #6366f1; }
       table { width: 100%; border-collapse: collapse; margin-top: 20px; }
       th { background-color: #6366f1; color: white; padding: 12px; text-align: left; }
       td { padding: 10px; border-bottom: 1px solid #ddd; }
@@ -180,21 +179,21 @@ export const exportToWord = (stats, filename) => {
     <body>
       <div class="header">
         <h1>Beyza Muhasebe AI</h1>
-        <p>Finansal Durum Raporu - ${new Date().toLocaleDateString('tr-TR')}</p>
+        <p>Fatura Durum Raporu - ${new Date().toLocaleDateString('tr-TR')}</p>
       </div>
 
       <div class="summary-container">
         <div class="summary-box income">
-          <strong>TOPLAM GELİR</strong><br/>
+          <strong>ÖDENEN FATURALAR</strong><br/>
           <span>${formatCurrency(totalIncome)}</span>
         </div>
         <div class="summary-box expense">
-          <strong>TOPLAM GİDER</strong><br/>
+          <strong>BEKLEYEN FATURALAR</strong><br/>
           <span>${formatCurrency(totalExpense)}</span>
         </div>
         <div class="summary-box profit">
-          <strong>NET DURUM</strong><br/>
-          <span>${formatCurrency(netProfit)}</span>
+          <strong>TOPLAM TUTAR</strong><br/>
+          <span>${formatCurrency(totalAmount)}</span>
         </div>
       </div>
 
@@ -203,7 +202,7 @@ export const exportToWord = (stats, filename) => {
         <thead>
           <tr>
             <th>Kategori Adı</th>
-            <th>Tür</th>
+            <th>Durum</th>
             <th>Tutar</th>
           </tr>
         </thead>
@@ -213,7 +212,7 @@ export const exportToWord = (stats, filename) => {
             .map(c => `
             <tr>
               <td>${c.name}</td>
-              <td>${c.type === 'INCOME' ? 'Gelir' : 'Gider'}</td>
+              <td>${c.type === 'INCOME' ? 'Ödenen' : 'Bekleyen'}</td>
               <td>${formatCurrency(c.value)}</td>
             </tr>
           `).join('')}

@@ -72,6 +72,15 @@ const Dashboard = ({ user, onLogout }) => {
   useEffect(() => {
     fetchStats();
     fetchCategories();
+
+    const handleUpdate = () => {
+      fetchStats();
+    };
+
+    window.addEventListener('invoiceUpdated', handleUpdate);
+    return () => {
+      window.removeEventListener('invoiceUpdated', handleUpdate);
+    };
   }, [fetchStats, fetchCategories]);
 
   const handleFileUpload = async (e) => {

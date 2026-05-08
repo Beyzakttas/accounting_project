@@ -126,8 +126,15 @@
 }
 
 @keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .upload-invoice-btn {
@@ -188,9 +195,20 @@
   font-weight: 600;
 }
 
-.status-pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-.status-paid { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
-.status-overdue { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+.status-pending {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.status-paid {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.status-overdue {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
 
 .invoice-amount {
   font-size: 1.5rem;

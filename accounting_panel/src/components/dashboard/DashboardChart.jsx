@@ -87,7 +87,7 @@ const DashboardChart = ({ stats }) => {
   const maxVal = rawMax > 0 ? (Math.ceil(rawMax / 100) * 100) : 100;
   const yLabels = [maxVal, maxVal * 0.75, maxVal * 0.5, maxVal * 0.25, 0];
 
-  let displayTitle = "Gelir/Gider Analizi";
+  let displayTitle = "Ödenen/Bekleyen Fatura Analizi";
   if (viewMode === 'daily') displayTitle = "Günlük Analiz";
   else if (viewMode === 'weekly') displayTitle = "Haftalık Analiz";
   else if (viewMode === 'monthly') displayTitle = "Aylık Analiz";
@@ -169,7 +169,7 @@ const DashboardChart = ({ stats }) => {
                   <div
                     className="chart-bar bar-income"
                     style={{ height: `${Math.max(hInc, isEmpty ? 0 : 4)}%` }}
-                    title={`Gelir: ₺${dataItem.income.toLocaleString()}`}
+                    title={`Ödenen: ₺${dataItem.income.toLocaleString()}`}
                   >
                     {dataItem.income > 0 && (
                       <span className="bar-value-label label-income">
@@ -182,7 +182,7 @@ const DashboardChart = ({ stats }) => {
                   <div
                     className="chart-bar bar-expense"
                     style={{ height: `${Math.max(hExp, isEmpty ? 0 : 4)}%` }}
-                    title={`Gider: ₺${dataItem.expense.toLocaleString()}`}
+                    title={`Bekleyen: ₺${dataItem.expense.toLocaleString()}`}
                   >
                     {dataItem.expense > 0 && (
                       <span className="bar-value-label label-expense">

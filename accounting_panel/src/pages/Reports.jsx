@@ -144,13 +144,13 @@ const Reports = ({ user, onLogout }) => {
     }
   };
 
-  const netKar = stats.totalIncome - stats.totalExpense;
+  const totalInvoices = stats.totalIncome + stats.totalExpense;
 
   const reportStats = [
-    { title: 'Toplam Gelir', value: apiClient.formatCurrency(stats.totalIncome), isPositive: true },
-    { title: 'Toplam Gider', value: apiClient.formatCurrency(stats.totalExpense), isPositive: false },
-    { title: 'Net Kar', value: apiClient.formatCurrency(netKar), isPositive: netKar >= 0 },
-    { title: 'Bekleyen Faturalar', value: stats.pendingCount.toString(), isPositive: stats.pendingCount === 0 }
+    { title: 'Ödenen Faturalar', value: apiClient.formatCurrency(stats.totalIncome), isPositive: true },
+    { title: 'Bekleyen Faturalar', value: apiClient.formatCurrency(stats.totalExpense), isPositive: false },
+    { title: 'Toplam Faturalar', value: apiClient.formatCurrency(totalInvoices), isPositive: true, isNeutral: true },
+    { title: 'Bekleyen Adet', value: stats.pendingCount.toString(), isPositive: stats.pendingCount === 0 }
   ];
 
   return (
@@ -165,7 +165,7 @@ const Reports = ({ user, onLogout }) => {
         {/* Summary Grid */}
         <div className="reports-summary-grid">
           {reportStats.map((stat, idx) => (
-            <div key={idx} className="glass-card reports-stat-card" style={{ borderLeft: `5px solid ${stat.isPositive ? '#10b981' : '#ef4444'}` }}>
+            <div key={idx} className="glass-card reports-stat-card" style={{ borderLeft: `5px solid ${stat.isNeutral ? '#6366f1' : stat.isPositive ? '#10b981' : '#ef4444'}` }}>
               <h3 className="reports-stat-title">{stat.title.toUpperCase()}</h3>
               <div className="reports-stat-value">{stat.value}</div>
             </div>
@@ -175,7 +175,7 @@ const Reports = ({ user, onLogout }) => {
         <div className="reports-charts-grid">
           {/* Daily Chart */}
           <div className="glass-card reports-chart-card">
-            <h2 className="reports-chart-title">Günlük Finansal Analiz</h2>
+            <h2 className="reports-chart-title">Günlük Fatura Analizi</h2>
             <div className="reports-chart-area">
               {stats.dailyData && stats.dailyData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%" minHeight={300}>
@@ -195,8 +195,8 @@ const Reports = ({ user, onLogout }) => {
                     <YAxis stroke="var(--text-secondary)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={{ borderRadius: '15px', border: '1px solid rgba(255,255,255,0.1)', background: '#1e293b', color: '#fff' }} />
                     <Legend iconType="circle" />
-                    <Area type="monotone" dataKey="income" name="Gelir" stroke="#10b981" fillOpacity={1} fill="url(#colorIncome)" />
-                    <Area type="monotone" dataKey="expense" name="Gider" stroke="#ef4444" fillOpacity={1} fill="url(#colorExpense)" />
+                    <Area type="monotone" dataKey="income" name="Ödenen" stroke="#10b981" fillOpacity={1} fill="url(#colorIncome)" />
+                    <Area type="monotone" dataKey="expense" name="Bekleyen" stroke="#ef4444" fillOpacity={1} fill="url(#colorExpense)" />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
@@ -207,13 +207,13 @@ const Reports = ({ user, onLogout }) => {
 
           {/* Category Pie */}
           <div className="glass-card reports-chart-card">
-            <h2 className="reports-chart-title">Gider Dağılımı</h2>
+            <h2 className="reports-chart-title">Kategori Bazlı Fatura Dağılımı</h2>
             <div className="reports-chart-area">
               {stats.categoryData && stats.categoryData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                   <PieChart>
                     <Pie
-                      data={stats.categoryData.filter(c => c.type === 'EXPENSE')}
+                      data={stats.categoryData}
                       cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={8} dataKey="value" nameKey="name"
                     >
                       {stats.categoryData.map((_, i) => <Cell key={i} fill={['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'][i % 5]} />)}
@@ -223,7 +223,7 @@ const Reports = ({ user, onLogout }) => {
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="reports-empty-state">Gider verisi bulunmuyor.</div>
+                <div className="reports-empty-state">Fatura verisi bulunmuyor.</div>
               )}
             </div>
           </div>
