@@ -8,20 +8,30 @@ import STATUS_CODES from '../Utils/statusCodes.js';
 export const createInvoice = async (invoiceData, userId, companyId) => {
   const { invoiceNumber, amount, date, vendor } = invoiceData;
 
-  // 1. Fatura Numarası ile Kontrol (Eğer numara varsa)
-  if (invoiceNumber && invoiceNumber.trim()) {
-    const trimmedNumber = invoiceNumber.trim();
-    const existingByNo = await Invoice.findOne({
-      companyId: companyId,
-      invoiceNumber: { $regex: new RegExp(`^${trimmedNumber}$`, 'i') }
-    });
+  // Fatura no boş ise otomatik benzersiz numara üret
+  let finalInvoiceNumber = invoiceNumber;
+  if (!finalInvoiceNumber || !finalInvoiceNumber.trim()) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const random = Math.floor(1000 + Math.random() * 9000);
+    finalInvoiceNumber = `FT-${yyyy}${mm}${dd}-${random}`;
+  } else {
+    finalInvoiceNumber = finalInvoiceNumber.trim();
+  }
 
-    if (existingByNo) {
-      const error = new Error('Bu fatura numarası daha önce sisteme kaydedilmiş. Lütfen farklı bir numara girin.');
-      error.statusCode = STATUS_CODES.BAD_REQUEST;
-      error.data = { existingId: existingByNo._id, type: 'DUPLICATE_NUMBER' };
-      throw error;
-    }
+  // 1. Fatura Numarası ile Kontrol (Benzersiz olmalıdır)
+  const existingByNo = await Invoice.findOne({
+    companyId: companyId,
+    invoiceNumber: { $regex: new RegExp(`^${finalInvoiceNumber}$`, 'i') }
+  });
+
+  if (existingByNo) {
+    const error = new Error('Bu fatura numarası daha önce sisteme kaydedilmiş. Lütfen farklı bir numara girin.');
+    error.statusCode = STATUS_CODES.BAD_REQUEST;
+    error.data = { existingId: existingByNo._id, type: 'DUPLICATE_NUMBER' };
+    throw error;
   }
 
   // 2. Metadata ile Kontrol (Tutar + Tarih + Satıcı) - Numara yoksa veya farklıysa bile yakalar
@@ -49,6 +59,8 @@ export const createInvoice = async (invoiceData, userId, companyId) => {
 
   const newInvoice = new Invoice({
     ...invoiceData,
+    type: 'EXPENSE',
+    invoiceNumber: finalInvoiceNumber,
     uploadedBy: userId,
     companyId: companyId
   });
@@ -110,11 +122,22 @@ export const deleteInvoice = async (invoiceId, userId, role) => {
 /**
  * İstatistikleri getirir (Gelişmiş Raporlar İçin)
  */
-export const getInvoiceStats = async (companyIdStr) => {
+export const getInvoiceStats = async (companyIdStr, userIdStr = null, role = null, department = null) => {
   const companyId = new mongoose.Types.ObjectId(companyIdStr);
 
+  const matchFilter = { companyId: companyId };
+
+  if (role === 'USER' && userIdStr) {
+    const userId = new mongoose.Types.ObjectId(userIdStr);
+    matchFilter.$or = [
+      { uploadedBy: userId },
+      { assignedTo: userId },
+      { department: department || 'Diger' }
+    ];
+  }
+
   const results = await Invoice.aggregate([
-    { $match: { companyId: companyId } },
+    { $match: matchFilter },
     {
       $facet: {
         // 1. Genel Özet
@@ -122,9 +145,10 @@ export const getInvoiceStats = async (companyIdStr) => {
           {
             $group: {
               _id: null,
-              totalIncome: { $sum: { $cond: [{ $eq: ['$type', 'INCOME'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } },
-              totalExpense: { $sum: { $cond: [{ $eq: ['$type', 'EXPENSE'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } },
-              pendingCount: { $sum: { $cond: [{ $eq: ['$status', 'Pending'] }, 1, 0] } }
+              pendingCount: { $sum: { $cond: [{ $eq: ['$status', 'Pending'] }, 1, 0] } },
+              pendingAmount: { $sum: { $cond: [{ $eq: ['$status', 'Pending'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } },
+              paidCount: { $sum: { $cond: [{ $eq: ['$status', 'Processed'] }, 1, 0] } },
+              paidAmount: { $sum: { $cond: [{ $eq: ['$status', 'Processed'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } }
             }
           }
         ],
@@ -137,8 +161,8 @@ export const getInvoiceStats = async (companyIdStr) => {
                 month: { $month: { $toDate: '$date' } },
                 day: { $dayOfMonth: { $toDate: '$date' } }
               },
-              income: { $sum: { $cond: [{ $eq: ['$type', 'INCOME'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } },
-              expense: { $sum: { $cond: [{ $eq: ['$type', 'EXPENSE'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } }
+              pending: { $sum: { $cond: [{ $eq: ['$status', 'Pending'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } },
+              paid: { $sum: { $cond: [{ $eq: ['$status', 'Processed'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } }
             }
           },
           { $sort: { '_id.year': -1, '_id.month': -1, '_id.day': -1 } },
@@ -160,7 +184,7 @@ export const getInvoiceStats = async (companyIdStr) => {
           },
           {
             $group: {
-              _id: { categoryId: '$categoryObjId', type: '$type' },
+              _id: { categoryId: '$categoryObjId', status: '$status' },
               total: { $sum: { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } } }
             }
           },
@@ -175,7 +199,8 @@ export const getInvoiceStats = async (companyIdStr) => {
           {
             $project: {
               name: { $ifNull: [{ $arrayElemAt: ['$categoryInfo.name', 0] }, 'Kategorisiz'] },
-              type: '$_id.type',
+              type: { $cond: [{ $eq: ['$_id.status', 'Processed'] }, 'INCOME', 'EXPENSE'] },
+              status: '$_id.status',
               value: '$total'
             }
           }
@@ -188,8 +213,8 @@ export const getInvoiceStats = async (companyIdStr) => {
                 year: { $year: { $toDate: '$date' } },
                 month: { $month: { $toDate: '$date' } }
               },
-              income: { $sum: { $cond: [{ $eq: ['$type', 'INCOME'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } },
-              expense: { $sum: { $cond: [{ $eq: ['$type', 'EXPENSE'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } }
+              pending: { $sum: { $cond: [{ $eq: ['$status', 'Pending'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } },
+              paid: { $sum: { $cond: [{ $eq: ['$status', 'Processed'] }, { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } }, 0] } }
             }
           },
           { $sort: { '_id.year': -1, '_id.month': -1 } },
@@ -200,13 +225,19 @@ export const getInvoiceStats = async (companyIdStr) => {
   ]);
 
   const facet = results[0];
-  const summary = facet.summary[0] || { totalIncome: 0, totalExpense: 0, pendingCount: 0 };
+  const summary = facet.summary[0] || { pendingCount: 0, pendingAmount: 0, paidCount: 0, paidAmount: 0 };
+
+  // Geriye dönük uyumluluk alanları
+  const totalIncome = summary.paidAmount || 0; // Ödenenler
+  const totalExpense = summary.pendingAmount || 0; // Bekleyenler
 
   const formattedDailyData = facet.dailyData
     .map(item => ({
       dateStr: `${String(item._id.day).padStart(2, '0')}/${String(item._id.month).padStart(2, '0')}`,
-      income: item.income,
-      expense: item.expense,
+      income: item.paid,
+      expense: item.pending,
+      paid: item.paid,
+      pending: item.pending,
       date: new Date(item._id.year, item._id.month - 1, item._id.day),
       sortKey: item._id.year * 10000 + item._id.month * 100 + item._id.day
     }))
@@ -216,8 +247,10 @@ export const getInvoiceStats = async (companyIdStr) => {
   const formattedMonthlyData = facet.monthlyData
     .map(item => ({
       monthStr: months[item._id.month - 1],
-      income: item.income,
-      expense: item.expense,
+      income: item.paid,
+      expense: item.pending,
+      paid: item.paid,
+      pending: item.pending,
       year: item._id.year,
       month: item._id.month,
       sortKey: item._id.year * 100 + item._id.month
@@ -226,8 +259,35 @@ export const getInvoiceStats = async (companyIdStr) => {
 
   return {
     ...summary,
+    totalIncome,
+    totalExpense,
+    pendingCount: summary.pendingCount,
     dailyData: formattedDailyData,
     monthlyData: formattedMonthlyData,
     categoryData: facet.categoryData
   };
+};
+
+/**
+ * Faturayı ödenmiş (Processed) olarak işaretler
+ */
+export const payInvoice = async (invoiceId, userId, role, department) => {
+  const query = { _id: invoiceId };
+  if (role === 'USER') {
+    query.$or = [
+      { uploadedBy: userId },
+      { assignedTo: userId },
+      { department: department || 'Diger' }
+    ];
+  }
+
+  const invoice = await Invoice.findOne(query);
+  if (!invoice) {
+    const error = new Error('İşlem yapmak istediğiniz fatura bulunamadı veya bu işlem için yetkiniz yetersiz.');
+    error.statusCode = STATUS_CODES.NOT_FOUND;
+    throw error;
+  }
+
+  invoice.status = 'Processed';
+  return await invoice.save();
 };

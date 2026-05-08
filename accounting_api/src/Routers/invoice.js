@@ -89,6 +89,7 @@ router.post('/', roleMiddleware(['ADMIN', 'MANAGER', 'USER']), upload.single('im
  *         description: Fatura güncellendi
  */
 router.put('/:id', roleMiddleware(['ADMIN', 'MANAGER', 'USER']), invoiceController.updateInvoice);
+router.put('/:id/pay', roleMiddleware(['ADMIN', 'MANAGER', 'USER']), invoiceController.payInvoice);
 
 /**
  * @swagger

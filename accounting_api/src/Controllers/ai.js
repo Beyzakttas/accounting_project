@@ -40,7 +40,7 @@ export const processInvoiceOCR = async (req, res, next) => {
 export const chatWithAI = async (req, res, next) => {
   try {
     const { question } = req.body;
-    const { _id: userId, companyId } = req.user;
+    const { _id: userId, companyId, role, department } = req.user;
 
     if (!question) {
       return res.status(400).json({ success: false, message: 'Lütfen bir soru sorun.' });
@@ -54,7 +54,7 @@ export const chatWithAI = async (req, res, next) => {
     }
 
     // Kullanıcının güncel finansal durumunu al
-    const stats = await invoiceService.getInvoiceStats(companyId);
+    const stats = await invoiceService.getInvoiceStats(companyId, userId, role, department);
 
     const answer = await aiService.getFinancialChat(stats, question);
 

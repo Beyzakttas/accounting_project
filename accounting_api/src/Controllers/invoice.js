@@ -29,10 +29,11 @@ const invoiceController = {
       const { companyId, _id: userId, role, department } = req.user;
       const filter = { companyId };
 
-      // USER rolü hem kendi yüklediklerini hem de kendi departmanına atanan faturaları görsün
+      // USER rolü hem kendi yüklediklerini hem kendisine atananları hem de kendi departmanına ait olanları görsün
       if (role === 'USER') {
         filter.$or = [
           { uploadedBy: userId },
+          { assignedTo: userId },
           { department: department || 'Diger' }
         ];
       }
@@ -69,9 +70,20 @@ const invoiceController = {
   // 5. İstatistikleri getir
   getInvoiceStats: async (req, res, next) => {
     try {
-      const { companyId } = req.user;
-      const stats = await invoiceService.getInvoiceStats(companyId);
+      const { companyId, _id: userId, role, department } = req.user;
+      const stats = await invoiceService.getInvoiceStats(companyId, userId, role, department);
       return successResponse(res, stats, 'İstatistikler başarıyla getirildi.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // 6. Faturayı öde
+  payInvoice: async (req, res, next) => {
+    try {
+      const { _id: userId, role, department } = req.user;
+      const invoice = await invoiceService.payInvoice(req.params.id, userId, role, department);
+      return successResponse(res, invoice, 'Fatura başarıyla ödendi / işlendi.');
     } catch (error) {
       next(error);
     }
