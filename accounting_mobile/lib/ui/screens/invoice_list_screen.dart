@@ -135,9 +135,9 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                 children: [
                   _buildFilterChip(context, 'Tümü', 'ALL', Icons.list),
                   const SizedBox(width: 10),
-                  _buildFilterChip(context, 'Gelirler', 'INCOME', Icons.trending_up),
+                  _buildFilterChip(context, 'Bekleyenler', 'PENDING', Icons.pending_actions),
                   const SizedBox(width: 10),
-                  _buildFilterChip(context, 'Giderler', 'EXPENSE', Icons.trending_down),
+                  _buildFilterChip(context, 'Ödenenler', 'PAID', Icons.check_circle_outline),
                 ],
               ),
             ),
@@ -156,37 +156,113 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                             final invoice = invoices[index];
                             final isIncome = invoice['type'] == 'INCOME';
 
+                            final dueDateStr = invoice['dueDate'];
+                            final status = invoice['status'] ?? 'Pending';
+                            bool isNearDue = false;
+                            int daysLeft = 0;
+                            if (dueDateStr != null && status == 'Pending') {
+                              final dueDate = DateTime.parse(dueDateStr);
+                              final today = DateTime.now();
+                              final difference = DateTime(dueDate.year, dueDate.month, dueDate.day)
+                                  .difference(DateTime(today.year, today.month, today.day))
+                                  .inDays;
+                              if (difference <= 3) {
+                                isNearDue = true;
+                                daysLeft = difference;
+                              }
+                            }
+
                             return FadeInUp(
                               duration: const Duration(milliseconds: 300),
                               child: Card(
                                 margin: const EdgeInsets.only(bottom: 12),
-                                child: ListTile(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => AddInvoiceScreen(invoiceToEdit: invoice),
+                                shape: isNearDue
+                                    ? RoundedRectangleBorder(
+                                        side: const BorderSide(color: Colors.redAccent, width: 2),
+                                        borderRadius: BorderRadius.circular(12),
+                                      )
+                                    : RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                clipBehavior: Clip.antiAlias,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (isNearDue)
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.redAccent,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 16),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              daysLeft < 0
+                                                  ? 'VADESİ GEÇTİ (${daysLeft.abs()} gün gecikti)'
+                                                  : daysLeft == 0
+                                                      ? 'VADESİ BUGÜN SON!'
+                                                      : 'VADESİ YAKLAŞIYOR ($daysLeft gün kaldı)',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    );
-                                  },
-                                  leading: CircleAvatar(
-                                    backgroundColor: isIncome
-                                        ? Colors.greenAccent.withOpacity(0.1)
-                                        : Colors.redAccent.withOpacity(0.1),
-                                    child: Icon(
-                                      isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-                                      color: isIncome ? Colors.greenAccent : Colors.redAccent,
-                                    ),
-                                  ),
-                                  title: Text(
-                                    '${invoice['vendor'] ?? 'Genel'} - ${invoice['description'] ?? 'Açıklama Yok'}',
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  subtitle: Text(
-                                    invoice['date'] != null
-                                        ? AppFormatters.dateFormat.format(DateTime.parse(invoice['date']))
-                                        : 'Tarih Yok',
-                                  ),
+                                    ListTile(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => AddInvoiceScreen(invoiceToEdit: invoice),
+                                          ),
+                                        );
+                                      },
+                                      leading: CircleAvatar(
+                                        backgroundColor: isIncome
+                                            ? Colors.greenAccent.withOpacity(0.1)
+                                            : Colors.redAccent.withOpacity(0.1),
+                                        child: Icon(
+                                          isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+                                          color: isIncome ? Colors.greenAccent : Colors.redAccent,
+                                        ),
+                                      ),
+                                      title: Text(
+                                        '${invoice['vendor'] ?? 'Genel'} - ${invoice['description'] ?? 'Açıklama Yok'}',
+                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                      subtitle: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            invoice['date'] != null
+                                                ? 'Fatura Tarihi: ${AppFormatters.dateFormat.format(DateTime.parse(invoice['date']))}'
+                                                : 'Tarih Yok',
+                                          ),
+                                          if (invoice['assignedTo'] != null) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'Atanan: ${invoice['assignedTo'] is Map ? (invoice['assignedTo']['fullname'] ?? invoice['assignedTo']['email'] ?? '') : 'Personel'}',
+                                              style: TextStyle(color: Colors.blueAccent.shade100, fontWeight: FontWeight.w500),
+                                            ),
+                                          ],
+                                          if (invoice['dueDate'] != null) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'Vade: ${AppFormatters.dateFormat.format(DateTime.parse(invoice['dueDate']))}',
+                                              style: TextStyle(
+                                                color: isNearDue ? Colors.redAccent : Colors.grey,
+                                                fontWeight: isNearDue ? FontWeight.bold : FontWeight.normal,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
@@ -201,7 +277,14 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                                       PopupMenuButton<String>(
                                         icon: const Icon(Icons.more_vert, color: Colors.blueAccent),
                                         onSelected: (value) async {
-                                          if (value == 'edit') {
+                                          if (value == 'pay') {
+                                            final success = await context.read<InvoiceProvider>().payInvoice(invoice['_id']);
+                                            if (success && mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Fatura başarıyla ödendi / işlendi!')),
+                                              );
+                                            }
+                                          } else if (value == 'edit') {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
@@ -260,6 +343,17 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                                           }
                                         },
                                         itemBuilder: (context) => [
+                                          if (status == 'Pending')
+                                            const PopupMenuItem(
+                                              value: 'pay',
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.payment_rounded, size: 20, color: Colors.greenAccent),
+                                                  SizedBox(width: 8),
+                                                  Text('Öde', style: TextStyle(color: Colors.greenAccent)),
+                                                ],
+                                              ),
+                                            ),
                                           const PopupMenuItem(
                                             value: 'edit',
                                             child: Row(
@@ -359,5 +453,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
         fontSize: 13,
       ),
     );
+  }
+}
   }
 }

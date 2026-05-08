@@ -82,7 +82,7 @@ class _DashboardChartState extends State<DashboardChart> {
                   touchTooltipData: BarTouchTooltipData(
                     tooltipBgColor: Theme.of(context).colorScheme.surface,
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      String category = rodIndex == 0 ? 'Gelir' : 'Gider';
+                      String category = rodIndex == 0 ? 'Ödenen' : 'Bekleyen';
                       return BarTooltipItem(
                         '$category\n${rod.toY.toStringAsFixed(0)} ₺',
                         TextStyle(color: rod.color, fontWeight: FontWeight.bold),
@@ -162,9 +162,9 @@ class _DashboardChartState extends State<DashboardChart> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildLegendItem('Gelir', Colors.greenAccent),
+              _buildLegendItem('Ödenen', Colors.greenAccent),
               const SizedBox(width: 24),
-              _buildLegendItem('Gider', Colors.redAccent),
+              _buildLegendItem('Bekleyen', Colors.redAccent),
             ],
           ),
         ],

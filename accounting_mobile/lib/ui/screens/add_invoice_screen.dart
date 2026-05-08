@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import '../../providers/invoice_provider.dart';
+import '../../providers/auth_provider.dart';
 
 class AddInvoiceScreen extends StatefulWidget {
   final Map<String, dynamic>? invoiceToEdit;
@@ -25,6 +26,8 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
   String _type = 'EXPENSE';
   String? _selectedCategory;
   String _department = 'Diger';
+  String? _assignedTo;
+  DateTime? _dueDate;
   XFile? _image;
   
   @override
@@ -41,9 +44,24 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
     super.initState();
     context.read<InvoiceProvider>().fetchCategories();
     
+    // Eğer kullanıcı yönetici ise çalışan listesini de çekelim
+    final userRole = context.read<AuthProvider>().user?['role'] as String? ?? 'USER';
+    if (userRole == 'ADMIN' || userRole == 'MANAGER') {
+      context.read<InvoiceProvider>().fetchStaff();
+    }
+    
     // Resim varsa ilklendirelim
     if (widget.initialImage != null) {
       _image = widget.initialImage;
+    }
+
+    String generateInvoiceNo() {
+      final today = DateTime.now();
+      final yyyy = today.year;
+      final mm = today.month.toString().padLeft(2, '0');
+      final dd = today.day.toString().padLeft(2, '0');
+      final random = (1000 + (today.microsecondsSinceEpoch % 9000));
+      return 'FT-$yyyy$mm$dd-$random';
     }
     
     if (widget.invoiceToEdit != null) {
@@ -54,6 +72,11 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
       _invoiceNoController.text = inv['invoiceNumber'] ?? '';
       _type = inv['type'] ?? 'EXPENSE';
       _department = inv['department'] ?? 'Diger';
+      
+      _assignedTo = inv['assignedTo'] != null 
+          ? (inv['assignedTo'] is Map ? inv['assignedTo']['_id'] : inv['assignedTo'].toString()) 
+          : null;
+      _dueDate = inv['dueDate'] != null ? DateTime.parse(inv['dueDate']) : null;
       
       if (inv['category'] != null) {
         if (inv['category'] is Map) {
@@ -67,7 +90,9 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
       _amountController.text = data['amount']?.toString() ?? '';
       _descController.text = data['description'] ?? '';
       _vendorController.text = data['vendor'] ?? '';
-      _invoiceNoController.text = data['invoiceNumber'] ?? '';
+      _invoiceNoController.text = data['invoiceNumber'] != null && data['invoiceNumber'].toString().trim().isNotEmpty
+          ? data['invoiceNumber'].toString()
+          : generateInvoiceNo();
       _type = data['type'] ?? 'EXPENSE';
       _department = data['department'] ?? 'Diger';
       
@@ -78,6 +103,8 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
           _selectedCategory = data['category'];
         }
       }
+    } else {
+      _invoiceNoController.text = generateInvoiceNo();
     }
   }
 
@@ -208,17 +235,6 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: 'INCOME', label: Text('Gelir'), icon: Icon(Icons.add_circle_outline)),
-                  ButtonSegment(value: 'EXPENSE', label: Text('Gider'), icon: Icon(Icons.remove_circle_outline)),
-                ],
-                selected: {_type},
-                onSelectionChanged: (Set<String> newSelection) {
-                  setState(() => _type = newSelection.first);
-                },
-              ),
-              const SizedBox(height: 24),
               TextFormField(
                 controller: _amountController,
                 keyboardType: TextInputType.text, // Harflerin girilebilmesine izin ver, böylece uyarıyı görebilirler
@@ -261,6 +277,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                 controller: _invoiceNoController,
                 decoration: InputDecoration(
                   labelText: 'Fatura No',
+                  hintText: 'FT-YYYYMMDD-XXXX',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 validator: (v) => v!.isEmpty ? 'Gerekli' : null,
@@ -300,6 +317,71 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                 ],
                 onChanged: (v) => setState(() => _department = v ?? 'Diger'),
               ),
+              if (context.read<AuthProvider>().user?['role'] == 'ADMIN' ||
+                  context.read<AuthProvider>().user?['role'] == 'MANAGER') ...[
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _assignedTo,
+                  decoration: InputDecoration(
+                    labelText: 'Atanan Personel',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(Icons.person_outline),
+                  ),
+                  items: [
+                    const DropdownMenuItem<String>(
+                      value: null,
+                      child: Text('Atanmamış'),
+                    ),
+                    ...invoiceProvider.staff.map((s) {
+                      return DropdownMenuItem<String>(
+                        value: s['_id'],
+                        child: Text(s['fullname'] ?? s['email'] ?? ''),
+                      );
+                    }),
+                  ],
+                  onChanged: (v) => setState(() => _assignedTo = v),
+                ),
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: () async {
+                    final DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate: _dueDate ?? DateTime.now(),
+                      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: ColorScheme.dark(
+                              primary: const Color(0xFF6366F1),
+                              onPrimary: Colors.white,
+                              surface: Theme.of(context).cardTheme.color ?? const Color(0xFF1E1E2E),
+                              onSurface: Colors.white,
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (picked != null) {
+                      setState(() => _dueDate = picked);
+                    }
+                  },
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Vade Tarihi (Son Ödeme)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      prefixIcon: const Icon(Icons.calendar_today_outlined),
+                    ),
+                    child: Text(
+                      _dueDate == null
+                          ? 'Seçilmedi'
+                          : '${_dueDate!.day.toString().padLeft(2, '0')}.${_dueDate!.month.toString().padLeft(2, '0')}.${_dueDate!.year}',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 32),
               Row(
                 children: [
@@ -320,6 +402,8 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                                     'department': _department,
                                     'taxAmount': widget.initialData?['taxAmount'] ?? 0,
                                     'date': widget.invoiceToEdit?['date'] ?? DateTime.now().toIso8601String(),
+                                    'assignedTo': _assignedTo,
+                                    'dueDate': _dueDate?.toIso8601String(),
                                   };
 
                                 bool success;

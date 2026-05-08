@@ -172,6 +172,12 @@ class InvoiceProvider with ChangeNotifier {
 
   List<dynamic> get filteredInvoices {
     if (_filter == 'ALL') return _invoices;
+    if (_filter == 'PENDING') {
+      return _invoices.where((invoice) => invoice['status'] == 'Pending').toList();
+    }
+    if (_filter == 'PAID') {
+      return _invoices.where((invoice) => invoice['status'] == 'Processed').toList();
+    }
     return _invoices.where((invoice) => invoice['type'] == _filter).toList();
   }
 
@@ -317,6 +323,33 @@ class InvoiceProvider with ChangeNotifier {
       }
     } catch (e) {
       print('Delete Invoice Error: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> payInvoice(String id) async {
+    _isLoading = true;
+    _lastError = null;
+    notifyListeners();
+
+    try {
+      final response = await _apiService.dio.put('/invoice/$id/pay');
+      if (response.statusCode == 200) {
+        _isLoading = false;
+        fetchInvoices();
+        fetchStats();
+        return true;
+      }
+    } catch (e) {
+      print('Pay Invoice Error: $e');
+      if (e is DioException && e.response != null) {
+        _lastError = e.response?.data['message'] ?? 'Ödeme işlemi başarısız.';
+      } else {
+        _lastError = 'Bağlantı hatası oluştu.';
+      }
     }
 
     _isLoading = false;
