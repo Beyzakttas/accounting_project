@@ -12,7 +12,14 @@ const NotificationWatcher = ({ user }) => {
   // Ses çalma fonksiyonu (Glassy "di-ri-ri-ri" su damlası / kabarcık efekti)
   const playChime = () => {
     try {
+      const isMuted = localStorage.getItem('in_app_notifications_sound_muted') === 'true';
+      if (isMuted) return;
+
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(err => console.log('Audio resume error:', err));
+      }
       
       // Mi5 (659.25), La5 (880.00), Do#6 (1109.73), Mi6 (1318.51) - Parlak A Major Arpeji
       const notes = [659.25, 880.00, 1109.73, 1318.51];

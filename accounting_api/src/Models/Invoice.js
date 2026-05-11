@@ -3,8 +3,7 @@ import mongoose from 'mongoose';
 const InvoiceSchema = new mongoose.Schema({
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Company',
-    required: true
+    ref: 'Company'
   },
   uploadedBy: {
     type: mongoose.Schema.Types.ObjectId,

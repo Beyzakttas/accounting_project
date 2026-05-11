@@ -33,16 +33,6 @@ const authMiddleware = async (req, res, next) => {
       return next(error);
     }
 
-    // Aktiflik kontrolü (Şirket)
-    if (user.companyId && user.role !== 'ADMIN') {
-      const company = await Company.findById(user.companyId).select('isActive').lean();
-      if (!company || company.isActive === false) {
-        const error = new Error(MESSAGES.AUTH.COMPANY_INACTIVE);
-        error.statusCode = STATUS_CODES.FORBIDDEN;
-        return next(error);
-      }
-    }
-
     req.user = user;
     next();
   } catch (err) {

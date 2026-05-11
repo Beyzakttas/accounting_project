@@ -7,11 +7,10 @@ import { successResponse } from '../Utils/apiResponse.js';
 const router = express.Router();
 router.use(authMiddleware);
 
-// GET /api/category - Şirkete ait kategorileri listele
+// GET /api/category - Tüm kategorileri listele
 router.get('/', async (req, res, next) => {
   try {
-    const { companyId } = req.user;
-    const categories = await Category.find({ companyId }).sort({ name: 1 });
+    const categories = await Category.find().sort({ name: 1 });
     return successResponse(res, categories);
   } catch (error) {
     next(error);
@@ -21,14 +20,13 @@ router.get('/', async (req, res, next) => {
 // POST /api/category - Yeni kategori oluştur
 router.post('/', async (req, res, next) => {
   try {
-    const { companyId } = req.user;
     const { name } = req.body;
     if (!name) {
       const err = new Error('Kategori adı zorunludur.');
       err.statusCode = 400;
       throw err;
     }
-    const category = await Category.create({ name, companyId });
+    const category = await Category.create({ name });
     return successResponse(res, category, 'Kategori oluşturuldu.', 201);
   } catch (error) {
     next(error);

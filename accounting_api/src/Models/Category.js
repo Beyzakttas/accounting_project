@@ -9,8 +9,7 @@ const CategorySchema = new mongoose.Schema({
     // Hangi şirkete ait olduğunu bağlamak için
     companyId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Company',
-        required: true
+        ref: 'Company'
     }
 }, {
     timestamps: true

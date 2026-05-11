@@ -14,9 +14,8 @@ export const processInvoiceOCR = async (req, res, next) => {
     const result = await aiService.extractInvoiceData(req.file.buffer, req.file.mimetype);
 
     // Kategori eşleştirme mantığı
-    if (result && result.category && req.user && req.user.companyId) {
+    if (result && result.category) {
       const category = await Category.findOne({
-        companyId: req.user.companyId,
         name: { $regex: new RegExp(`^${result.category}$`, 'i') } // Case-insensitive eşleşme
       });
 
@@ -40,21 +39,14 @@ export const processInvoiceOCR = async (req, res, next) => {
 export const chatWithAI = async (req, res, next) => {
   try {
     const { question } = req.body;
-    const { _id: userId, companyId, role, department } = req.user;
+    const { _id: userId, role, department } = req.user;
 
     if (!question) {
       return res.status(400).json({ success: false, message: 'Lütfen bir soru sorun.' });
     }
 
-    if (!companyId) {
-      // Eğer şirket ID yoksa (örneğin admin), boş istatistiklerle devam et veya hata döndür
-      const emptyStats = { totalIncome: 0, totalExpense: 0, pendingCount: 0 };
-      const answer = await aiService.getFinancialChat(emptyStats, question);
-      return res.status(200).json({ success: true, data: answer });
-    }
-
-    // Kullanıcının güncel finansal durumunu al
-    const stats = await invoiceService.getInvoiceStats(companyId, userId, role, department);
+    // Kullanıcının güncel finansal durumunu al (şirket filtresi olmadan)
+    const stats = await invoiceService.getInvoiceStats(userId, role, department);
 
     const answer = await aiService.getFinancialChat(stats, question);
 

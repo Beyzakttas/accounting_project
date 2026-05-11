@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const DashboardChart = ({ stats }) => {
+  const { language } = useLanguage();
   const [viewMode, setViewMode] = useState('weekly');
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
@@ -38,10 +40,10 @@ const DashboardChart = ({ stats }) => {
     }
   } else if (viewMode === 'weekly') {
     chartData = [
-      { label: "4 Hafta Önce", income: 0, expense: 0, minDate: new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000), maxDate: new Date(now.getTime() - 21 * 24 * 60 * 60 * 1000) },
-      { label: "3 Hafta Önce", income: 0, expense: 0, minDate: new Date(now.getTime() - 21 * 24 * 60 * 60 * 1000), maxDate: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000) },
-      { label: "Geçen Hafta", income: 0, expense: 0, minDate: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000), maxDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
-      { label: "Bu Hafta", income: 0, expense: 0, minDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), maxDate: now }
+      { label: language === 'tr' ? "4 Hafta Önce" : "4 Weeks Ago", income: 0, expense: 0, minDate: new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000), maxDate: new Date(now.getTime() - 21 * 24 * 60 * 60 * 1000) },
+      { label: language === 'tr' ? "3 Hafta Önce" : "3 Weeks Ago", income: 0, expense: 0, minDate: new Date(now.getTime() - 21 * 24 * 60 * 60 * 1000), maxDate: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000) },
+      { label: language === 'tr' ? "Geçen Hafta" : "Last Week", income: 0, expense: 0, minDate: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000), maxDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
+      { label: language === 'tr' ? "Bu Hafta" : "This Week", income: 0, expense: 0, minDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), maxDate: now }
     ];
 
     if (stats.dailyData && stats.dailyData.length > 0) {
@@ -61,13 +63,26 @@ const DashboardChart = ({ stats }) => {
     }
   } else if (viewMode === 'monthly') {
     if (stats.monthlyData && stats.monthlyData.length > 0) {
-      chartData = stats.monthlyData.slice(-6).map(m => ({
-        label: m.monthStr,
-        income: m.income,
-        expense: m.expense
-      }));
+      chartData = stats.monthlyData.slice(-6).map(m => {
+        // Translate monthly labels if needed (e.g. "Oca", "Şub" to "Jan", "Feb")
+        let translatedLabel = m.monthStr;
+        if (language === 'en') {
+          const monthsMap = {
+            'Ocak': 'Jan', 'Şubat': 'Feb', 'Mart': 'Mar', 'Nisan': 'Apr', 'Mayıs': 'May', 'Haziran': 'Jun',
+            'Temmuz': 'Jul', 'Ağustos': 'Aug', 'Eylül': 'Sep', 'Ekim': 'Oct', 'Kasım': 'Nov', 'Aralık': 'Dec',
+            'Oca': 'Jan', 'Şub': 'Feb', 'Mar': 'Mar', 'Nis': 'Apr', 'May': 'May', 'Haz': 'Jun',
+            'Tem': 'Jul', 'Ağu': 'Aug', 'Eyl': 'Sep', 'Eki': 'Oct', 'Kas': 'Nov', 'Ara': 'Dec'
+          };
+          translatedLabel = monthsMap[m.monthStr] || m.monthStr;
+        }
+        return {
+          label: translatedLabel,
+          income: m.income,
+          expense: m.expense
+        };
+      });
     } else {
-      chartData = [{ label: "Veri Yok", income: 0, expense: 0 }];
+      chartData = [{ label: language === 'tr' ? "Veri Yok" : "No Data", income: 0, expense: 0 }];
     }
   } else if (viewMode === 'yearly') {
     if (stats.monthlyData && stats.monthlyData.length > 0) {
@@ -79,7 +94,7 @@ const DashboardChart = ({ stats }) => {
       });
       chartData = Object.values(yearMap).sort((a, b) => a.label.localeCompare(b.label));
     } else {
-      chartData = [{ label: "Veri Yok", income: 0, expense: 0 }];
+      chartData = [{ label: language === 'tr' ? "Veri Yok" : "No Data", income: 0, expense: 0 }];
     }
   }
 
@@ -87,11 +102,11 @@ const DashboardChart = ({ stats }) => {
   const maxVal = rawMax > 0 ? (Math.ceil(rawMax / 100) * 100) : 100;
   const yLabels = [maxVal, maxVal * 0.75, maxVal * 0.5, maxVal * 0.25, 0];
 
-  let displayTitle = "Ödenen/Bekleyen Fatura Analizi";
-  if (viewMode === 'daily') displayTitle = "Günlük Analiz";
-  else if (viewMode === 'weekly') displayTitle = "Haftalık Analiz";
-  else if (viewMode === 'monthly') displayTitle = "Aylık Analiz";
-  else if (viewMode === 'yearly') displayTitle = "Yıllık Analiz";
+  let displayTitle = language === 'tr' ? "Ödenen/Bekleyen Fatura Analizi" : "Paid/Pending Invoice Analysis";
+  if (viewMode === 'daily') displayTitle = language === 'tr' ? "Günlük Analiz" : "Daily Analysis";
+  else if (viewMode === 'weekly') displayTitle = language === 'tr' ? "Haftalık Analiz" : "Weekly Analysis";
+  else if (viewMode === 'monthly') displayTitle = language === 'tr' ? "Aylık Analiz" : "Monthly Analysis";
+  else if (viewMode === 'yearly') displayTitle = language === 'tr' ? "Yıllık Analiz" : "Yearly Analysis";
 
   return (
     <div className="chart-section glass-card" style={{ zIndex: 1 }}>
@@ -113,10 +128,10 @@ const DashboardChart = ({ stats }) => {
               border: '1px solid var(--glass-border)'
             }}>
               {[
-                { id: 'daily', label: 'Günlük' },
-                { id: 'weekly', label: 'Haftalık' },
-                { id: 'monthly', label: 'Aylık' },
-                { id: 'yearly', label: 'Yıllık' }
+                { id: 'daily', label: language === 'tr' ? 'Günlük' : 'Daily' },
+                { id: 'weekly', label: language === 'tr' ? 'Haftalık' : 'Weekly' },
+                { id: 'monthly', label: language === 'tr' ? 'Aylık' : 'Monthly' },
+                { id: 'yearly', label: language === 'tr' ? 'Yıllık' : 'Yearly' }
               ].map(mode => (
                 <button
                   key={mode.id}
@@ -169,7 +184,7 @@ const DashboardChart = ({ stats }) => {
                   <div
                     className="chart-bar bar-income"
                     style={{ height: `${Math.max(hInc, isEmpty ? 0 : 4)}%` }}
-                    title={`Ödenen: ₺${dataItem.income.toLocaleString()}`}
+                    title={`${language === 'tr' ? 'Ödenen' : 'Paid'}: ₺${dataItem.income.toLocaleString()}`}
                   >
                     {dataItem.income > 0 && (
                       <span className="bar-value-label label-income">
@@ -182,7 +197,7 @@ const DashboardChart = ({ stats }) => {
                   <div
                     className="chart-bar bar-expense"
                     style={{ height: `${Math.max(hExp, isEmpty ? 0 : 4)}%` }}
-                    title={`Bekleyen: ₺${dataItem.expense.toLocaleString()}`}
+                    title={`${language === 'tr' ? 'Bekleyen' : 'Pending'}: ₺${dataItem.expense.toLocaleString()}`}
                   >
                     {dataItem.expense > 0 && (
                       <span className="bar-value-label label-expense">

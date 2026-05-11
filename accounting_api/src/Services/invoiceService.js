@@ -5,7 +5,7 @@ import STATUS_CODES from '../Utils/statusCodes.js';
 /**
  * Yeni fatura oluşturur
  */
-export const createInvoice = async (invoiceData, userId, companyId) => {
+export const createInvoice = async (invoiceData, userId) => {
   const { invoiceNumber, amount, date, vendor } = invoiceData;
 
   // Fatura no boş ise otomatik benzersiz numara üret
@@ -23,7 +23,6 @@ export const createInvoice = async (invoiceData, userId, companyId) => {
 
   // 1. Fatura Numarası ile Kontrol (Benzersiz olmalıdır)
   const existingByNo = await Invoice.findOne({
-    companyId: companyId,
     invoiceNumber: { $regex: new RegExp(`^${finalInvoiceNumber}$`, 'i') }
   });
 
@@ -43,7 +42,6 @@ export const createInvoice = async (invoiceData, userId, companyId) => {
     endDate.setHours(23, 59, 59, 999);
 
     const existingByMeta = await Invoice.findOne({
-      companyId: companyId,
       amount: amount,
       vendor: { $regex: new RegExp(`^${vendor.trim()}$`, 'i') },
       date: { $gte: startDate, $lte: endDate }
@@ -61,8 +59,7 @@ export const createInvoice = async (invoiceData, userId, companyId) => {
     ...invoiceData,
     type: 'EXPENSE',
     invoiceNumber: finalInvoiceNumber,
-    uploadedBy: userId,
-    companyId: companyId
+    uploadedBy: userId
   });
 
   return await newInvoice.save();
@@ -105,6 +102,7 @@ export const updateInvoice = async (invoiceId, updateData, userId, role, departm
  */
 export const deleteInvoice = async (invoiceId, userId, role) => {
   const query = { _id: invoiceId };
+  
   if (role === 'USER') {
     query.uploadedBy = userId;
   }
@@ -122,10 +120,8 @@ export const deleteInvoice = async (invoiceId, userId, role) => {
 /**
  * İstatistikleri getirir (Gelişmiş Raporlar İçin)
  */
-export const getInvoiceStats = async (companyIdStr, userIdStr = null, role = null, department = null) => {
-  const companyId = new mongoose.Types.ObjectId(companyIdStr);
-
-  const matchFilter = { companyId: companyId };
+export const getInvoiceStats = async (userIdStr = null, role = null, department = null) => {
+  const matchFilter = {};
 
   if (role === 'USER' && userIdStr) {
     const userId = new mongoose.Types.ObjectId(userIdStr);

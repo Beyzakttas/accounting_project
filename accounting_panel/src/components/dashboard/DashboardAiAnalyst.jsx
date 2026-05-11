@@ -1,10 +1,13 @@
 import React from 'react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const DashboardAiAnalyst = ({ isAnalyzing, handleFileUpload }) => {
+  const { language } = useLanguage();
+
   return (
     <div className="recent-activity glass-card">
       <div className="card-header">
-        <h2>Yapay Zeka Fatura Analizi</h2>
+        <h2>{language === 'tr' ? 'Yapay Zeka Fatura Analizi' : 'AI Invoice Analysis'}</h2>
       </div>
       <div className={`ai-upload-area ${isAnalyzing ? 'analyzing' : ''}`}>
         <input
@@ -19,18 +22,24 @@ const DashboardAiAnalyst = ({ isAnalyzing, handleFileUpload }) => {
         {isAnalyzing ? (
           <div className="scanner-container">
             <div className="scan-ring"></div>
-            <div className="analyzing-text">ANALİZ EDİLİYOR...</div>
+            <div className="analyzing-text">{language === 'tr' ? 'ANALİZ EDİLİYOR...' : 'ANALYZING...'}</div>
           </div>
         ) : (
           <>
             <div className="upload-icon">☁️</div>
-            <p className="upload-text">Faturanızı sürükleyin veya <span className="highlight">dosya seçin</span></p>
+            <p className="upload-text">
+              {language === 'tr' ? (
+                <>Faturanızı sürükleyin veya <span className="highlight">dosya seçin</span></>
+              ) : (
+                <>Drag your invoice here or <span className="highlight">choose a file</span></>
+              )}
+            </p>
             <p className="upload-sub">PDF, JPG, PNG (Max. 10MB)</p>
             <button
               className="upload-btn"
               onClick={() => document.getElementById('ai-file-input').click()}
             >
-              Bilgisayardan Seç
+              {language === 'tr' ? 'Bilgisayardan Seç' : 'Choose from Computer'}
             </button>
           </>
         )}

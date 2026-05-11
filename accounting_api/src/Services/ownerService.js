@@ -9,7 +9,7 @@ import STATUS_CODES from '../Utils/statusCodes.js';
 /**
  * Yeni personel hesabı oluşturur
  */
-export const createStaff = async (staffData, ownerCompanyId) => {
+export const createStaff = async (staffData) => {
   const { fullname, email, password, department } = staffData;
 
   const existingUser = await User.findOne({ email });
@@ -24,7 +24,6 @@ export const createStaff = async (staffData, ownerCompanyId) => {
     email,
     password,
     role: 'USER',
-    companyId: ownerCompanyId,
     department: department || 'Diğer',
     isActive: true
   });
@@ -36,17 +35,17 @@ export const createStaff = async (staffData, ownerCompanyId) => {
 /**
  * Şirketteki tüm personelleri listeler
  */
-export const getCompanyStaff = async (companyId) => {
-  return await User.find({ companyId, role: 'USER' }).select('-password');
+export const getCompanyStaff = async () => {
+  return await User.find({ role: 'USER' }).select('-password');
 };
 
 /**
  * Personel bilgilerini günceller
  */
-export const updateStaff = async (staffId, updateData, ownerCompanyId) => {
+export const updateStaff = async (staffId, updateData) => {
   const { fullname, department, isActive } = updateData;
 
-  const staff = await User.findOne({ _id: staffId, companyId: ownerCompanyId });
+  const staff = await User.findById(staffId);
   if (!staff) {
     const error = new Error('Personel bulunamadı');
     error.statusCode = STATUS_CODES.NOT_FOUND;
@@ -64,8 +63,8 @@ export const updateStaff = async (staffId, updateData, ownerCompanyId) => {
 /**
  * Personel hesabını siler
  */
-export const deleteStaff = async (staffId, ownerCompanyId) => {
-  const result = await User.deleteOne({ _id: staffId, companyId: ownerCompanyId });
+export const deleteStaff = async (staffId) => {
+  const result = await User.deleteOne({ _id: staffId });
   if (result.deletedCount === 0) {
     const error = new Error('Personel kaydı bulunamadı veya işlem sırasında bir sorun oluştu.');
     error.statusCode = STATUS_CODES.NOT_FOUND;
@@ -77,12 +76,17 @@ export const deleteStaff = async (staffId, ownerCompanyId) => {
 /**
  * Şirket ayarlarını günceller
  */
-export const updateCompanySettings = async (companyId, settings) => {
-  const company = await Company.findById(companyId);
+export const updateCompanySettings = async (settings) => {
+  let company = await Company.findOne();
   if (!company) {
-    const error = new Error(MESSAGES.CONTROLLERS.OWNER.COMPANY_NOT_FOUND);
-    error.statusCode = STATUS_CODES.NOT_FOUND;
-    throw error;
+    // Hiç şirket yoksa varsayılan bir tane oluştur
+    company = await Company.create({
+      name: 'Varsayılan Şirket',
+      taxNumber: '0000000000',
+      address: 'Sistem tarafından otomatik oluşturuldu',
+      phone: '000-000-0000',
+      email: 'default@company.com'
+    });
   }
 
   company.settings = { ...company.settings, ...settings };
@@ -93,24 +97,24 @@ export const updateCompanySettings = async (companyId, settings) => {
 /**
  * Yeni kategori oluşturur
  */
-export const createCategory = async (categoryData, companyId) => {
+export const createCategory = async (categoryData) => {
   const { name } = categoryData;
-  const existingCategory = await Category.findOne({ name, companyId });
+  const existingCategory = await Category.findOne({ name });
   if (existingCategory) {
     const error = new Error(MESSAGES.CONTROLLERS.OWNER.CATEGORY_EXISTS);
     error.statusCode = STATUS_CODES.BAD_REQUEST;
     throw error;
   }
 
-  const newCategory = new Category({ name, companyId });
+  const newCategory = new Category({ name });
   return await newCategory.save();
 };
 
 /**
  * Şirkete ait tüm faturaları listeler
  */
-export const getCompanyInvoices = async (companyId, userId, role) => {
-  const filter = { companyId };
+export const getCompanyInvoices = async (userId, role) => {
+  const filter = {};
   // USER rolü sadece kendi yüklediklerini görsün
   if (role === 'USER') filter.uploadedBy = userId;
 
@@ -122,6 +126,6 @@ export const getCompanyInvoices = async (companyId, userId, role) => {
 /**
  * Şirkete ait kategorileri listeler
  */
-export const getCategories = async (companyId) => {
-  return await Category.find({ companyId });
+export const getCategories = async () => {
+  return await Category.find();
 };

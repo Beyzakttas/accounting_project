@@ -8,7 +8,7 @@ const invoiceController = {
   // 1. Fatura oluştur
   createInvoice: async (req, res, next) => {
     try {
-      const { companyId, _id: userId } = req.user;
+      const { _id: userId } = req.user;
       const invoiceData = { ...req.body };
 
       // Eğer resim yüklendiyse yolunu ekle
@@ -16,7 +16,7 @@ const invoiceController = {
         invoiceData.imageUrl = `/uploads/invoices/${req.file.filename}`;
       }
 
-      const invoice = await invoiceService.createInvoice(invoiceData, userId, companyId);
+      const invoice = await invoiceService.createInvoice(invoiceData, userId);
       return successResponse(res, invoice, 'Fatura başarıyla oluşturuldu.', STATUS_CODES.CREATED);
     } catch (error) {
       next(error);
@@ -26,8 +26,8 @@ const invoiceController = {
   // 2. Faturaları listele (Yetkiye göre)
   getAllInvoices: async (req, res, next) => {
     try {
-      const { companyId, _id: userId, role, department } = req.user;
-      const filter = { companyId };
+      const { _id: userId, role, department } = req.user;
+      const filter = {};
 
       // USER rolü hem kendi yüklediklerini hem kendisine atananları hem de kendi departmanına ait olanları görsün
       if (role === 'USER') {
@@ -70,8 +70,8 @@ const invoiceController = {
   // 5. İstatistikleri getir
   getInvoiceStats: async (req, res, next) => {
     try {
-      const { companyId, _id: userId, role, department } = req.user;
-      const stats = await invoiceService.getInvoiceStats(companyId, userId, role, department);
+      const { _id: userId, role, department } = req.user;
+      const stats = await invoiceService.getInvoiceStats(userId, role, department);
       return successResponse(res, stats, 'İstatistikler başarıyla getirildi.');
     } catch (error) {
       next(error);

@@ -11,6 +11,7 @@ import Invoices from './pages/Invoices';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import { ToastProvider } from './contexts/ToastContext';
 import NotificationWatcher from './components/NotificationWatcher';
 
@@ -32,24 +33,26 @@ function App() {
 
   return (
     <ThemeProvider>
-      <ToastProvider>
-        <NotificationWatcher user={user} />
-        <Router>
-          <Routes>
-            <Route path="/" element={
-              <Login setUser={setUser} />
-            } />
-            <Route path="/dashboard" element={<Dashboard user={user} onLogout={handleLogout} />} />
-            <Route path="/staff" element={<StaffManagement user={user} onLogout={handleLogout} />} />
-            <Route path="/invoices" element={<Invoices user={user} onLogout={handleLogout} />} />
-            <Route path="/reports" element={<Reports user={user} onLogout={handleLogout} />} />
-            <Route path="/settings" element={<Settings user={user} onLogout={handleLogout} />} />
-            <Route path="/register" element={<Register setUser={setUser} />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
-          </Routes>
-        </Router>
-      </ToastProvider>
+      <LanguageProvider>
+        <ToastProvider>
+          <NotificationWatcher user={user} />
+          <Router>
+            <Routes>
+              <Route path="/" element={
+                <Login setUser={setUser} />
+              } />
+              <Route path="/dashboard" element={<Dashboard user={user} onLogout={handleLogout} />} />
+              <Route path="/staff" element={<StaffManagement user={user} onLogout={handleLogout} />} />
+              <Route path="/invoices" element={<Invoices user={user} onLogout={handleLogout} />} />
+              <Route path="/reports" element={<Reports user={user} onLogout={handleLogout} />} />
+              <Route path="/settings" element={<Settings user={user} onLogout={handleLogout} />} />
+              <Route path="/register" element={<Register setUser={setUser} />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
+            </Routes>
+          </Router>
+        </ToastProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

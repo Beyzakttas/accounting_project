@@ -4,10 +4,12 @@ import Modal from '../components/common/Modal';
 import FormInput from '../components/common/FormInput';
 import { useToast } from '../contexts/ToastContext';
 import apiClient from '../api/apiClient';
+import { useLanguage } from '../contexts/LanguageContext';
 import '../assets/css/StaffManagement.css';
 
 const StaffManagement = ({ user, onLogout }) => {
   const { addToast } = useToast();
+  const { t, language } = useLanguage();
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -18,14 +20,14 @@ const StaffManagement = ({ user, onLogout }) => {
   const [activeMenu] = useState('Personel Yönetimi');
 
   const departmentLabels = {
-    'Muhasebe': 'Muhasebe',
-    'Finans': 'Finans',
-    'IK': 'İnsan Kaynakları',
-    'Satis': 'Satış',
-    'Pazarlama': 'Pazarlama',
-    'Yazilim': 'Yazılım / IT',
-    'Operasyon': 'Operasyon',
-    'Diger': 'Diğer'
+    'Muhasebe': language === 'tr' ? 'Muhasebe' : 'Accounting',
+    'Finans': language === 'tr' ? 'Finans' : 'Finance',
+    'IK': language === 'tr' ? 'İnsan Kaynakları' : 'Human Resources',
+    'Satis': language === 'tr' ? 'Satış' : 'Sales',
+    'Pazarlama': language === 'tr' ? 'Pazarlama' : 'Marketing',
+    'Yazilim': language === 'tr' ? 'Yazılım / IT' : 'Software / IT',
+    'Operasyon': language === 'tr' ? 'Operasyon' : 'Operations',
+    'Diger': language === 'tr' ? 'Diğer' : 'Other'
   };
 
   // Yeni personel formu state
@@ -44,11 +46,11 @@ const StaffManagement = ({ user, onLogout }) => {
       }
     } catch (error) {
       console.error('Personel listesi yüklenemedi:', error);
-      addToast('Personel listesi şu an görüntülenemiyor, lütfen sayfanızı yenileyip tekrar deneyin.', 'error');
+      addToast(language === 'tr' ? 'Personel listesi şu an görüntülenemiyor, lütfen sayfanızı yenileyip tekrar deneyin.' : 'Staff list is currently unavailable, please refresh the page and try again.', 'error');
     } finally {
       setLoading(false);
     }
-  }, [addToast]);
+  }, [addToast, language]);
 
   useEffect(() => {
     fetchStaff();
@@ -68,21 +70,21 @@ const StaffManagement = ({ user, onLogout }) => {
           setEditingId(null);
           setFormData({ fullname: '', email: '', password: '', department: 'Muhasebe' });
           fetchStaff();
-          addToast('Personel bilgileri güncellendi.', 'success');
+          addToast(language === 'tr' ? 'Personel bilgileri güncellendi.' : 'Staff information updated.', 'success');
         }
       } else {
         // Yeni kayıt işlemi
-        if (!formData.password) return addToast('Yeni personel için şifre zorunludur.', 'warning');
+        if (!formData.password) return addToast(language === 'tr' ? 'Yeni personel için şifre zorunludur.' : 'Password is required for new staff.', 'warning');
         const response = await apiClient.post('/owner/staff', formData);
         if (response.success) {
           setShowModal(false);
           setFormData({ fullname: '', email: '', password: '', department: 'Muhasebe' });
           fetchStaff();
-          addToast('Personel başarıyla eklendi.', 'success');
+          addToast(language === 'tr' ? 'Personel başarıyla eklendi.' : 'Staff successfully added.', 'success');
         }
       }
     } catch (error) {
-      addToast(error.message || 'İşleminiz kaydedilemedi, lütfen girdiğiniz bilgilerin doğruluğunu kontrol edin.', 'error');
+      addToast(error.message || (language === 'tr' ? 'İşleminiz kaydedilemedi, lütfen girdiğiniz bilgilerin doğruluğunu kontrol edin.' : 'Your transaction could not be saved, please check the correctness of your information.'), 'error');
     }
   };
 
@@ -111,10 +113,10 @@ const StaffManagement = ({ user, onLogout }) => {
         setShowDeleteModal(false);
         setStaffToDelete(null);
         fetchStaff();
-        addToast('Personel silindi.', 'success');
+        addToast(language === 'tr' ? 'Personel silindi.' : 'Staff deleted.', 'success');
       }
     } catch (error) {
-      addToast(error.message || 'Silme işlemi başarısız.', 'error');
+      addToast(error.message || (language === 'tr' ? 'Silme işlemi başarısız.' : 'Deletion failed.'), 'error');
     } finally {
       setDeleting(false);
     }
@@ -130,16 +132,16 @@ const StaffManagement = ({ user, onLogout }) => {
       <div className="staff-management-container">
         <div className="glass-card staff-table-container">
           {loading ? (
-            <div className="loading-state">Yükleniyor...</div>
+            <div className="loading-state">{t('common.loading')}</div>
           ) : (
             <table className="staff-table">
               <thead>
                 <tr>
-                  <th>Ad Soyad</th>
-                  <th>E-posta</th>
-                  <th>Departman</th>
-                  <th>Durum</th>
-                  <th>İşlemler</th>
+                  <th>{language === 'tr' ? 'Ad Soyad' : 'Full Name'}</th>
+                  <th>{language === 'tr' ? 'E-posta' : 'Email'}</th>
+                  <th>{language === 'tr' ? 'Departman' : 'Department'}</th>
+                  <th>{language === 'tr' ? 'Durum' : 'Status'}</th>
+                  <th>{language === 'tr' ? 'İşlemler' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -147,22 +149,22 @@ const StaffManagement = ({ user, onLogout }) => {
                   <tr key={staff._id} className="staff-row">
                     <td>{staff.fullname}</td>
                     <td>{staff.email}</td>
-                    <td>{departmentLabels[staff.department] || staff.department || 'Belirtilmemiş'}</td>
+                    <td>{departmentLabels[staff.department] || staff.department || (language === 'tr' ? 'Belirtilmemiş' : 'Not Specified')}</td>
                     <td>
                       <span className={`status-badge ${staff.isActive ? 'active' : 'inactive'}`}>
-                        {staff.isActive ? 'Aktif' : 'Pasif'}
+                        {staff.isActive ? (language === 'tr' ? 'Aktif' : 'Active') : (language === 'tr' ? 'Pasif' : 'Inactive')}
                       </span>
                     </td>
                     <td className="actions-cell">
-                      <button className="action-btn text-btn" title="Düzenle" onClick={() => handleEditStaff(staff)}>Düzenle</button>
-                      <button className="action-btn text-btn delete-btn" title="Sil" onClick={() => handleDeleteClick(staff)}>Sil</button>
+                      <button className="action-btn text-btn" title={language === 'tr' ? 'Düzenle' : 'Edit'} onClick={() => handleEditStaff(staff)}>{language === 'tr' ? 'Düzenle' : 'Edit'}</button>
+                      <button className="action-btn text-btn delete-btn" title={language === 'tr' ? 'Sil' : 'Delete'} onClick={() => handleDeleteClick(staff)}>{language === 'tr' ? 'Sil' : 'Delete'}</button>
                     </td>
                   </tr>
                 ))}
                 {staffList.length === 0 && (
                   <tr>
                     <td colSpan="5" style={{ textAlign: 'center', padding: '3rem' }}>
-                      Henüz personel eklenmemiş.
+                      {language === 'tr' ? 'Henüz personel eklenmemiş.' : 'No staff has been added yet.'}
                     </td>
                   </tr>
                 )}
@@ -180,33 +182,33 @@ const StaffManagement = ({ user, onLogout }) => {
           setEditingId(null);
           setFormData({ fullname: '', email: '', password: '', department: 'Muhasebe' });
         }}
-        title={editingId ? 'Personel Güncelle' : 'Yeni Personel Ekle'}
+        title={editingId ? (language === 'tr' ? 'Personel Güncelle' : 'Update Staff') : (language === 'tr' ? 'Yeni Personel Ekle' : 'Add New Staff')}
         onSubmit={handleAddStaff}
-        submitText={editingId ? 'Güncelle' : 'Personeli Kaydet'}
+        submitText={editingId ? (language === 'tr' ? 'Güncelle' : 'Update') : (language === 'tr' ? 'Personeli Kaydet' : 'Save Staff')}
         submitClassName="add-staff-btn"
         closeOnOverlayClick={false}
       >
         <FormInput
-          label="Ad Soyad"
+          label={language === 'tr' ? "Ad Soyad" : "Full Name"}
           type="text"
           name="fullname"
           value={formData.fullname}
           onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
-          placeholder="Ahmet Yılmaz"
+          placeholder={language === 'tr' ? "Ahmet Yılmaz" : "John Doe"}
           required
         />
         <FormInput
-          label="E-posta"
+          label={language === 'tr' ? "E-posta" : "Email"}
           type="email"
           name="email"
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          placeholder="ahmet@sirket.com"
+          placeholder={language === 'tr' ? "ahmet@sirket.com" : "john@company.com"}
           required
           disabled={!!editingId} // E-posta değiştirilemesin
         />
         <FormInput
-          label={`Şifre ${editingId ? '(Değiştirmek istemiyorsanız boş bırakın)' : ''}`}
+          label={language === 'tr' ? `Şifre ${editingId ? '(Değiştirmek istemiyorsanız boş bırakın)' : ''}` : `Password ${editingId ? '(Leave blank if you do not want to change)' : ''}`}
           type="password"
           name="password"
           value={formData.password}
@@ -215,21 +217,21 @@ const StaffManagement = ({ user, onLogout }) => {
           required={!editingId}
         />
         <FormInput
-          label="Departman"
+          label={language === 'tr' ? "Departman" : "Department"}
           type="select"
           name="department"
           value={formData.department}
           onChange={(e) => setFormData({ ...formData, department: e.target.value })}
           required
           options={[
-            { value: 'Muhasebe', label: 'Muhasebe' },
-            { value: 'Finans', label: 'Finans' },
-            { value: 'IK', label: 'İnsan Kaynakları' },
-            { value: 'Satis', label: 'Satış' },
-            { value: 'Pazarlama', label: 'Pazarlama' },
-            { value: 'Yazilim', label: 'Yazılım / IT' },
-            { value: 'Operasyon', label: 'Operasyon' },
-            { value: 'Diger', label: 'Diğer' }
+            { value: 'Muhasebe', label: language === 'tr' ? 'Muhasebe' : 'Accounting' },
+            { value: 'Finans', label: language === 'tr' ? 'Finans' : 'Finance' },
+            { value: 'IK', label: language === 'tr' ? 'İnsan Kaynakları' : 'Human Resources' },
+            { value: 'Satis', label: language === 'tr' ? 'Satış' : 'Sales' },
+            { value: 'Pazarlama', label: language === 'tr' ? 'Pazarlama' : 'Marketing' },
+            { value: 'Yazilim', label: language === 'tr' ? 'Yazılım / IT' : 'Software / IT' },
+            { value: 'Operasyon', label: language === 'tr' ? 'Operasyon' : 'Operations' },
+            { value: 'Diger', label: language === 'tr' ? 'Diğer' : 'Other' }
           ]}
         />
       </Modal>
@@ -245,15 +247,24 @@ const StaffManagement = ({ user, onLogout }) => {
           e.preventDefault();
           handleDeleteStaff();
         }}
-        title="Personeli Sil"
-        submitText={deleting ? 'Siliniyor...' : 'Evet, Sil'}
+        title={language === 'tr' ? "Personeli Sil" : "Delete Staff"}
+        submitText={deleting ? (language === 'tr' ? 'Siliniyor...' : 'Deleting...') : (language === 'tr' ? 'Evet, Sil' : 'Yes, Delete')}
         submitClassName="danger-btn"
         maxWidth="450px"
       >
         <div style={{ textAlign: 'center', padding: '1rem 0' }}>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.6' }}>
-            <strong>{staffToDelete?.fullname}</strong> isimli personeli sistemden kalıcı olarak silmek istediğinize emin misiniz? <br />
-            <span style={{ color: '#ef4444', fontWeight: '600' }}>Bu işlem geri alınamaz.</span>
+            {language === 'tr' ? (
+              <>
+                <strong>{staffToDelete?.fullname}</strong> isimli personeli sistemden kalıcı olarak silmek istediğinize emin misiniz? <br />
+                <span style={{ color: '#ef4444', fontWeight: '600' }}>Bu işlem geri alınamaz.</span>
+              </>
+            ) : (
+              <>
+                Are you sure you want to permanently delete the staff member named <strong>{staffToDelete?.fullname}</strong>? <br />
+                <span style={{ color: '#ef4444', fontWeight: '600' }}>This action cannot be undone.</span>
+              </>
+            )}
           </p>
         </div>
       </Modal>
