@@ -18,16 +18,40 @@ class CategoryPieChart extends StatelessWidget {
     }
 
     // İlgili tipteki kategorileri filtreleyelim
-    final filteredData = categoryData!
+    var filteredData = categoryData!
         .where((item) => item['type'] == type)
         .toList();
+
+    // Değerlerine göre büyükten küçüğe sıralayalım
+    filteredData.sort((a, b) {
+      final valA = (a['value'] ?? 0).toDouble();
+      final valB = (b['value'] ?? 0).toDouble();
+      return valB.compareTo(valA);
+    });
+
+    // Eğer 10'dan fazla kategori varsa ilk 9'u alıp kalanları "Diğer" altında toplayalım
+    if (filteredData.length > 10) {
+      final top9 = filteredData.sublist(0, 9);
+      final remaining = filteredData.sublist(9);
+      final otherValue = remaining.fold<double>(
+        0.0,
+        (sum, item) => sum + (item['value'] ?? 0).toDouble(),
+      );
+
+      filteredData = List<dynamic>.from(top9)
+        ..add({
+          'name': 'Diğer',
+          'value': otherValue,
+          'type': type,
+        });
+    }
 
     if (filteredData.isEmpty) {
       return Container(
         height: 200,
         alignment: Alignment.center,
         child: Text(
-          '${type == 'INCOME' ? 'Gelir' : 'Gider'} verisi bulunamadı',
+          '${type == 'INCOME' ? 'Ödenen' : 'Bekleyen'} fatura verisi bulunamadı',
           style: const TextStyle(color: Colors.grey),
         ),
       );
@@ -44,7 +68,7 @@ class CategoryPieChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${type == 'INCOME' ? 'Gelir' : 'Gider'} Dağılımı',
+            '${type == 'INCOME' ? 'Ödenen' : 'Bekleyen'} Fatura Dağılımı',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),

@@ -8,6 +8,8 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'dart:async';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
@@ -20,9 +22,66 @@ class InvoiceProvider with ChangeNotifier {
   Map<String, dynamic>? _stats;
   List<dynamic> _invoices = [];
   List<dynamic> _categories = [];
+  List<dynamic> _staff = [];
   bool _isLoading = false;
   String? _lastError;
   String _filter = 'ALL';
+  int _unreadNotificationsCount = 0;
+  List<Map<String, dynamic>> _notifications = [];
+  
+  int get unreadNotificationsCount => _unreadNotificationsCount;
+  List<Map<String, dynamic>> get notifications => _notifications;
+
+  void clearUnreadNotifications() {
+    _unreadNotificationsCount = 0;
+    _saveNotificationsToPrefs();
+    notifyListeners();
+  }
+
+  void clearAllNotifications() {
+    _notifications.clear();
+    _unreadNotificationsCount = 0;
+    _saveNotificationsToPrefs();
+    notifyListeners();
+  }
+
+  Future<void> loadSavedNotifications() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Load notifications
+      final String? stored = prefs.getString('saved_notifications');
+      if (stored != null) {
+        final List<dynamic> decoded = jsonDecode(stored);
+        _notifications = decoded.map((item) => Map<String, dynamic>.from(item)).toList();
+      }
+      _unreadNotificationsCount = prefs.getInt('unread_notifications_count') ?? 0;
+
+      // Load known invoice IDs to prevent duplicate alerts across app launches
+      final List<String>? storedKnownIds = prefs.getStringList('known_invoice_ids');
+      if (storedKnownIds != null) {
+        _knownInvoiceIds = storedKnownIds.toSet();
+        _isFirstPoll = false;
+      } else {
+        _isFirstPoll = true;
+      }
+      
+      notifyListeners();
+    } catch (e) {
+      print('Error loading notifications: $e');
+    }
+  }
+
+  Future<void> _saveNotificationsToPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('saved_notifications', jsonEncode(_notifications));
+      await prefs.setInt('unread_notifications_count', _unreadNotificationsCount);
+      await prefs.setStringList('known_invoice_ids', _knownInvoiceIds.toList());
+    } catch (e) {
+      print('Error saving notifications: $e');
+    }
+  }
   
   Timer? _pollingTimer;
   Set<String> _knownInvoiceIds = {};
@@ -31,16 +90,11 @@ class InvoiceProvider with ChangeNotifier {
   void startNotificationPolling(BuildContext context) {
     if (_pollingTimer != null) return; // Zaten çalışıyorsa ikinciyi başlatma
     
-    _isFirstPoll = true;
-    _knownInvoiceIds.clear();
-
     // İlk sorguyu yap ve bilinenleri doldur
     _checkNewInvoices(context);
 
-    // Her 5 dakikada bir (geliştirici ortamında test için 15 saniyede bir!)
-    const interval = bool.fromEnvironment('dart.vm.product') 
-        ? Duration(minutes: 5) 
-        : Duration(seconds: 15);
+    // Her 20 saniyede bir kesintisiz ve hızlı sorgula (Uygulama yayındayken de hızlı hissettirsin!)
+    const interval = Duration(seconds: 20);
 
     _pollingTimer = Timer.periodic(interval, (timer) {
       _checkNewInvoices(context);
@@ -64,8 +118,62 @@ class InvoiceProvider with ChangeNotifier {
         final currentIds = fetchedInvoices.map((inv) => inv['_id'] as String).toSet();
 
         if (_isFirstPoll) {
-          _knownInvoiceIds = currentIds;
           _isFirstPoll = false;
+
+          // Son 48 saat içindeki faturaları "çevrimdışı iken gelen" kabul et ve bildirim üret
+          final fortyEightHoursAgo = DateTime.now().subtract(const Duration(hours: 48));
+
+          final offlineInvoices = fetchedInvoices.where((inv) {
+            final uploader = inv['uploadedBy'] is Map ? inv['uploadedBy'] : {};
+            final uploaderId = uploader['_id'] as String? ?? '';
+
+            // 1. Kendi eklediğimiz fatura değilse
+            if (uploaderId == loggedInUserId) return false;
+
+            // 2. Son 48 saatte yüklenmişse
+            final createdAtStr = inv['createdAt'] as String? ?? inv['date'] as String? ?? '';
+            if (createdAtStr.isEmpty) return false;
+            final createdAt = DateTime.tryParse(createdAtStr);
+            if (createdAt == null || createdAt.isBefore(fortyEightHoursAgo)) return false;
+
+            // 3. Departman uyuşuyorsa (USER için)
+            final userRole = authProvider.user?['role'] as String? ?? 'USER';
+            if (userRole == 'USER') {
+              final userDepartment = authProvider.user?['department'] as String? ?? 'Diger';
+              final invDepartment = inv['department'] as String? ?? 'Diger';
+              return invDepartment == userDepartment;
+            }
+            return true;
+          }).toList();
+
+          if (offlineInvoices.isNotEmpty) {
+            _unreadNotificationsCount += offlineInvoices.length;
+            for (var inv in offlineInvoices) {
+              final vendor = inv['vendor'] ?? 'Genel';
+              final amount = inv['amount']?.toString() ?? '0';
+              final uploader = inv['uploadedBy'] is Map ? inv['uploadedBy'] : {};
+              final uploaderName = uploader['fullname'] ?? 'Bir personel';
+              final department = inv['department'] ?? 'Diger';
+
+              String snackTitle = 'Yeni Fatura Atandı! 🔔';
+              String snackBody = 'Siz çevrimdışı iken yöneticiniz $uploaderName, $department departmanı için $vendor firmasından $amount ₺ tutarında bir fatura ekledi.';
+
+              // Bildirimler hafızasına gerçek zamanlı ekle (çiftleme koruması)
+              final alreadyExists = _notifications.any((n) => n['id'] == inv['_id']);
+              if (!alreadyExists) {
+                _notifications.insert(0, {
+                  'id': inv['_id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                  'title': snackTitle,
+                  'body': snackBody,
+                  'time': DateTime.now().toIso8601String(),
+                });
+              }
+            }
+          }
+
+          _knownInvoiceIds = currentIds;
+          _saveNotificationsToPrefs();
+          notifyListeners();
           return;
         }
 
@@ -76,47 +184,44 @@ class InvoiceProvider with ChangeNotifier {
 
           final uploader = inv['uploadedBy'] is Map ? inv['uploadedBy'] : {};
           final uploaderId = uploader['_id'] as String? ?? '';
-          final uploaderRole = uploader['role'] as String? ?? 'USER';
 
           // 1. Kendi eklediğimiz fatura için kendimize bildirim göndermeyelim
           if (uploaderId == loggedInUserId) return false;
 
-          final userRole = authProvider.user?['role'] as String? ?? 'USER';
           final userDepartment = authProvider.user?['department'] as String? ?? 'Diger';
           final invDepartment = inv['department'] as String? ?? 'Diger';
 
-          // 2. YÖNETİCİ/ADMİN eklediyse -> Sadece o departmanın çalışanlarına (USER rolündeki kişilere) bildirim gitsin
-          if (uploaderRole == 'MANAGER' || uploaderRole == 'ADMIN') {
-            return userRole == 'USER' && invDepartment == userDepartment;
-          }
-
-          // 3. STANDART ÇALIŞAN (USER) eklediyse -> Tüm YÖNETİCİ/ADMİN'lere bildirim gitsin
-          if (uploaderRole == 'USER') {
-            return userRole == 'MANAGER' || userRole == 'ADMIN';
-          }
-
-          return false;
+          // 2. Faturanın atandığı departmandaki herkese bildirim gitsin
+          return invDepartment == userDepartment;
         }).toList();
 
+        bool hasNewIds = false;
+        for (var id in currentIds) {
+          if (!_knownInvoiceIds.contains(id)) {
+            _knownInvoiceIds.add(id);
+            hasNewIds = true;
+          }
+        }
+
         if (newInvoices.isNotEmpty) {
+          _unreadNotificationsCount += newInvoices.length;
           for (var inv in newInvoices) {
             final vendor = inv['vendor'] ?? 'Genel';
             final amount = inv['amount']?.toString() ?? '0';
             final uploader = inv['uploadedBy'] is Map ? inv['uploadedBy'] : {};
             final uploaderName = uploader['fullname'] ?? 'Bir personel';
-            final uploaderRole = uploader['role'] ?? 'USER';
             final department = inv['department'] ?? 'Diger';
 
             String snackTitle = 'Yeni Fatura Geldi! 🔔';
-            String snackBody = '$vendor firmasından $amount ₺ tutarında fatura yüklendi.';
+            String snackBody = '$uploaderName, $department departmanı için $vendor firmasından $amount ₺ tutarında yeni bir fatura ekledi.';
 
-            if (uploaderRole == 'MANAGER' || uploaderRole == 'ADMIN') {
-              snackTitle = 'Yeni Fatura Atandı! 🔔';
-              snackBody = 'Yöneticiniz $uploaderName, $department departmanı için $vendor firmasından $amount ₺ tutarında yeni bir fatura ekledi.';
-            } else {
-              snackTitle = 'Yeni Fatura Yüklendi! 📄';
-              snackBody = '$uploaderName, $department departmanı adına $vendor firmasından $amount ₺ tutarında yeni bir fatura ekledi.';
-            }
+            // Bildirimler hafızasına gerçek zamanlı ekle
+            _notifications.insert(0, {
+              'id': inv['_id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+              'title': snackTitle,
+              'body': snackBody,
+              'time': DateTime.now().toIso8601String(),
+            });
             
             // Flutter içinde şık bir snackbar bildirimi tetikleyelim
             if (context.mounted) {
@@ -153,9 +258,11 @@ class InvoiceProvider with ChangeNotifier {
               );
             }
           }
+        }
 
-          // Bilinenler listesini güncelle
-          _knownInvoiceIds.addAll(newInvoices.map((inv) => inv['_id'] as String));
+        if (hasNewIds) {
+          _saveNotificationsToPrefs();
+          notifyListeners();
         }
       }
     } catch (e) {
@@ -166,6 +273,7 @@ class InvoiceProvider with ChangeNotifier {
   Map<String, dynamic>? get stats => _stats;
   List<dynamic> get invoices => _invoices;
   List<dynamic> get categories => _categories;
+  List<dynamic> get staff => _staff;
   bool get isLoading => _isLoading;
   String? get lastError => _lastError;
   String get filter => _filter;
@@ -224,6 +332,18 @@ class InvoiceProvider with ChangeNotifier {
       }
     } catch (e) {
       print('Fetch Categories Error: $e');
+    }
+  }
+
+  Future<void> fetchStaff() async {
+    try {
+      final response = await _apiService.dio.get('/owner/staff');
+      if (response.statusCode == 200) {
+        _staff = response.data['data'];
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Fetch Staff Error: $e');
     }
   }
 

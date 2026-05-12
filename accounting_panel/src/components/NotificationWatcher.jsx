@@ -63,6 +63,22 @@ const NotificationWatcher = ({ user }) => {
       return;
     }
 
+    // Tarayıcı kalıcı hafızasından kayıtlı bilinen fatura ID'lerini yükle
+    const savedKnownIds = localStorage.getItem('known_invoice_ids');
+    if (savedKnownIds) {
+      try {
+        const parsed = JSON.parse(savedKnownIds);
+        if (Array.isArray(parsed)) {
+          knownInvoiceIdsRef.current = new Set(parsed);
+          isFirstLoadRef.current = false;
+        }
+      } catch (e) {
+        console.error('Failed to parse known_invoice_ids:', e);
+      }
+    } else {
+      isFirstLoadRef.current = true;
+    }
+
     const checkNewInvoices = async () => {
       try {
         const response = await apiClient.get('/invoice');
@@ -74,13 +90,71 @@ const NotificationWatcher = ({ user }) => {
         const currentIds = invoices.map(inv => inv._id);
         
         if (isFirstLoadRef.current) {
-          // İlk yüklemede mevcut tüm faturaları "bilinen" olarak işaretle (eski faturalar için tekrar uyarı vermesin)
-          knownInvoiceIdsRef.current = new Set(currentIds);
           isFirstLoadRef.current = false;
           
-          console.log('[NW] İlk yükleme tamamlandı. Bilinen fatura sayısı:', currentIds.length);
+          // Son 48 saat içinde yüklenen faturaları "çevrimdışı iken gelen" kabul et ve bildirim listesine ekle
+          const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
           
-          // Yerel hafızaya da yedekleyelim
+          const offlineInvoices = invoices.filter(inv => {
+            const uploader = inv.uploadedBy || {};
+            const uploaderId = String(uploader._id || uploader);
+
+            // Kendi yüklediğimiz faturaya bildirim almayalım
+            if (uploaderId === String(userId)) return false;
+
+            // Son 48 saat içinde yüklenmiş olmalı
+            const createdAt = new Date(inv.createdAt || inv.date);
+            if (createdAt < fortyEightHoursAgo) return false;
+
+            // Çalışan ise kendi departmanına atanmış olmalı
+            if (userRole === 'USER') {
+              return inv.department === userDepartment;
+            }
+            return true;
+          });
+
+          if (offlineInvoices.length > 0) {
+            const currentNotifications = JSON.parse(localStorage.getItem('in_app_notifications') || '[]');
+
+            offlineInvoices.forEach(inv => {
+              // Eğer bu fatura için daha önceden bildirim eklenmemişse ekleyelim (çiftleme koruması)
+              const alreadyExists = currentNotifications.some(n => n.id === inv._id);
+              if (alreadyExists) return;
+
+              const vendor = inv.vendor || 'Genel';
+              const amount = apiClient.formatCurrency(inv.amount);
+              const uploaderName = inv.uploadedBy?.fullname || 'Bir çalışan';
+              const uploaderRole = inv.uploadedBy?.role || 'USER';
+              const department = inv.department || 'Diger';
+
+              let title = 'Yeni Çevrimdışı Fatura! 📥';
+              let message = '';
+
+              if (uploaderRole === 'MANAGER' || uploaderRole === 'ADMIN') {
+                title = 'Yeni Fatura Atandı! 🔔';
+                message = `Siz çevrimdışı iken yöneticiniz ${uploaderName}, ${department} departmanı için ${vendor} firmasından ${amount} tutarında yeni bir fatura ekledi.`;
+              } else {
+                message = `Siz çevrimdışı iken ${uploaderName}, ${department} departmanı adına ${vendor} firmasından ${amount} tutarında yeni bir fatura ekledi.`;
+              }
+
+              currentNotifications.unshift({
+                id: inv._id,
+                title,
+                message,
+                createdAt: inv.createdAt || new Date().toISOString(),
+                read: false
+              });
+            });
+
+            const trimmedNotifications = currentNotifications.slice(0, 50);
+            localStorage.setItem('in_app_notifications', JSON.stringify(trimmedNotifications));
+            
+            // Diğer bileşenlere (Topbar gibi) haber ver
+            window.dispatchEvent(new CustomEvent('newNotification'));
+          }
+
+          // Mevcut tüm faturaları bilinen olarak işaretle ve yerel hafızaya kaydet
+          knownInvoiceIdsRef.current = new Set(currentIds);
           localStorage.setItem('known_invoice_ids', JSON.stringify(currentIds));
           return;
         }
@@ -138,7 +212,7 @@ const NotificationWatcher = ({ user }) => {
             } else {
               title = 'Yeni Fatura Yüklendi! 📄';
               message = `${uploaderName}, ${department} departmanı adına ${vendor} firmasından ${amount} tutarında yeni bir fatura ekledi.`;
-              addToast(`📄 Yeni Fatura Yüklendi: ${uploaderName}, ${department} departmanı adına ${vendor} firmasından ${amount} tutarında yeni bir fatura ekledi.`, 'info', 7000);
+              addToast(`📄 Yeni Fatura Yüklendi: ${uploaderName}, ${department} departmanı adına ${vendor} firmasından ${amount} tutarında yeni bir faturayı ekledi.`, 'info', 7000);
             }
 
             // Listeye ekle (başa ekle ki en son bildirim en üstte olsun)
@@ -160,9 +234,17 @@ const NotificationWatcher = ({ user }) => {
           
           // Chime sesini çal
           playChime();
+        }
 
-          // Bilinenler listesini güncelle
-          currentIds.forEach(id => knownInvoiceIdsRef.current.add(id));
+        // Bilinenler listesini her durumda güncelle (Yeni faturaları daima hafızaya ekle)
+        let hasNewIds = false;
+        currentIds.forEach(id => {
+          if (!knownInvoiceIdsRef.current.has(id)) {
+            knownInvoiceIdsRef.current.add(id);
+            hasNewIds = true;
+          }
+        });
+        if (hasNewIds) {
           localStorage.setItem('known_invoice_ids', JSON.stringify(Array.from(knownInvoiceIdsRef.current)));
         }
       } catch (err) {

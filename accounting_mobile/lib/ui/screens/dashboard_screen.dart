@@ -11,6 +11,7 @@ import '../widgets/category_pie_chart.dart';
 import 'invoice_list_screen.dart';
 import 'add_invoice_screen.dart';
 import 'ai_chat_screen.dart';
+import 'notifications_screen.dart';
 import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -27,6 +28,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      context.read<InvoiceProvider>().loadSavedNotifications();
       context.read<InvoiceProvider>().fetchStats();
       context.read<InvoiceProvider>().startNotificationPolling(context);
     });
@@ -70,6 +72,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
             tooltip: 'AI Asistan',
           ),
           IconButton(
+            icon: Badge(
+              label: Text('${invoiceProvider.unreadNotificationsCount}'),
+              isLabelVisible: invoiceProvider.unreadNotificationsCount > 0,
+              backgroundColor: Colors.redAccent,
+              child: const Icon(Icons.notifications_outlined),
+            ),
+            onPressed: () {
+              invoiceProvider.clearUnreadNotifications();
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+              );
+            },
+            tooltip: 'Bildirimler',
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => authProvider.logout(),
           ),
@@ -100,20 +118,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Expanded(
                           child: _buildCompactStatCard(
                             context,
-                            'Gelir',
+                            'Ödenen',
                             stats?['totalIncome']?.toDouble() ?? 0.0,
                             Colors.greenAccent,
-                            Icons.trending_up,
+                            Icons.check_circle_outline,
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildCompactStatCard(
                             context,
-                            'Gider',
+                            'Bekleyen',
                             stats?['totalExpense']?.toDouble() ?? 0.0,
-                            Colors.redAccent,
-                            Icons.trending_down,
+                            Colors.orangeAccent,
+                            Icons.pending_actions,
                           ),
                         ),
                       ],
@@ -121,8 +139,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 12),
                     _buildStatCard(
                       context,
-                      'Net Bakiye',
-                      (stats?['totalIncome']?.toDouble() ?? 0.0) -
+                      'Toplam Hacim',
+                      (stats?['totalIncome']?.toDouble() ?? 0.0) +
                           (stats?['totalExpense']?.toDouble() ?? 0.0),
                       Colors.blueAccent,
                       Icons.account_balance_wallet,

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 import '../../providers/invoice_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../core/constants.dart';
 
 class AddInvoiceScreen extends StatefulWidget {
   final Map<String, dynamic>? invoiceToEdit;
@@ -199,6 +200,21 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                       ),
                     ),
                   ],
+                )
+              else if (widget.invoiceToEdit?['imageUrl'] != null)
+                Container(
+                  height: 200,
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    image: DecorationImage(
+                      image: NetworkImage(
+                        AppConstants.baseUrl.replaceAll('/api', '') + widget.invoiceToEdit!['imageUrl'],
+                      ),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -319,28 +335,6 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
               ),
               if (context.read<AuthProvider>().user?['role'] == 'ADMIN' ||
                   context.read<AuthProvider>().user?['role'] == 'MANAGER') ...[
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: _assignedTo,
-                  decoration: InputDecoration(
-                    labelText: 'Atanan Personel',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    prefixIcon: const Icon(Icons.person_outline),
-                  ),
-                  items: [
-                    const DropdownMenuItem<String>(
-                      value: null,
-                      child: Text('Atanmamış'),
-                    ),
-                    ...invoiceProvider.staff.map((s) {
-                      return DropdownMenuItem<String>(
-                        value: s['_id'],
-                        child: Text(s['fullname'] ?? s['email'] ?? ''),
-                      );
-                    }),
-                  ],
-                  onChanged: (v) => setState(() => _assignedTo = v),
-                ),
                 const SizedBox(height: 16),
                 InkWell(
                   onTap: () async {

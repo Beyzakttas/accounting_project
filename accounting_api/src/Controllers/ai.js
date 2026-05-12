@@ -38,7 +38,7 @@ export const processInvoiceOCR = async (req, res, next) => {
  */
 export const chatWithAI = async (req, res, next) => {
   try {
-    const { question } = req.body;
+    const { question, language } = req.body;
     const { _id: userId, role, department } = req.user;
 
     if (!question) {
@@ -48,7 +48,7 @@ export const chatWithAI = async (req, res, next) => {
     // Kullanıcının güncel finansal durumunu al (şirket filtresi olmadan)
     const stats = await invoiceService.getInvoiceStats(userId, role, department);
 
-    const answer = await aiService.getFinancialChat(stats, question);
+    const answer = await aiService.getFinancialChat(stats, question, language || 'tr');
 
     res.status(200).json({
       success: true,

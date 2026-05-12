@@ -42,7 +42,7 @@ class ReportsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Gelir ve giderlerinizin kategorilere göre dökümü.',
+                      'Ödenen ve bekleyen faturalarınızın kategorilere göre dökümü.',
                       style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
                     ),
                     const SizedBox(height: 32),

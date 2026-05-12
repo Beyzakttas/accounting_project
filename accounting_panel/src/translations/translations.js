@@ -14,7 +14,13 @@ export const translations = {
       search: "Ara...",
       close: "Kapat",
       other: "Diğer",
-      success: "Başarılı"
+      success: "Başarılı",
+      serverUnreachable: "Sunucuya şu an ulaşılamıyor, lütfen internet bağlantınızı kontrol edin.",
+      deleting: "Siliniyor...",
+      yesDelete: "Evet, Sil",
+      paying: "Ödeniyor...",
+      yesPay: "Evet, Öde",
+      unspecified: "Belirtilmemiş"
     },
     sidebar: {
       dashboard: "Anasayfa",
@@ -82,7 +88,30 @@ export const translations = {
       deleteConfirmText: "Bu faturayı kalıcı olarak silmek istediğinize emin misiniz?",
       invoicePaidSuccess: "Fatura başarıyla ödendi.",
       invoiceDeletedSuccess: "Fatura başarıyla silindi.",
-      payBtn: "Öde"
+      payBtn: "Öde",
+      errorLoadingInvoices: "Faturalar yüklenirken bir sorun oluştu.",
+      errorLoadingCategories: "Kategoriler yüklenirken bir sorun oluştu.",
+      pleaseEnterCategoryName: "Lütfen kategori adı girin.",
+      updateSuccess: "Fatura başarıyla güncellendi.",
+      createSuccess: "Fatura başarıyla oluşturuldu.",
+      saveError: "Kaydetme işlemi sırasında bir sorun oluştu, lütfen girdiğiniz bilgileri kontrol edin.",
+      deleteError: "Silme işlemi başarısız.",
+      paymentError: "Ödeme işlemi başarısız oldu.",
+      searchPlaceholder: "Fatura no, açıklama veya satıcı ara...",
+      invoiceTypeDefault: "Fatura",
+      statusPending: "Beklemede",
+      statusPaid: "Ödendi",
+      noInvoicesFound: "Fatura Bulunmuyor",
+      noInvoicesDesc: "Henüz sisteme fatura eklenmemiş.",
+      descriptionPlaceholder: "Hizmet bedeli, Amazon alımı vb.",
+      vendorPlaceholder: "Örn: Trendyol, Hepsiburada",
+      addCustomCategory: "+ Diğer (Yeni Kategori Ekle)",
+      selectCategoryPlaceholder: "-- Kategori Seçin --",
+      cannotBeUndone: "Bu işlem geri alınamaz.",
+      deleteConfirmMessage: "Seçili faturayı sistemden kalıcı olarak silmek istediğinize emin misiniz?",
+      payConfirmTitle: "Ödeme Onayı",
+      payConfirmMessage: "Seçili fatura için ödeme işlemini onaylıyor musunuz?",
+      payConfirmAmount: "Tutar:"
     },
     reports: {
       title: "Gelişmiş Raporlar",
@@ -113,7 +142,20 @@ export const translations = {
       staffList: "Personel Listesi",
       adminRole: "Yönetici (ADMIN)",
       managerRole: "Müdür (MANAGER)",
-      userRole: "Personel (USER)"
+      userRole: "Personel (USER)",
+      errorLoadingStaff: "Personel listesi şu an görüntülenemiyor, lütfen sayfanızı yenileyip tekrar deneyin.",
+      updateStaffSuccess: "Personel bilgileri güncellendi.",
+      passwordRequired: "Yeni personel için şifre zorunludur.",
+      saveError: "İşleminiz kaydedilemedi, lütfen girdiğiniz bilgilerin doğruluğunu kontrol edin.",
+      deleteStaffSuccess: "Personel başarıyla silindi.",
+      deleteStaffTitle: "Personeli Sil",
+      deleteConfirmMessage: "isimli personeli sistemden kalıcı olarak silmek istediğinize emin misiniz?",
+      updateStaffTitle: "Personel Güncelle",
+      noStaffAdded: "Henüz personel eklenmemiş.",
+      passwordLabelNew: "Şifre",
+      passwordLabelEdit: "Şifre (Değiştirmek istemiyorsanız boş bırakın)",
+      fullnamePlaceholder: "Ahmet Yılmaz",
+      emailPlaceholder: "ahmet@sirket.com"
     },
     settings: {
       title: "Hesap Ayarları",
@@ -130,6 +172,27 @@ export const translations = {
       saveChanges: "Değişiklikleri Kaydet",
       profileUpdatedSuccess: "Profiliniz başarıyla güncellendi.",
       passwordUpdatedSuccess: "Şifreniz başarıyla güncellendi."
+    },
+    departments: {
+      Muhasebe: "Muhasebe",
+      Finans: "Finans",
+      IK: "İnsan Kaynakları (IK)",
+      Satis: "Satış",
+      Pazarlama: "Pazarlama",
+      Yazilim: "Yazılım / IT",
+      Operasyon: "Operasyon",
+      Diger: "Diğer",
+      unspecified: "Belirtilmemiş"
+    },
+    aiAssistant: {
+      welcome: "Merhaba! Ben Muhasebe AI asistanıyım. Finansal verilerinizle ilgili size nasıl yardımcı olabilirim?",
+      unreachable: "Şu an bağlantı kuramıyorum. Lütfen API anahtarınızı ve internetinizi kontrol edin.",
+      errorOccurred: "Üzgünüm, bir hata oluştu:",
+      title: "Finansal Asistan",
+      online: "Çevrimiçi",
+      closeBtn: "Kapat",
+      placeholder: "Bir soru sorun...",
+      askButtonTitle: "AI Asistana Sor"
     }
   },
   en: {
@@ -147,7 +210,13 @@ export const translations = {
       search: "Search...",
       close: "Close",
       other: "Other",
-      success: "Success"
+      success: "Success",
+      serverUnreachable: "Server is currently unreachable, please check your internet connection.",
+      deleting: "Deleting...",
+      yesDelete: "Yes, Delete",
+      paying: "Paying...",
+      yesPay: "Yes, Pay",
+      unspecified: "Not Specified"
     },
     sidebar: {
       dashboard: "Dashboard",
@@ -215,7 +284,30 @@ export const translations = {
       deleteConfirmText: "Are you sure you want to permanently delete this invoice?",
       invoicePaidSuccess: "Invoice paid successfully.",
       invoiceDeletedSuccess: "Invoice deleted successfully.",
-      payBtn: "Pay"
+      payBtn: "Pay",
+      errorLoadingInvoices: "A problem occurred while loading invoices.",
+      errorLoadingCategories: "A problem occurred while loading categories.",
+      pleaseEnterCategoryName: "Please enter a category name.",
+      updateSuccess: "Invoice successfully updated.",
+      createSuccess: "Invoice successfully created.",
+      saveError: "An error occurred during saving, please check your inputs.",
+      deleteError: "Deletion failed.",
+      paymentError: "Payment process failed.",
+      searchPlaceholder: "Search invoice no, description or vendor...",
+      invoiceTypeDefault: "Invoice",
+      statusPending: "Pending",
+      statusPaid: "Paid",
+      noInvoicesFound: "No Invoices Found",
+      noInvoicesDesc: "No invoices have been added to the system yet.",
+      descriptionPlaceholder: "Service fee, Amazon purchase etc.",
+      vendorPlaceholder: "e.g. Amazon, Apple",
+      addCustomCategory: "+ Other (Add New Category)",
+      selectCategoryPlaceholder: "-- Select Category --",
+      cannotBeUndone: "This action cannot be undone.",
+      deleteConfirmMessage: "Are you sure you want to permanently delete the selected invoice?",
+      payConfirmTitle: "Payment Confirmation",
+      payConfirmMessage: "Do you confirm the payment for the selected invoice?",
+      payConfirmAmount: "Amount:"
     },
     reports: {
       title: "Advanced Reports",
@@ -246,7 +338,20 @@ export const translations = {
       staffList: "Employee List",
       adminRole: "Administrator (ADMIN)",
       managerRole: "Manager (MANAGER)",
-      userRole: "Staff (USER)"
+      userRole: "Staff (USER)",
+      errorLoadingStaff: "Staff list is currently unavailable, please refresh the page and try again.",
+      updateStaffSuccess: "Staff information updated.",
+      passwordRequired: "Password is required for new staff.",
+      saveError: "Your transaction could not be saved, please check the correctness of your information.",
+      deleteStaffSuccess: "Staff deleted successfully.",
+      deleteStaffTitle: "Delete Staff",
+      deleteConfirmMessage: "Are you sure you want to permanently delete the staff member named",
+      updateStaffTitle: "Update Staff",
+      noStaffAdded: "No staff has been added yet.",
+      passwordLabelNew: "Password",
+      passwordLabelEdit: "Password (Leave blank if you do not want to change)",
+      fullnamePlaceholder: "John Doe",
+      emailPlaceholder: "john@company.com"
     },
     settings: {
       title: "Account Settings",
@@ -263,6 +368,28 @@ export const translations = {
       saveChanges: "Save Changes",
       profileUpdatedSuccess: "Your profile has been updated successfully.",
       passwordUpdatedSuccess: "Your password has been updated successfully."
+    },
+    departments: {
+      Muhasebe: "Accounting",
+      Finans: "Finance",
+      IK: "Human Resources (HR)",
+      Satis: "Sales",
+      Pazarlama: "Marketing",
+      Yazilim: "Software / IT",
+      Operasyon: "Operations",
+      Diger: "Other",
+      unspecified: "Not Specified"
+    },
+    aiAssistant: {
+      welcome: "Hello! I am your Accounting AI assistant. How can I help you with your financial data?",
+      unreachable: "I cannot connect right now. Please check your API key and internet connection.",
+      errorOccurred: "Sorry, an error occurred:",
+      title: "Financial Assistant",
+      online: "Online",
+      closeBtn: "Close",
+      placeholder: "Ask a question...",
+      askButtonTitle: "Ask AI Assistant"
     }
   }
 };
+

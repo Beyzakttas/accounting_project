@@ -34,8 +34,19 @@ export const LanguageProvider = ({ children }) => {
     return value;
   };
 
+  const getDepartmentOptions = () => [
+    { value: 'Muhasebe', label: t('departments.Muhasebe') },
+    { value: 'Finans', label: t('departments.Finans') },
+    { value: 'IK', label: t('departments.IK') },
+    { value: 'Satis', label: t('departments.Satis') },
+    { value: 'Pazarlama', label: t('departments.Pazarlama') },
+    { value: 'Yazilim', label: t('departments.Yazilim') },
+    { value: 'Operasyon', label: t('departments.Operasyon') },
+    { value: 'Diger', label: t('departments.Diger') }
+  ];
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage, t, getDepartmentOptions }}>
       {children}
     </LanguageContext.Provider>
   );

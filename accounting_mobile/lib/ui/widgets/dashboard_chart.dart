@@ -148,7 +148,7 @@ class _DashboardChartState extends State<DashboardChart> {
                       ),
                       BarChartRodData(
                         toY: (data['expense'] ?? 0).toDouble(),
-                        color: Colors.redAccent,
+                        color: Colors.orangeAccent,
                         width: _selectedPeriod == ChartPeriod.daily ? 8 : 12,
                         borderRadius: BorderRadius.circular(4),
                       ),
@@ -164,7 +164,7 @@ class _DashboardChartState extends State<DashboardChart> {
             children: [
               _buildLegendItem('Ödenen', Colors.greenAccent),
               const SizedBox(width: 24),
-              _buildLegendItem('Bekleyen', Colors.redAccent),
+              _buildLegendItem('Bekleyen', Colors.orangeAccent),
             ],
           ),
         ],

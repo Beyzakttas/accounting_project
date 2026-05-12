@@ -154,10 +154,11 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                           itemCount: invoices.length,
                           itemBuilder: (context, index) {
                             final invoice = invoices[index];
+                            final status = invoice['status'] ?? 'Pending';
+                            final isPaid = status == 'Processed' || status == 'Paid';
                             final isIncome = invoice['type'] == 'INCOME';
 
                             final dueDateStr = invoice['dueDate'];
-                            final status = invoice['status'] ?? 'Pending';
                             bool isNearDue = false;
                             int daysLeft = 0;
                             if (dueDateStr != null && status == 'Pending') {
@@ -222,12 +223,12 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                                         );
                                       },
                                       leading: CircleAvatar(
-                                        backgroundColor: isIncome
+                                        backgroundColor: isPaid
                                             ? Colors.greenAccent.withOpacity(0.1)
-                                            : Colors.redAccent.withOpacity(0.1),
+                                            : Colors.orangeAccent.withOpacity(0.1),
                                         child: Icon(
-                                          isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-                                          color: isIncome ? Colors.greenAccent : Colors.redAccent,
+                                          isPaid ? Icons.check_circle_outline : Icons.pending_actions,
+                                          color: isPaid ? Colors.greenAccent : Colors.orangeAccent,
                                         ),
                                       ),
                                       title: Text(
@@ -263,141 +264,182 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                                           ],
                                         ],
                                       ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        AppFormatters.currencyFormat.format(invoice['amount'] ?? 0.0),
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: isIncome ? Colors.greenAccent : Colors.redAccent,
-                                        ),
-                                      ),
-                                      PopupMenuButton<String>(
-                                        icon: const Icon(Icons.more_vert, color: Colors.blueAccent),
-                                        onSelected: (value) async {
-                                          if (value == 'pay') {
-                                            final success = await context.read<InvoiceProvider>().payInvoice(invoice['_id']);
-                                            if (success && mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(content: Text('Fatura başarıyla ödendi / işlendi!')),
-                                              );
-                                            }
-                                          } else if (value == 'edit') {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => AddInvoiceScreen(invoiceToEdit: invoice),
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (!isPaid) ...[
+                                            IconButton(
+                                              icon: const Icon(Icons.payment_rounded, color: Colors.greenAccent),
+                                              onPressed: () async {
+                                                final success = await context.read<InvoiceProvider>().payInvoice(invoice['_id']);
+                                                if (success && mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(content: Text('Fatura başarıyla ödendi!')),
+                                                  );
+                                                }
+                                              },
+                                              tooltip: 'Öde',
+                                            ),
+                                            const SizedBox(width: 4),
+                                          ],
+                                          Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                            children: [
+                                              Text(
+                                                AppFormatters.currencyFormat.format(invoice['amount'] ?? 0.0),
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isPaid ? Colors.greenAccent : Colors.orangeAccent,
+                                                ),
                                               ),
-                                            );
-                                          } else if (value == 'delete') {
-                                            showDialog(
-                                              context: context,
-                                              builder: (ctx) => AlertDialog(
-                                                title: const Text('Faturayı Sil'),
-                                                content: const Text('Bu faturayı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () => Navigator.pop(ctx),
-                                                    child: const Text('Vazgeç'),
+                                              const SizedBox(height: 4),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: isPaid
+                                                      ? Colors.greenAccent.withOpacity(0.1)
+                                                      : Colors.orangeAccent.withOpacity(0.1),
+                                                  borderRadius: BorderRadius.circular(6),
+                                                ),
+                                                child: Text(
+                                                  isPaid ? 'Ödendi' : 'Bekliyor',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: isPaid ? Colors.greenAccent : Colors.orangeAccent,
                                                   ),
-                                                  TextButton(
-                                                    onPressed: () async {
-                                                      Navigator.pop(ctx);
-                                                      final success = await context.read<InvoiceProvider>().deleteInvoice(invoice['_id']);
-                                                      if (success && mounted) {
-                                                        ScaffoldMessenger.of(context).showSnackBar(
-                                                          const SnackBar(content: Text('Fatura başarıyla silindi!')),
-                                                        );
-                                                      }
-                                                    },
-                                                    child: const Text('Sil', style: TextStyle(color: Colors.redAccent)),
-                                                  ),
-                                                ],
+                                                ),
                                               ),
-                                            );
-                                          } else if (value == 'share') {
-                                            context.read<InvoiceProvider>().shareInvoice(invoice);
-                                          } else if (value == 'download') {
-                                            if (invoice['imageUrl'] != null) {
-                                              final success = await context
-                                                  .read<InvoiceProvider>()
-                                                  .downloadInvoice(invoice['imageUrl']);
-                                              
-                                              if (mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(success 
-                                                        ? 'Fatura galeriye kaydedildi.' 
-                                                        : 'İndirme başarısız oldu.'),
-                                                    backgroundColor: success ? Colors.green : Colors.red,
+                                            ],
+                                          ),
+                                          PopupMenuButton<String>(
+                                            icon: const Icon(Icons.more_vert, color: Colors.blueAccent),
+                                            onSelected: (value) async {
+                                              if (value == 'pay') {
+                                                final success = await context.read<InvoiceProvider>().payInvoice(invoice['_id']);
+                                                if (success && mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(content: Text('Fatura başarıyla ödendi / işlendi!')),
+                                                  );
+                                                }
+                                              } else if (value == 'edit') {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => AddInvoiceScreen(invoiceToEdit: invoice),
                                                   ),
                                                 );
+                                              } else if (value == 'delete') {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (ctx) => AlertDialog(
+                                                    title: const Text('Faturayı Sil'),
+                                                    content: const Text('Bu faturayı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () => Navigator.pop(ctx),
+                                                        child: const Text('Vazgeç'),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () async {
+                                                          Navigator.pop(ctx);
+                                                          final success = await context.read<InvoiceProvider>().deleteInvoice(invoice['_id']);
+                                                          if (success && mounted) {
+                                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                              const SnackBar(content: Text('Fatura başarıyla silindi!')),
+                                                            );
+                                                          }
+                                                        },
+                                                        child: const Text('Sil', style: TextStyle(color: Colors.redAccent)),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              } else if (value == 'share') {
+                                                context.read<InvoiceProvider>().shareInvoice(invoice);
+                                              } else if (value == 'download') {
+                                                if (invoice['imageUrl'] != null) {
+                                                  final success = await context
+                                                      .read<InvoiceProvider>()
+                                                      .downloadInvoice(invoice['imageUrl']);
+                                                  
+                                                  if (mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(success 
+                                                            ? 'Fatura galeriye kaydedildi.' 
+                                                            : 'İndirme başarısız oldu.'),
+                                                        backgroundColor: success ? Colors.green : Colors.red,
+                                                      ),
+                                                    );
+                                                  }
+                                                } else {
+                                                  await context
+                                                      .read<InvoiceProvider>()
+                                                      .generateAndShareInvoicePdf(invoice);
+                                                }
                                               }
-                                            } else {
-                                              await context
-                                                  .read<InvoiceProvider>()
-                                                  .generateAndShareInvoicePdf(invoice);
-                                            }
-                                          }
-                                        },
-                                        itemBuilder: (context) => [
-                                          if (status == 'Pending')
-                                            const PopupMenuItem(
-                                              value: 'pay',
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.payment_rounded, size: 20, color: Colors.greenAccent),
-                                                  SizedBox(width: 8),
-                                                  Text('Öde', style: TextStyle(color: Colors.greenAccent)),
-                                                ],
+                                            },
+                                            itemBuilder: (context) => [
+                                              if (status == 'Pending')
+                                                const PopupMenuItem(
+                                                  value: 'pay',
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(Icons.payment_rounded, size: 20, color: Colors.greenAccent),
+                                                      SizedBox(width: 8),
+                                                      Text('Öde', style: TextStyle(color: Colors.greenAccent)),
+                                                    ],
+                                                  ),
+                                                ),
+                                              const PopupMenuItem(
+                                                value: 'edit',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(Icons.edit_rounded, size: 20, color: Colors.blueAccent),
+                                                    SizedBox(width: 8),
+                                                    Text('Düzenle'),
+                                                  ],
+                                                ),
                                               ),
-                                            ),
-                                          const PopupMenuItem(
-                                            value: 'edit',
-                                            child: Row(
-                                              children: [
-                                                Icon(Icons.edit_rounded, size: 20, color: Colors.blueAccent),
-                                                SizedBox(width: 8),
-                                                Text('Düzenle'),
-                                              ],
-                                            ),
-                                          ),
-                                          const PopupMenuItem(
-                                            value: 'share',
-                                            child: Row(
-                                              children: [
-                                                Icon(Icons.share_rounded, size: 20, color: Colors.blueAccent),
-                                                SizedBox(width: 8),
-                                                Text('Paylaş'),
-                                              ],
-                                            ),
-                                          ),
-                                          const PopupMenuItem(
-                                            value: 'download',
-                                            child: Row(
-                                              children: [
-                                                Icon(Icons.download_rounded, size: 20, color: Colors.blueAccent),
-                                                SizedBox(width: 8),
-                                                Text('İndir'),
-                                              ],
-                                            ),
-                                          ),
-                                          const PopupMenuItem(
-                                            value: 'delete',
-                                            child: Row(
-                                              children: [
-                                                Icon(Icons.delete_rounded, size: 20, color: Colors.redAccent),
-                                                SizedBox(width: 8),
-                                                Text('Sil', style: TextStyle(color: Colors.redAccent)),
-                                              ],
-                                            ),
+                                              const PopupMenuItem(
+                                                value: 'share',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(Icons.share_rounded, size: 20, color: Colors.blueAccent),
+                                                    SizedBox(width: 8),
+                                                    Text('Paylaş'),
+                                                  ],
+                                                ),
+                                              ),
+                                              const PopupMenuItem(
+                                                value: 'download',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(Icons.download_rounded, size: 20, color: Colors.blueAccent),
+                                                    SizedBox(width: 8),
+                                                    Text('İndir'),
+                                                  ],
+                                                ),
+                                              ),
+                                              const PopupMenuItem(
+                                                value: 'delete',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(Icons.delete_rounded, size: 20, color: Colors.redAccent),
+                                                    SizedBox(width: 8),
+                                                    Text('Sil', style: TextStyle(color: Colors.redAccent)),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             );
@@ -453,7 +495,5 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
         fontSize: 13,
       ),
     );
-  }
-}
   }
 }

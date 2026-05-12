@@ -23,9 +23,9 @@ export const processInvoiceOCR = async (file) => {
 /**
  * Finansal Asistan Sohbeti
  */
-export const askAiAssistant = async (question) => {
+export const askAiAssistant = async (question, language = 'tr') => {
   try {
-    const response = await apiClient.post('/ai/chat', { question });
+    const response = await apiClient.post('/ai/chat', { question, language });
     return response;
   } catch (error) {
     console.error('Chat Hatası:', error);

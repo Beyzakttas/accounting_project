@@ -3,6 +3,7 @@
 import * as invoiceService from '../Services/invoiceService.js';
 import { successResponse } from '../Utils/apiResponse.js';
 import STATUS_CODES from '../Utils/statusCodes.js';
+import User from '../Models/User.js';
 
 const invoiceController = {
   // 1. Fatura oluştur
@@ -29,7 +30,7 @@ const invoiceController = {
       const { _id: userId, role, department } = req.user;
       const filter = {};
 
-      // USER rolü hem kendi yüklediklerini hem kendisine atananları hem de kendi departmanına ait olanları görsün
+      // USER rolü kendi departmanına ait olan tüm faturaları, kendi yüklediklerini veya kendisine atananları görsün
       if (role === 'USER') {
         filter.$or = [
           { uploadedBy: userId },

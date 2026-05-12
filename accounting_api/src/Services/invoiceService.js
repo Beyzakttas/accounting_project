@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import Invoice from '../Models/Invoice.js';
 import STATUS_CODES from '../Utils/statusCodes.js';
+import User from '../Models/User.js';
 
 /**
  * Yeni fatura oluşturur
@@ -27,7 +28,7 @@ export const createInvoice = async (invoiceData, userId) => {
   });
 
   if (existingByNo) {
-    const error = new Error('Bu fatura numarası daha önce sisteme kaydedilmiş. Lütfen farklı bir numara girin.');
+    const error = new Error('Bu fatura numarası sistemde zaten mevcut! Devam ederseniz eski fatura silinecek ve bu yeni fatura geçerli olacaktır.');
     error.statusCode = STATUS_CODES.BAD_REQUEST;
     error.data = { existingId: existingByNo._id, type: 'DUPLICATE_NUMBER' };
     throw error;
@@ -48,7 +49,7 @@ export const createInvoice = async (invoiceData, userId) => {
     });
 
     if (existingByMeta) {
-      const error = new Error(`Bu satıcıdan (${vendor}) bu tarihte (${new Date(date).toLocaleDateString()}) bu tutarda bir fatura zaten mevcut.`);
+      const error = new Error(`Bu satıcıdan (${vendor}) bu tarihte bu tutarda bir fatura zaten mevcut! Devam ederseniz eski fatura silinecek ve bu yeni fatura geçerli olacaktır.`);
       error.statusCode = STATUS_CODES.BAD_REQUEST;
       error.data = { existingId: existingByMeta._id, type: 'DUPLICATE_METADATA' };
       throw error;
@@ -78,11 +79,12 @@ export const getInvoices = async (filter) => {
  * Fatura güncelleme
  */
 export const updateInvoice = async (invoiceId, updateData, userId, role, department) => {
-  // MANAGER ve ADMIN her zaman güncelleyebilir, USER kendi yüklediklerini veya kendi departmanına atanan faturaları
+  // MANAGER ve ADMIN her zaman güncelleyebilir, USER kendi yüklediklerini, kendisine atananları veya kendi departmanına ait olanları
   const query = { _id: invoiceId };
   if (role === 'USER') {
     query.$or = [
       { uploadedBy: userId },
+      { assignedTo: userId },
       { department: department || 'Diger' }
     ];
   }

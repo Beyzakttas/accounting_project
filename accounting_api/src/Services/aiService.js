@@ -168,8 +168,28 @@ export const extractInvoiceData = async (imageBuffer, mimeType) => {
  * @param {Object} context - Kullanıcının finansal durumu (toplam gelir, gider vb.)
  * @param {string} userQuestion - Kullanıcının sorusu
  */
-export const getFinancialChat = async (context, userQuestion) => {
-  const prompt = `
+export const getFinancialChat = async (context, userQuestion, language = 'tr') => {
+  const isEnglish = language.toLowerCase() === 'en';
+
+  const prompt = isEnglish ? `
+    You are the smart financial assistant of the 'Accounting AI' system.
+    You have access to the user's financial data (context), but you should only share them if it is relevant to the question or if the user asks about their financial status.
+    
+    User's financial data:
+    - Total Income: ${context.totalIncome} TL
+    - Total Expense: ${context.totalExpense} TL
+    - Net Status: ${context.totalIncome - context.totalExpense} TL
+    - Pending Invoices: ${context.pendingCount}
+    
+    User's question: "${userQuestion}"
+    
+    Instructions:
+    1. If the user just said hello/greeted, reply with a short greeting. Never list the budget summary.
+    2. Your responses must always be very short and concise. Do not exceed 2-3 sentences.
+    3. Only use the context data above if the user asks about their financial status.
+    4. Avoid unnecessary advice, focus only on answering the question.
+    5. Always reply in English.
+  ` : `
     Sen 'Muhasebe AI' sisteminin akıllı finansal asistanısın. 
     Kullanıcının finansal verilerine (context) sahipsin ancak bunları sadece soruyla ilgiliyse veya kullanıcı durumunu sorarsa paylaşmalısın.
     
@@ -186,10 +206,11 @@ export const getFinancialChat = async (context, userQuestion) => {
     2. Cevapların her zaman çok kısa ve öz olsun. Maksimum 2-3 cümleyi geçme.
     3. Sadece kullanıcı durumunu sorduğunda yukarıdaki context verilerini kullan.
     4. Gereksiz tavsiyelerden kaçın, sadece soruya odaklan.
+    5. Her zaman Türkçe cevap ver.
   `;
 
   try {
-    console.log('Chat asistanı çağrıldı, Soru:', userQuestion);
+    console.log(`Chat asistanı çağrıldı (${language.toUpperCase()}), Soru:`, userQuestion);
     // Sohbet için Gemini Pro kullanalım
     const model = getAiModel("gemini-pro");
     const result = await model.generateContent(prompt);
@@ -206,7 +227,7 @@ export const getFinancialChat = async (context, userQuestion) => {
         return await callGroqLlama(prompt, null, null, false);
     } catch (llamaError) {
         console.error("Llama sohbet yedeği başarısız:", llamaError);
-        throw new Error('Asistan şu an çok yoğun, lütfen 1 dakika bekleyip tekrar deneyin.');
+        throw new Error(isEnglish ? 'Assistant is very busy, please wait 1 minute and try again.' : 'Asistan şu an çok yoğun, lütfen 1 dakika bekleyip tekrar deneyin.');
     }
   }
 };

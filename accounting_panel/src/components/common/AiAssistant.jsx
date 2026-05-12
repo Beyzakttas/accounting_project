@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { askAiAssistant } from '../../services/aiService';
 import { RobotIcon, CloseIcon } from './Icons';
+import { useLanguage } from '../../contexts/LanguageContext';
 import '../../assets/css/AiAssistant.css';
 
 const AiAssistant = () => {
+    const { t, language } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
-    const [messages, setMessages] = useState([
-        { role: 'assistant', content: 'Merhaba! Ben Muhasebe AI asistanıyım. Finansal verilerinizle ilgili size nasıl yardımcı olabilirim?' }
-    ]);
+    const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef(null);
@@ -20,6 +20,13 @@ const AiAssistant = () => {
         scrollToBottom();
     }, [messages]);
 
+    // Set welcome message dynamically when language changes
+    useEffect(() => {
+        setMessages([
+            { role: 'assistant', content: t('aiAssistant.welcome') }
+        ]);
+    }, [language, t]);
+
     const handleSend = async (e) => {
         e.preventDefault();
         if (!input.trim() || isLoading) return;
@@ -30,14 +37,14 @@ const AiAssistant = () => {
         setIsLoading(true);
 
         try {
-            const response = await askAiAssistant(userMessage);
+            const response = await askAiAssistant(userMessage, language);
             if (response.success) {
                 setMessages(prev => [...prev, { role: 'assistant', content: response.data }]);
             }
         } catch (error) {
             console.error('Asistan hatası:', error);
-            const errorMsg = error.message || 'Şu an bağlantı kuramıyorum. Lütfen API anahtarınızı ve internetinizi kontrol edin.';
-            setMessages(prev => [...prev, { role: 'assistant', content: `Üzgünüm, bir hata oluştu: ${errorMsg}` }]);
+            const errorMsg = error.message || t('aiAssistant.unreachable');
+            setMessages(prev => [...prev, { role: 'assistant', content: `${t('aiAssistant.errorOccurred')} ${errorMsg}` }]);
         } finally {
             setIsLoading(false);
         }
@@ -49,7 +56,7 @@ const AiAssistant = () => {
             <button 
                 className="ai-fab" 
                 onClick={() => setIsOpen(!isOpen)}
-                title="AI Asistana Sor"
+                title={t('aiAssistant.askButtonTitle')}
             >
                 {isOpen ? <CloseIcon size={24} /> : <RobotIcon size={28} />}
             </button>
@@ -60,13 +67,13 @@ const AiAssistant = () => {
                     <div className="ai-chat-header">
                         <div className="ai-avatar">AI</div>
                         <div className="ai-header-info">
-                            <h3>Finansal Asistan</h3>
-                            <span>Çevrimiçi</span>
+                            <h3>{t('aiAssistant.title')}</h3>
+                            <span>{t('aiAssistant.online')}</span>
                         </div>
                         <button 
                             className="ai-close-window-btn" 
                             onClick={() => setIsOpen(false)}
-                            title="Kapat"
+                            title={t('aiAssistant.closeBtn')}
                         >
                             <CloseIcon size={18} />
                         </button>
@@ -89,7 +96,7 @@ const AiAssistant = () => {
                     <form className="ai-chat-input" onSubmit={handleSend}>
                         <input 
                             type="text" 
-                            placeholder="Bir soru sorun..." 
+                            placeholder={t('aiAssistant.placeholder')} 
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                         />

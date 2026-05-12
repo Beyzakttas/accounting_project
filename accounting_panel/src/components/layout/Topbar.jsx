@@ -696,7 +696,11 @@ const Topbar = ({
                                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                                     {selectedInvoice.status === 'Pending' && (
                                         <button
-                                            onClick={() => handlePayInvoiceFromModal(selectedInvoice._id)}
+                                            onClick={() => {
+                                                setIsDetailModalOpen(false);
+                                                setIsOpen(false);
+                                                navigate(`/invoices?highlight=${selectedInvoice._id}&action=pay`);
+                                            }}
                                             style={{
                                                 background: 'var(--primary-gradient, linear-gradient(135deg, #10b981, #059669))',
                                                 color: '#fff',

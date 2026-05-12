@@ -18,7 +18,7 @@ import '../assets/css/Invoices.css'; // Reuse invoice styles for modal
 const Dashboard = ({ user, onLogout }) => {
 
   const { addToast } = useToast();
-  const { t, language } = useLanguage();
+  const { t, language, getDepartmentOptions } = useLanguage();
   const [activeMenu] = useState('Anasayfa');
   const [stats, setStats] = useState({
     totalIncome: 0,
@@ -35,7 +35,7 @@ const Dashboard = ({ user, onLogout }) => {
     amount: '',
     date: '',
     type: 'EXPENSE',
-    category: '',
+    department: 'Diger',
     vendor: ''
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -79,9 +79,27 @@ const Dashboard = ({ user, onLogout }) => {
       fetchStats();
     };
 
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchStats();
+        fetchCategories();
+      }
+    };
+
     window.addEventListener('invoiceUpdated', handleUpdate);
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', fetchStats);
+
+    // Her 15 saniyede bir otomatik senkronize et
+    const interval = setInterval(() => {
+      fetchStats();
+    }, 15000);
+
     return () => {
       window.removeEventListener('invoiceUpdated', handleUpdate);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', fetchStats);
+      clearInterval(interval);
     };
   }, [fetchStats, fetchCategories]);
 
@@ -93,18 +111,9 @@ const Dashboard = ({ user, onLogout }) => {
     try {
       const response = await processInvoiceOCR(file);
       if (response.success) {
-        // Backend'den ID gelmiş olsa bile biz ismini gösterelim (Kullanıcı için daha anlaşılır)
-        let categoryDisplay = response.data.category || '';
-
-        // Eğer ID geldiyse ismine çevirelim
-        const found = categories.find(c => c._id === categoryDisplay);
-        if (found) {
-          categoryDisplay = found.name;
-        }
-
         setAiData({
           ...response.data,
-          category: categoryDisplay,
+          department: response.data.department || 'Diger',
           invoiceNumber: response.data.invoiceNumber || `AI-${Math.floor(100000 + Math.random() * 900000)}` 
         });
         addToast(language === 'tr' ? 'Fatura başarıyla analiz edildi!' : 'Invoice successfully analyzed!', 'success');
@@ -128,22 +137,10 @@ const Dashboard = ({ user, onLogout }) => {
     setIsSaving(true);
     
     try {
-      let finalCategoryId = null;
-      const existingCategory = categories.find(c => c.name.toLowerCase() === aiData.category.toLowerCase());
-
-      if (existingCategory) {
-        finalCategoryId = existingCategory._id;
-      } else if (aiData.category.trim()) {
-        const catResponse = await apiClient.post('/category', { name: aiData.category.trim() });
-        if (catResponse.success) {
-          finalCategoryId = catResponse.data._id;
-          fetchCategories();
-        }
-      }
-
       const savePayload = {
         ...aiData,
-        category: finalCategoryId || null
+        category: null,
+        department: aiData.department || 'Diger'
       };
 
       const response = await apiClient.post('/invoice', savePayload);
@@ -178,10 +175,10 @@ const Dashboard = ({ user, onLogout }) => {
 
               // 2. Yenisini kaydet
               try {
-                const finalCategoryId = categories.find(c => c.name.toLowerCase() === aiData.category.toLowerCase())?._id;
                 const retryResponse = await apiClient.post('/invoice', {
                   ...aiData,
-                  category: finalCategoryId || null
+                  category: null,
+                  department: aiData.department || 'Diger'
                 });
                 
                 if (retryResponse.success) {
@@ -284,12 +281,13 @@ const Dashboard = ({ user, onLogout }) => {
               required
             />
             <FormInput
-              label={language === 'tr' ? "Kategori" : "Category"}
-              name="category"
-              type="text"
-              value={aiData.category}
-              onChange={(e) => setAiData({ ...aiData, category: e.target.value })}
-              placeholder={language === 'tr' ? "Fatura kategorisi (Market, Yemek vb.)" : "Invoice category (Market, Food etc.)"}
+              label={language === 'tr' ? "Departman" : "Department"}
+              name="department"
+              type="select"
+              options={getDepartmentOptions()}
+              value={aiData.department || 'Diger'}
+              onChange={(e) => setAiData({ ...aiData, department: e.target.value })}
+              required
             />
           </div>
         </div>
