@@ -35,33 +35,59 @@ export const createInvoice = async (invoiceData, userId) => {
   }
 
   // 2. Metadata ile Kontrol (Tutar + Tarih + Satıcı) - Numara yoksa veya farklıysa bile yakalar
-  if (amount && date && vendor) {
-    // Gelen tarihin sadece gününü kullanalım (saat farkını elemek için)
-    const startDate = new Date(date);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(date);
-    endDate.setHours(23, 59, 59, 999);
-
-    const existingByMeta = await Invoice.findOne({
-      amount: amount,
-      vendor: { $regex: new RegExp(`^${vendor.trim()}$`, 'i') },
-      date: { $gte: startDate, $lte: endDate }
-    });
-
-    if (existingByMeta) {
-      const error = new Error(`Bu satıcıdan (${vendor}) bu tarihte bu tutarda bir fatura zaten mevcut! Devam ederseniz eski fatura silinecek ve bu yeni fatura geçerli olacaktır.`);
-      error.statusCode = STATUS_CODES.BAD_REQUEST;
-      error.data = { existingId: existingByMeta._id, type: 'DUPLICATE_METADATA' };
-      throw error;
+  let isValidDate = false;
+  let startDate = null;
+  let endDate = null;
+  
+  if (date) {
+    const d = new Date(date);
+    if (!isNaN(d.getTime())) {
+      isValidDate = true;
+      startDate = new Date(d);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(d);
+      endDate.setHours(23, 59, 59, 999);
     }
   }
 
-  const newInvoice = new Invoice({
+  if (isValidDate) {
+    const isAmountValid = amount !== undefined && amount !== null && amount !== '';
+    const isVendorValid = vendor && vendor !== "Bilinmeyen Satıcı" && vendor.trim() !== "";
+
+    // Sadece Tutar VEYA Satıcıdan en az biri varsa mükerrerlik arayalım
+    if (isAmountValid || isVendorValid) {
+      const query = {
+        date: { $gte: startDate, $lte: endDate },
+        uploadedBy: userId
+      };
+
+      if (isAmountValid) query.amount = Number(amount);
+      if (isVendorValid) query.vendor = { $regex: new RegExp(`^${vendor.trim()}$`, 'i') };
+
+      const existingByMeta = await Invoice.findOne(query);
+
+      if (existingByMeta) {
+        const error = new Error(`Bu tarihte bu bilgilere (Tutar/Satıcı) sahip bir faturanız zaten mevcut! Devam ederseniz eski fatura silinecek ve yenisi geçerli olacaktır.`);
+        error.statusCode = STATUS_CODES.BAD_REQUEST;
+        error.data = { existingId: existingByMeta._id, type: 'DUPLICATE_METADATA' };
+        throw error;
+      }
+    }
+  }
+
+  const invoicePayload = {
     ...invoiceData,
+    date: isValidDate ? startDate : new Date(), // Fallback to current date if invalid
     type: 'EXPENSE',
     invoiceNumber: finalInvoiceNumber,
     uploadedBy: userId
-  });
+  };
+
+  if (!invoicePayload.category) {
+    delete invoicePayload.category;
+  }
+
+  const newInvoice = new Invoice(invoicePayload);
 
   return await newInvoice.save();
 };

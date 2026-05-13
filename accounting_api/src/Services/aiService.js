@@ -164,6 +164,86 @@ export const extractInvoiceData = async (imageBuffer, mimeType) => {
 };
 
 /**
+ * Fatura OCR işlemi - YENİ (Ham Metin Üzerinden Hibrit Analiz)
+ * @param {string} text - Tarayıcıda Tesseract ile çıkarılmış metin
+ * @param {Object} extracted - Frontend Regex tarafından zaten tespit edilmiş veriler
+ */
+export const extractInvoiceDataFromText = async (text, extracted = {}) => {
+  console.log('Bulut API Metin Analizi başlatıldı...');
+  
+  const prompt = `
+    Sen profesyonel bir muhasebe asistanısın. Aşağıdaki fatura/fiş metnini analiz et ve eksik alanları doldurarak JSON formatında döndür.
+    Sadece JSON döndür, başka açıklama yapma.
+    
+    Önceden Regex ile kesin tespit edilen veriler (Bunları DÜZENLEME, sadece JSON'a aynen ekle):
+    - Tutar (amount): ${extracted.amount || 'Bulunamadı'}
+    - Tarih (date): ${extracted.date || 'Bulunamadı'}
+    - IBAN (iban): ${extracted.iban || 'Bulunamadı'}
+    - Fatura No (invoiceNumber): ${extracted.invoiceNumber || 'Bulunamadı'}
+
+    Metinden bulmanı ve tahmin etmeni beklediğimiz eksik alanlar:
+    - vendor: Satıcı adı veya Şirket Ünvanı (Örn: Starbucks, Migros)
+    - category: Faturanın kategorisi (Sadece şu seçeneklerden biri: 'Yemek', 'Ulaşım', 'Market', 'Teknoloji', 'Ofis', 'Diğer')
+    - description: Faturanın kısa özeti (Örn: Filtre Kahve Harcaması)
+    - taxAmount: KDV tutarı (Metinden çıkarabilirsen yaz, yoksa 0)
+    - type: 'EXPENSE' (Sabit)
+
+    Fatura Metni:
+    ---
+    ${text.substring(0, 2000)} // Metin çok uzunsa kırpalım
+    ---
+  `;
+
+  try {
+    // Sadece metin işlediğimiz için çok hızlı dönecektir
+    const model = getAiModel("gemini-1.5-flash-latest");
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const aiText = response.text();
+    
+    const parsedData = parseAiJson(aiText);
+
+    // Eğer Regex bazı verileri bulamamışsa ve AI bulmuşsa birleştir:
+    return {
+      vendor: parsedData.vendor || "Bilinmeyen Satıcı",
+      category: parsedData.category || "Diğer",
+      description: parsedData.description || "Fatura Harcaması",
+      taxAmount: parsedData.taxAmount || 0,
+      type: "EXPENSE",
+      amount: extracted.amount || parsedData.amount || 0,
+      date: extracted.date || parsedData.date || new Date().toISOString().split('T')[0],
+      invoiceNumber: extracted.invoiceNumber || parsedData.invoiceNumber || null,
+      iban: extracted.iban || parsedData.iban || null
+    };
+
+  } catch (error) {
+    console.error("Gemini Metin Analizi Hatası (Yedeğe geçiliyor):", error);
+    
+    try {
+        console.warn("Llama (Groq) metin yedeği devreye giriyor...");
+        // callGroqLlama image beklemez, isJson=true
+        const llamaText = await callGroqLlama(prompt, null, null, true);
+        const parsedLlama = JSON.parse(llamaText);
+        
+        return {
+          vendor: parsedLlama.vendor || "Bilinmeyen Satıcı",
+          category: parsedLlama.category || "Diğer",
+          description: parsedLlama.description || "Fatura Harcaması",
+          taxAmount: parsedLlama.taxAmount || 0,
+          type: "EXPENSE",
+          amount: extracted.amount || parsedLlama.amount || 0,
+          date: extracted.date || parsedLlama.date || new Date().toISOString().split('T')[0],
+          invoiceNumber: extracted.invoiceNumber || parsedLlama.invoiceNumber || null,
+          iban: extracted.iban || parsedLlama.iban || null
+        };
+    } catch (llamaError) {
+        console.error("Llama yedeği de başarısız:", llamaError);
+        throw new Error('Metin analiz servisleri şu an yanıt vermiyor.');
+    }
+  }
+};
+
+/**
  * Finansal verilere dayalı tavsiye ve cevap üretir
  * @param {Object} context - Kullanıcının finansal durumu (toplam gelir, gider vb.)
  * @param {string} userQuestion - Kullanıcının sorusu

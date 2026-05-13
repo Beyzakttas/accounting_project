@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 
-const DashboardAiAnalyst = ({ isAnalyzing, handleFileUpload }) => {
+const DashboardAiAnalyst = ({ isAnalyzing, handleFileUpload, aiProgressMessage }) => {
   const { language } = useLanguage();
 
   return (
@@ -22,7 +22,7 @@ const DashboardAiAnalyst = ({ isAnalyzing, handleFileUpload }) => {
         {isAnalyzing ? (
           <div className="scanner-container">
             <div className="scan-ring"></div>
-            <div className="analyzing-text">{language === 'tr' ? 'ANALİZ EDİLİYOR...' : 'ANALYZING...'}</div>
+            <div className="analyzing-text">{aiProgressMessage || (language === 'tr' ? 'ANALİZ EDİLİYOR...' : 'ANALYZING...')}</div>
           </div>
         ) : (
           <>

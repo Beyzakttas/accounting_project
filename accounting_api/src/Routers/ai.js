@@ -26,6 +26,15 @@ router.post('/ocr', upload.single('invoice'), aiController.processInvoiceOCR);
 
 /**
  * @swagger
+ * /api/ai/ocr-text:
+ *   post:
+ *     summary: İstemci tarafında ayıklanmış faturadan (metin üzerinden) veri ayıklar
+ *     tags: [AI]
+ */
+router.post('/ocr-text', aiController.processInvoiceOCRText);
+
+/**
+ * @swagger
  * /api/ai/chat:
  *   post:
  *     summary: Finansal asistanla konuşur

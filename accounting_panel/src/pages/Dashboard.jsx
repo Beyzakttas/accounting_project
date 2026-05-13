@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { getInvoiceStats } from '../services/invoiceService';
-import { processInvoiceOCR } from '../services/aiService';
+import { processInvoiceHybrid } from '../services/aiService';
 import apiClient from '../api/apiClient';
 import { useToast } from '../contexts/ToastContext';
 import Modal from '../components/common/Modal';
@@ -28,6 +28,7 @@ const Dashboard = ({ user, onLogout }) => {
 
   // AI OCR States
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiProgressMessage, setAiProgressMessage] = useState('');
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiData, setAiData] = useState({
     invoiceNumber: '',
@@ -108,12 +109,15 @@ const Dashboard = ({ user, onLogout }) => {
     if (!file) return;
 
     setIsAnalyzing(true);
+    setAiProgressMessage(language === 'tr' ? 'Fatura analiz ediliyor...' : 'Analyzing invoice...');
+    
     try {
-      const response = await processInvoiceOCR(file);
+      const response = await processInvoiceHybrid(file, setAiProgressMessage);
       if (response.success) {
         setAiData({
           ...response.data,
-          department: response.data.department || 'Diger',
+          department: response.data.department || 'Diger', // Do NOT map category to department
+          category: response.data.category || null,
           invoiceNumber: response.data.invoiceNumber || `AI-${Math.floor(100000 + Math.random() * 900000)}` 
         });
         addToast(language === 'tr' ? 'Fatura başarıyla analiz edildi!' : 'Invoice successfully analyzed!', 'success');
@@ -127,6 +131,7 @@ const Dashboard = ({ user, onLogout }) => {
       addToast(msg, 'error');
     } finally {
       setIsAnalyzing(false);
+      setAiProgressMessage('');
       // Reset input
       e.target.value = '';
     }
@@ -139,7 +144,6 @@ const Dashboard = ({ user, onLogout }) => {
     try {
       const savePayload = {
         ...aiData,
-        category: null,
         department: aiData.department || 'Diger'
       };
 
@@ -177,7 +181,6 @@ const Dashboard = ({ user, onLogout }) => {
               try {
                 const retryResponse = await apiClient.post('/invoice', {
                   ...aiData,
-                  category: null,
                   department: aiData.department || 'Diger'
                 });
                 
@@ -221,7 +224,8 @@ const Dashboard = ({ user, onLogout }) => {
             <DashboardChart stats={stats} />
             <DashboardAiAnalyst 
               isAnalyzing={isAnalyzing} 
-              handleFileUpload={handleFileUpload} 
+              handleFileUpload={handleFileUpload}
+              aiProgressMessage={aiProgressMessage} 
             />
           </div>
         </>
@@ -276,7 +280,11 @@ const Dashboard = ({ user, onLogout }) => {
               label={language === 'tr' ? "Tarih" : "Date"}
               name="date"
               type="date"
-              value={aiData.date ? new Date(aiData.date).toISOString().split('T')[0] : ''}
+              value={(() => {
+                if (!aiData.date) return '';
+                const d = new Date(aiData.date);
+                return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
+              })()}
               onChange={(e) => setAiData({ ...aiData, date: e.target.value })}
               required
             />

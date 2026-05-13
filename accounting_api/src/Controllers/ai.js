@@ -34,6 +34,39 @@ export const processInvoiceOCR = async (req, res, next) => {
 };
 
 /**
+ * Fatura OCR işlemi (Metinden veri çıkarma - Hibrit/Hızlı Yöntem)
+ */
+export const processInvoiceOCRText = async (req, res, next) => {
+  try {
+    const { text, extracted } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({ success: false, message: 'Lütfen analiz edilecek metni gönderin.' });
+    }
+
+    const result = await aiService.extractInvoiceDataFromText(text, extracted || {});
+
+    // Kategori eşleştirme mantığı
+    if (result && result.category) {
+      const category = await Category.findOne({
+        name: { $regex: new RegExp(`^${result.category}$`, 'i') } // Case-insensitive eşleşme
+      });
+
+      if (category) {
+        result.category = category._id;
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Finansal Asistan Sohbeti
  */
 export const chatWithAI = async (req, res, next) => {
