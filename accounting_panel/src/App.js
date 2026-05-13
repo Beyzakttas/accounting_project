@@ -10,6 +10,7 @@ import StaffManagement from './pages/StaffManagement';
 import Invoices from './pages/Invoices';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import Analysis from './pages/Analysis';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -45,6 +46,7 @@ function App() {
               <Route path="/staff" element={<StaffManagement user={user} onLogout={handleLogout} />} />
               <Route path="/invoices" element={<Invoices user={user} onLogout={handleLogout} />} />
               <Route path="/reports" element={<Reports user={user} onLogout={handleLogout} />} />
+              <Route path="/analysis" element={<Reports user={user} onLogout={handleLogout} />} />
               <Route path="/settings" element={<Settings user={user} onLogout={handleLogout} />} />
               <Route path="/register" element={<Register setUser={setUser} />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />

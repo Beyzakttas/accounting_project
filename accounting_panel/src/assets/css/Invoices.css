@@ -165,7 +165,7 @@
 
 .invoice-card {
   padding: 1.5rem;
-  border-radius: 20px;
+  border-radius: 12px;
   transition: all 0.3s ease;
   position: relative;
 }

@@ -9,7 +9,7 @@ const Sidebar = ({ user, activeMenu, isOpen, onClose }) => {
     const navItems = [
         { id: 'Anasayfa', icon: '🏠', label: t('sidebar.dashboard'), path: '/dashboard' },
         { id: 'Faturalar', icon: '📄', label: t('sidebar.invoices'), path: '/invoices' },
-        { id: 'Raporlar', icon: '📊', label: t('sidebar.reports'), adminOnly: true, path: '/reports' },
+        { id: 'Raporlar', icon: '📊', label: t('sidebar.reports') || (language === 'tr' ? 'Rapor & Analiz' : 'Reports & Analysis'), adminOnly: true, path: '/reports' },
         { id: 'Personel Yönetimi', icon: '👥', label: t('sidebar.staff'), adminOnly: true, path: '/staff' },
         { id: 'Ayarlar', icon: '⚙️', label: t('sidebar.settings'), path: '/settings' },
     ];

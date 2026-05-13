@@ -26,7 +26,7 @@ export const translations = {
       dashboard: "Anasayfa",
       invoices: "Faturalar",
       staff: "Personel Yönetimi",
-      reports: "Raporlar",
+      reports: "Rapor & Analiz",
       settings: "Ayarlar",
       logout: "Çıkış Yap"
     },
@@ -222,7 +222,7 @@ export const translations = {
       dashboard: "Dashboard",
       invoices: "Invoices",
       staff: "Staff Management",
-      reports: "Reports",
+      reports: "Reports & Analysis",
       settings: "Settings",
       logout: "Log Out"
     },

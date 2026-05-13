@@ -109,9 +109,9 @@ const DashboardChart = ({ stats }) => {
   else if (viewMode === 'yearly') displayTitle = language === 'tr' ? "Yıllık Analiz" : "Yearly Analysis";
 
   return (
-    <div className="chart-section glass-card" style={{ zIndex: 1 }}>
-      <div className="card-header" style={{ position: 'relative', zIndex: 5 }}>
-        <h2>{displayTitle}</h2>
+    <div className="chart-section glass-card" style={{ zIndex: 1, padding: '1.75rem' }}>
+      <div className="card-header" style={{ position: 'relative', zIndex: 5, paddingBottom: '1rem', borderBottom: '1px solid var(--glass-border)', marginBottom: '1.75rem' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: 'var(--text-primary)' }}>📊 {displayTitle}</h2>
         <div ref={menuRef} style={{ position: 'relative' }}>
           <button className="icon-btn" onClick={() => setShowMenu(!showMenu)}>⋮</button>
           {showMenu && (

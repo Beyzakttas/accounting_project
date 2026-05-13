@@ -243,6 +243,58 @@ export const getInvoiceStats = async (userIdStr = null, role = null, department 
           },
           { $sort: { '_id.year': -1, '_id.month': -1 } },
           { $limit: 12 }
+        ],
+        // 5. En Fazla Harcama Yapan Kişiler (Top Spenders)
+        spenderData: [
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'uploadedBy',
+              foreignField: '_id',
+              as: 'userInfo'
+            }
+          },
+          { $unwind: { path: '$userInfo', preserveNullAndEmptyArrays: true } },
+          { $match: { 'userInfo.role': { $ne: 'ADMIN' } } },
+          {
+            $group: {
+              _id: '$uploadedBy',
+              name: { $first: '$userInfo.fullname' },
+              totalAmount: { $sum: { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } } },
+              count: { $sum: 1 }
+            }
+          },
+          { $sort: { totalAmount: -1 } },
+          { $limit: 5 },
+          {
+            $project: {
+              name: { $ifNull: ['$name', 'Bilinmeyen Kullanıcı'] },
+              value: '$totalAmount',
+              count: 1
+            }
+          }
+        ],
+        // 6. En Çok Harcama Yapılan Kurumlar (Top Vendors)
+        vendorData: [
+          {
+            $match: { vendor: { $exists: true, $ne: null, $ne: "" } }
+          },
+          {
+            $group: {
+              _id: '$vendor',
+              totalAmount: { $sum: { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } } },
+              count: { $sum: 1 }
+            }
+          },
+          { $sort: { totalAmount: -1 } },
+          { $limit: 5 },
+          {
+            $project: {
+              name: '$_id',
+              value: '$totalAmount',
+              count: 1
+            }
+          }
         ]
       }
     }
@@ -288,7 +340,9 @@ export const getInvoiceStats = async (userIdStr = null, role = null, department 
     pendingCount: summary.pendingCount,
     dailyData: formattedDailyData,
     monthlyData: formattedMonthlyData,
-    categoryData: facet.categoryData
+    categoryData: facet.categoryData,
+    spenderData: facet.spenderData || [],
+    vendorData: facet.vendorData || []
   };
 };
 

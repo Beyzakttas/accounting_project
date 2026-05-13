@@ -220,7 +220,7 @@ const Dashboard = ({ user, onLogout }) => {
         <>
           <DashboardStats stats={stats} />
           
-          <div className="dashboard-grid">
+          <div className="dashboard-grid" style={{ marginTop: '0.25rem' }}>
             <DashboardChart stats={stats} />
             <DashboardAiAnalyst 
               isAnalyzing={isAnalyzing} 

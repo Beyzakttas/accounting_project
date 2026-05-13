@@ -23,7 +23,7 @@
   color: white !important;
   border: none;
   padding: 0.9rem 2rem;
-  border-radius: 14px;
+  border-radius: 12px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -43,7 +43,7 @@
 
 .staff-table-container {
   overflow-x: auto;
-  border-radius: 16px;
+  border-radius: 12px;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -184,7 +184,7 @@
   padding: 0.9rem 1.2rem;
   background: rgba(0, 0, 0, 0.03);
   border: 1.5px solid var(--glass-border);
-  border-radius: 14px;
+  border-radius: 12px;
   color: var(--text-primary);
   outline: none;
   font-size: 1rem;
@@ -212,7 +212,7 @@
   border: 1.5px solid var(--glass-border);
   color: var(--text-secondary);
   padding: 0.9rem 1.8rem;
-  border-radius: 14px;
+  border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s ease;
