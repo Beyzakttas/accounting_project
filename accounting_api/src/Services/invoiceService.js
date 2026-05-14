@@ -7,7 +7,7 @@ import User from '../Models/User.js';
  * Yeni fatura oluşturur
  */
 export const createInvoice = async (invoiceData, userId) => {
-  const { invoiceNumber, amount, date, vendor } = invoiceData;
+  const { invoiceNumber, amount, date, dueDate, vendor } = invoiceData;
 
   // Fatura no boş ise otomatik benzersiz numara üret
   let finalInvoiceNumber = invoiceNumber;
@@ -75,9 +75,22 @@ export const createInvoice = async (invoiceData, userId) => {
     }
   }
 
+  let calculatedDueDate = null;
+  if (dueDate) {
+    const dd = new Date(dueDate);
+    if (!isNaN(dd.getTime())) {
+      calculatedDueDate = new Date(dd);
+    }
+  }
+  const baseDate = isValidDate ? startDate : new Date();
+  if (!calculatedDueDate) {
+    calculatedDueDate = new Date(baseDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+  }
+
   const invoicePayload = {
     ...invoiceData,
-    date: isValidDate ? startDate : new Date(), // Fallback to current date if invalid
+    date: baseDate,
+    dueDate: calculatedDueDate,
     type: 'EXPENSE',
     invoiceNumber: finalInvoiceNumber,
     uploadedBy: userId

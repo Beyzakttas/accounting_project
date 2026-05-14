@@ -1,20 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Default Light Theme - Refined for Premium Feel */
-  --primary-color: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  --bg-color: #f1f5f9;
-  --text-primary: #1e293b;
+  /* Default Light Theme - Refined for Premium Feel (EduPortal Style) */
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  --bg-color: #f8fafc;
+  --text-primary: #0f172a;
   --text-secondary: #64748b;
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(79, 70, 229, 0.15);
+  --glass-bg: #ffffff;
+  --glass-border: #e2e8f0;
   --modal-bg: #ffffff;
   --input-bg: #ffffff;
   --danger: #ef4444;
   --success: #10b981;
-  --sidebar-bg: #ffffff;
+  --sidebar-bg: #0f172a;
 }
 
 [data-theme='dark'] {
@@ -30,7 +30,7 @@
   --input-bg: rgba(255, 255, 255, 0.05);
   --danger: #ef4444;
   --success: #10b981;
-  --sidebar-bg: #1e293b;
+  --sidebar-bg: #0f172a;
 }
 
 * {

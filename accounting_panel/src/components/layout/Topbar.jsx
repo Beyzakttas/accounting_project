@@ -126,18 +126,6 @@ const Topbar = ({
         }
     };
 
-    const handlePayInvoiceFromModal = async (invoiceId) => {
-        try {
-            const response = await apiClient.put(`/invoice/${invoiceId}/pay`);
-            if (response.success) {
-                setSelectedInvoice(prev => ({ ...prev, status: 'Processed' }));
-                window.dispatchEvent(new CustomEvent('invoiceUpdated'));
-            }
-        } catch (err) {
-            console.error('Ödeme işlemi başarısız:', err);
-        }
-    };
-
     const handleMarkSingleRead = (id) => {
         const updated = notifications.map(n => n.id === id ? { ...n, read: true } : n);
         setNotifications(updated);
@@ -669,6 +657,13 @@ const Topbar = ({
                                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '8px' }}>
                                         <span style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>{t('topbar.date')}</span>
                                         <span style={{ fontSize: '13.5px', fontWeight: '600' }}>{apiClient.formatDate(selectedInvoice.date)}</span>
+                                    </div>
+
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '8px' }}>
+                                        <span style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>{language === 'tr' ? 'Son Ödeme Tarihi:' : 'Due Date:'}</span>
+                                        <span style={{ fontSize: '13.5px', fontWeight: '600', color: '#f59e0b' }}>
+                                            {selectedInvoice.dueDate ? apiClient.formatDate(selectedInvoice.dueDate) : apiClient.formatDate(new Date(new Date(selectedInvoice.date).getTime() + 14 * 24 * 60 * 60 * 1000).toISOString())}
+                                        </span>
                                     </div>
 
                                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '8px' }}>

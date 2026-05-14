@@ -12,6 +12,13 @@ import '../assets/css/Login.css';
 function Login({ setUser }) {
   const { addToast } = useToast();
 
+  React.useEffect(() => {
+    localStorage.clear();
+    if (setUser) {
+      setUser({ name: '', role: 'USER', id: '', department: 'Diger' });
+    }
+  }, [setUser]);
+
   const validationSchema = Yup.object().shape({
     email: Yup.string()
       .email('Geçersiz e-posta adresi')

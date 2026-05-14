@@ -27,9 +27,7 @@ function App() {
   });
 
   const handleLogout = () => {
-    localStorage.clear();
-    setUser({ name: '', role: 'USER' });
-    window.location.href = '/';
+    window.location.href = '/login';
   };
 
   return (
@@ -39,9 +37,8 @@ function App() {
           <NotificationWatcher user={user} />
           <Router>
             <Routes>
-              <Route path="/" element={
-                <Login setUser={setUser} />
-              } />
+              <Route path="/" element={<Login setUser={setUser} />} />
+              <Route path="/login" element={<Login setUser={setUser} />} />
               <Route path="/dashboard" element={<Dashboard user={user} onLogout={handleLogout} />} />
               <Route path="/staff" element={<StaffManagement user={user} onLogout={handleLogout} />} />
               <Route path="/invoices" element={<Invoices user={user} onLogout={handleLogout} />} />

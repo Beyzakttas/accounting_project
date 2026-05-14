@@ -186,6 +186,11 @@ const NotificationWatcher = ({ user }) => {
         if (newInvoices.length > 0) {
           const currentNotifications = JSON.parse(localStorage.getItem('in_app_notifications') || '[]');
 
+          // Eğer 5'ten fazla yeni bildirim varsa ekrana tek bir toplu bildirim (toast) ver
+          if (newInvoices.length > 5) {
+            addToast(`📦 Toplu Bildirim: Sisteme ${newInvoices.length} adet yeni fatura yüklendi. Detayları üst bildirim menüsünden inceleyebilirsiniz.`, 'info', 8000);
+          }
+
           // Yeni faturaları uyar
           newInvoices.forEach(inv => {
             const vendor = inv.vendor || 'Genel';
@@ -204,15 +209,21 @@ const NotificationWatcher = ({ user }) => {
             if (isSelf) {
               title = 'Faturanız Yüklendi! 📄';
               message = `${department} departmanı adına ${vendor} firmasından ${amount} tutarındaki faturanız başarıyla sisteme yüklendi.`;
-              addToast(`📄 Faturanız Yüklendi: ${vendor} firmasından ${amount} tutarındaki faturanız başarıyla kaydedildi.`, 'success', 7000);
+              if (newInvoices.length <= 5) {
+                addToast(`📄 Faturanız Yüklendi: ${vendor} firmasından ${amount} tutarındaki faturanız başarıyla kaydedildi.`, 'success', 7000);
+              }
             } else if (uploaderRole === 'MANAGER' || uploaderRole === 'ADMIN') {
               title = 'Yeni Fatura Atandı! 🔔';
               message = `Yöneticiniz ${uploaderName}, ${department} departmanı için ${vendor} firmasından ${amount} tutarında yeni bir faturayı ekledi!`;
-              addToast(`🔔 Yeni Fatura Atandı: Yöneticiniz ${uploaderName}, ${department} departmanı için ${vendor} firmasından ${amount} tutarında yeni bir fatura ekledi!`, 'info', 7000);
+              if (newInvoices.length <= 5) {
+                addToast(`🔔 Yeni Fatura Atandı: Yöneticiniz ${uploaderName}, ${department} departmanı için ${vendor} firmasından ${amount} tutarında yeni bir fatura ekledi!`, 'info', 7000);
+              }
             } else {
               title = 'Yeni Fatura Yüklendi! 📄';
               message = `${uploaderName}, ${department} departmanı adına ${vendor} firmasından ${amount} tutarında yeni bir fatura ekledi.`;
-              addToast(`📄 Yeni Fatura Yüklendi: ${uploaderName}, ${department} departmanı adına ${vendor} firmasından ${amount} tutarında yeni bir faturayı ekledi.`, 'info', 7000);
+              if (newInvoices.length <= 5) {
+                addToast(`📄 Yeni Fatura Yüklendi: ${uploaderName}, ${department} departmanı adına ${vendor} firmasından ${amount} tutarında yeni bir faturayı ekledi.`, 'info', 7000);
+              }
             }
 
             // Listeye ekle (başa ekle ki en son bildirim en üstte olsun)

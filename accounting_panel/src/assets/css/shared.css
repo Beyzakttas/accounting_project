@@ -15,6 +15,17 @@
   position: relative;
 }
 
+@keyframes smoothContentEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Mobile Sidebar Overlay */
 .sidebar-overlay {
   position: fixed;
@@ -66,6 +77,7 @@
   flex-direction: column;
   gap: 1.2rem;
   scrollbar-width: none;
+  animation: smoothContentEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   /* Firefox */
   -ms-overflow-style: none;
   /* IE and Edge */
@@ -76,14 +88,14 @@
   /* Chrome, Safari, Opera */
 }
 
-/* Glassmorphism System */
+/* Glassmorphism System - Refined for EduPortal Premium Solid Feel */
 .glass-card {
   background: var(--glass-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 /* Common Animations */

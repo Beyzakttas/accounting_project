@@ -7,7 +7,7 @@ const DashboardAiAnalyst = ({ isAnalyzing, handleFileUpload, aiProgressMessage }
   return (
     <div className="recent-activity glass-card" style={{ padding: '1.75rem' }}>
       <div className="card-header" style={{ paddingBottom: '1rem', borderBottom: '1px solid var(--glass-border)', marginBottom: '1.75rem' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: 'var(--text-primary)' }}>🤖 {language === 'tr' ? 'Yapay Zeka Fatura Analizi' : 'AI Invoice Analysis'}</h2>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: 'var(--text-primary)' }}>{language === 'tr' ? 'Yapay Zeka Fatura Analizi' : 'AI Invoice Analysis'}</h2>
       </div>
       <div className={`ai-upload-area ${isAnalyzing ? 'analyzing' : ''}`}>
         <input

@@ -26,6 +26,9 @@ const InvoiceSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  dueDate: {
+    type: Date // Son ödeme / vade tarihi
+  },
   type: {
     type: String,
     enum: ['INCOME', 'EXPENSE'],

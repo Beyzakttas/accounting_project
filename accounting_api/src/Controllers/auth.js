@@ -6,6 +6,7 @@ import STATUS_CODES from '../Utils/statusCodes.js';
 const authController = {
   login: async (req, res, next) => {
     const { email, password } = req.body;
+    console.log(`Giriş denemesi: ${email}`);
 
     if (!email || !password) {
       const error = new Error('Lütfen e-posta ve şifrenizi girin.');

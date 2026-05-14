@@ -47,6 +47,7 @@ const Invoices = ({ user, onLogout }) => {
       description: '',
       amount: '',
       date: new Date().toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'EXPENSE',
       status: 'Pending',
       category: '',
@@ -62,6 +63,7 @@ const Invoices = ({ user, onLogout }) => {
     description: '',
     amount: '',
     date: new Date().toISOString().split('T')[0],
+    dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     type: 'EXPENSE',
     status: 'Pending',
     category: '',
@@ -201,6 +203,7 @@ const Invoices = ({ user, onLogout }) => {
       description: invoice.description,
       amount: invoice.amount,
       date: new Date(invoice.date).toISOString().split('T')[0],
+      dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : new Date(new Date(invoice.date).getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: invoice.type,
       status: invoice.status || 'Pending',
       category: invoice.category?._id || invoice.category || '',
@@ -355,6 +358,30 @@ const Invoices = ({ user, onLogout }) => {
                         {invoice.uploadedBy?.fullname || invoice.uploadedBy?.name || invoice.uploadedBy?.email || t('common.system')}
                       </span>
                     </div>
+                    {invoice.status === 'Pending' && (
+                      <div className="info-row due-date-row">
+                        <span>{t('invoices.dueDateLabel')}:</span>
+                        <span className="info-value">
+                          {invoice.dueDate ? apiClient.formatDate(invoice.dueDate) : '-'}
+                          {(() => {
+                            const due = new Date(invoice.dueDate || Date.now() + 14 * 24 * 60 * 60 * 1000);
+                            const now = new Date();
+                            due.setHours(0,0,0,0);
+                            now.setHours(0,0,0,0);
+                            const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+                            if (diffDays < 0) {
+                              return <span className="due-badge overdue-badge"> ({Math.abs(diffDays)} {t('invoices.daysOverdue')})</span>;
+                            } else if (diffDays === 0) {
+                              return <span className="due-badge warning-badge"> ({t('invoices.dueToday')})</span>;
+                            } else if (diffDays <= 7) {
+                              return <span className="due-badge warning-badge"> ({diffDays} {t('invoices.daysLeft')})</span>;
+                            } else {
+                              return null;
+                            }
+                          })()}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="invoice-card-footer">
                     <span className="invoice-date">
@@ -417,15 +444,25 @@ const Invoices = ({ user, onLogout }) => {
             />
           </div>
 
-          <FormInput
-            label={t('invoices.descriptionLabel')}
-            type="text"
-            name="description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder={t('invoices.descriptionPlaceholder')}
-            required
-          />
+          <div className="form-row">
+            <FormInput
+              label={t('invoices.descriptionLabel')}
+              type="text"
+              name="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder={t('invoices.descriptionPlaceholder')}
+              required
+            />
+            <FormInput
+              label={t('invoices.vendorLabel')}
+              type="text"
+              name="vendor"
+              value={formData.vendor || ''}
+              onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+              placeholder={t('invoices.vendorPlaceholder')}
+            />
+          </div>
 
           <div className="form-row">
             <FormInput
@@ -437,12 +474,12 @@ const Invoices = ({ user, onLogout }) => {
               required
             />
             <FormInput
-              label={t('invoices.vendorLabel')}
-              type="text"
-              name="vendor"
-              value={formData.vendor || ''}
-              onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-              placeholder={t('invoices.vendorPlaceholder')}
+              label={t('invoices.dueDateLabel')}
+              type="date"
+              name="dueDate"
+              value={formData.dueDate || ''}
+              onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+              required
             />
           </div>
 

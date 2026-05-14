@@ -120,6 +120,7 @@ export const extractInvoiceData = async (imageBuffer, mimeType) => {
     - invoiceNumber: Fatura numarası veya Fiş no (Varsa yaz, yoksa null)
     - amount: Toplam tutar (Sadece sayı, Örn: 150.50)
     - date: Fatura tarihi (YYYY-MM-DD formatında)
+    - dueDate: Son ödeme veya vade tarihi (YYYY-MM-DD formatında, faturada açıkça belirtilmemişse fatura tarihine +14 gün ekle)
     - description: Faturanın kısa özeti (Örn: Kahve harcaması)
     - taxAmount: KDV tutarı (Tahmin et veya varsa yaz, yoksa 0)
     - category: Faturanın kategorisi (Sadece şu seçeneklerden biri: 'Yemek', 'Ulaşım', 'Market', 'Teknoloji', 'Ofis', 'Diğer')
@@ -131,6 +132,7 @@ export const extractInvoiceData = async (imageBuffer, mimeType) => {
       "invoiceNumber": "TR-123456",
       "amount": 45.00,
       "date": "2024-04-20",
+      "dueDate": "2024-05-04",
       "description": "Filtre Kahve",
       "taxAmount": 4.50,
       "category": "Yemek",
@@ -183,6 +185,7 @@ export const extractInvoiceDataFromText = async (text, extracted = {}) => {
 
     Metinden bulmanı ve tahmin etmeni beklediğimiz eksik alanlar:
     - vendor: Satıcı adı veya Şirket Ünvanı (Örn: Starbucks, Migros)
+    - dueDate: Son ödeme veya vade tarihi (YYYY-MM-DD formatında, faturada açıkça belirtilmemişse fatura tarihine +14 gün ekle)
     - category: Faturanın kategorisi (Sadece şu seçeneklerden biri: 'Yemek', 'Ulaşım', 'Market', 'Teknoloji', 'Ofis', 'Diğer')
     - description: Faturanın kısa özeti (Örn: Filtre Kahve Harcaması)
     - taxAmount: KDV tutarı (Metinden çıkarabilirsen yaz, yoksa 0)
@@ -212,6 +215,7 @@ export const extractInvoiceDataFromText = async (text, extracted = {}) => {
       type: "EXPENSE",
       amount: extracted.amount || parsedData.amount || 0,
       date: extracted.date || parsedData.date || new Date().toISOString().split('T')[0],
+      dueDate: parsedData.dueDate || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       invoiceNumber: extracted.invoiceNumber || parsedData.invoiceNumber || null,
       iban: extracted.iban || parsedData.iban || null
     };
@@ -233,6 +237,7 @@ export const extractInvoiceDataFromText = async (text, extracted = {}) => {
           type: "EXPENSE",
           amount: extracted.amount || parsedLlama.amount || 0,
           date: extracted.date || parsedLlama.date || new Date().toISOString().split('T')[0],
+          dueDate: parsedLlama.dueDate || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           invoiceNumber: extracted.invoiceNumber || parsedLlama.invoiceNumber || null,
           iban: extracted.iban || parsedLlama.iban || null
         };
