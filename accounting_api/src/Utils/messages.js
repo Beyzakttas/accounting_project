@@ -16,6 +16,13 @@ const MESSAGES = {
             TAX_NUMBER_REQUIRED: 'Lütfen geçerli bir vergi numarası girin.',
             PHONE_REQUIRED: 'Lütfen iletişim için bir telefon numarası girin.',
             EMAIL_REQUIRED: 'Şirket e-posta adresi belirtilmelidir.',
+        },
+        INVOICE: {
+            UPLOADED_BY_REQUIRED: 'Yükleyen kullanıcı bilgisi zorunludur.',
+            AMOUNT_REQUIRED: 'Tutar alanı zorunludur.',
+            INVOICE_NUMBER_REQUIRED: 'Fatura numarası zorunludur.',
+            DESCRIPTION_REQUIRED: 'Açıklama alanı zorunludur.',
+            TYPE_REQUIRED: 'Fatura türü zorunludur.'
         }
     },
     AUTH: {

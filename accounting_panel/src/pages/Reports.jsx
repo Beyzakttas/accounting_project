@@ -105,6 +105,7 @@ const Reports = ({ user, onLogout }) => {
     dailyData: [], categoryData: [], spenderData: [], vendorData: []
   });
   const [invoices, setInvoices] = useState([]);
+  const [categories, setCategories] = useState([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -179,6 +180,47 @@ const Reports = ({ user, onLogout }) => {
     return Object.values(vendorMap).sort((a, b) => b.value - a.value);
   }, [invoices, user, language]);
 
+  const userCategoryData = React.useMemo(() => {
+    if (!invoices || invoices.length === 0 || !user) return [];
+    const myInvoices = invoices.filter(inv => {
+      const up = inv.uploadedBy || {};
+      const upId = String(up._id || up);
+      return upId === String(user.id || user._id);
+    });
+
+    const catMap = {};
+    myInvoices.forEach(inv => {
+      let cName = (language === 'tr' ? 'Genel' : 'General');
+      if (inv.category && inv.category.name) {
+        cName = inv.category.name;
+      } else if (typeof inv.category === 'string' && inv.category.trim()) {
+        const catIdStr = inv.category.trim();
+        const foundCat = categories.find(c => String(c._id) === catIdStr);
+        if (foundCat && foundCat.name) {
+          cName = foundCat.name;
+        } else {
+          cName = inv.department && inv.department.trim() ? inv.department.trim() : (language === 'tr' ? 'Genel' : 'General');
+        }
+      } else if (inv.department && inv.department.trim()) {
+        cName = inv.department.trim();
+      }
+
+      if (!catMap[cName]) {
+        catMap[cName] = { name: cName, value: 0, paidValue: 0, pendingValue: 0, count: 0 };
+      }
+      const amt = Number(inv.amount || 0);
+      catMap[cName].value += amt;
+      if (inv.status === 'Processed') {
+        catMap[cName].paidValue += amt;
+      } else {
+        catMap[cName].pendingValue += amt;
+      }
+      catMap[cName].count += 1;
+    });
+
+    return Object.values(catMap).sort((a, b) => b.value - a.value);
+  }, [invoices, user, language, categories]);
+
   const myTotalSpending = React.useMemo(() => {
     return userVendorData.reduce((sum, item) => sum + item.value, 0);
   }, [userVendorData]);
@@ -205,12 +247,14 @@ const Reports = ({ user, onLogout }) => {
 
   const fetchStats = async () => {
     try {
-      const [resStats, resInvoices] = await Promise.all([
+      const [resStats, resInvoices, resCategories] = await Promise.all([
         getInvoiceStats(),
-        apiClient.get('/invoice')
+        apiClient.get('/invoice'),
+        apiClient.get('/category')
       ]);
       if (resStats.success) setStats(resStats.data);
       if (resInvoices && resInvoices.success) setInvoices(resInvoices.data);
+      if (resCategories && resCategories.success) setCategories(resCategories.data);
     } catch (err) {
       console.error('İstatistikler alınamadı:', err);
     }
@@ -243,9 +287,9 @@ const Reports = ({ user, onLogout }) => {
         {data && data.length > 0 ? (
           <div className="chart-container" style={{ height: '350px', width: '100%', marginTop: '1rem' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 20, right: 30, left: 10, bottom: 25 }}>
+              <BarChart data={data} margin={{ top: 20, right: 30, left: 15, bottom: 25 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--glass-border, rgba(0,0,0,0.08))" />
-                <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fontSize: 12, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fontSize: 11, fontWeight: 600 }} angle={0} textAnchor="middle" interval="preserveStartEnd" axisLine={false} tickLine={false} tickFormatter={(val) => (!val || !val.trim() || val.trim() === 'Örnek Fatura') ? (language === 'tr' ? 'Genel Satıcı' : 'General Vendor') : (val.length > 10 ? val.substring(0, 10) + '...' : val)} />
                 <YAxis stroke="var(--text-secondary)" tick={{ fontSize: 11, fontWeight: 600 }} axisLine={false} tickLine={false} tickFormatter={(val) => `₺${val >= 1000 ? (val/1000).toFixed(0) + 'k' : val}`} />
                 <Tooltip 
                   cursor={{ fill: 'rgba(255,255,255,0.05)' }} 
@@ -259,7 +303,7 @@ const Reports = ({ user, onLogout }) => {
                     <Bar dataKey="pendingValue" name={language === 'tr' ? 'Bekleyen Faturalar' : 'Pending Invoices'} fill="#ef4444" radius={[8, 8, 0, 0]} maxBarSize={55} />
                   </>
                 ) : (
-                  <Bar dataKey="value" name={language === 'tr' ? 'Tutar' : 'Amount'} fill={data[0].color || '#3b82f6'} radius={[8, 8, 0, 0]} maxBarSize={55} />
+                  <Bar dataKey="value" name={language === 'tr' ? 'Tutar' : 'Amount'} fill={colorClass === 'bar-expense' ? '#ef4444' : '#10b981'} radius={[8, 8, 0, 0]} maxBarSize={55} />
                 )}
               </BarChart>
             </ResponsiveContainer>
@@ -284,15 +328,46 @@ const Reports = ({ user, onLogout }) => {
 
       <div className="reports-container">
         {user?.role === 'USER' ? (
-          <div style={{ width: '100%', maxWidth: '100%' }}>
-            {/* Kullanıcının Kendi Harcama Dağılımı ve Toplamı Tek Grafikte */}
-            {renderCustomChart(
-              userVendorData,
-              language === 'tr' ? `Harcama Dağılımım (Toplam: ₺${myTotalSpending.toLocaleString('tr-TR')})` : `My Spending Breakdown (Total: ₺${myTotalSpending.toLocaleString('en-US')})`,
-              '',
-              'bar-income',
-              'label-income'
-            )}
+          <div style={{ width: '100%' }}>
+            {/* 1. STUNNING AREA CHART WITH CATEGORY DATA */}
+            <div className="glass-card" style={{ padding: '2rem', borderRadius: '16px', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
+                  {language === 'tr' ? `Kategori Bazlı Harcama Dağılımım (Toplam: ₺${myTotalSpending.toLocaleString('tr-TR')})` : `Category Spending Breakdown (Total: ₺${myTotalSpending.toLocaleString('en-US')})`}
+                </h2>
+                <div style={{ cursor: 'pointer', color: 'var(--text-secondary)', padding: '4px 8px', fontSize: '1.4rem', fontWeight: 'bold' }}>
+                  ⋮
+                </div>
+              </div>
+
+              <div style={{ height: '340px', width: '100%' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={userCategoryData} margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
+                    <defs>
+                      <linearGradient id="colorPaidArea" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorPendingArea" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--glass-border, rgba(0,0,0,0.08))" />
+                    <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fontSize: 12, fontWeight: 600 }} axisLine={false} tickLine={false} />
+                    <YAxis stroke="var(--text-secondary)" tick={{ fontSize: 11, fontWeight: 600 }} axisLine={false} tickLine={false} tickFormatter={(val) => `₺${val >= 1000 ? (val/1000).toFixed(0) + 'k' : val}`} />
+                    <Tooltip 
+                      cursor={{ stroke: '#8b5cf6', strokeWidth: 1, strokeDasharray: '4 4' }}
+                      contentStyle={{ borderRadius: '14px', border: '1px solid var(--glass-border)', background: 'var(--modal-bg)', color: 'var(--text-primary)', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', padding: '12px 16px' }}
+                      formatter={(val, name) => [`₺${val.toLocaleString('tr-TR')}`, name === 'paidValue' ? (language === 'tr' ? 'Ödenen' : 'Paid') : (language === 'tr' ? 'Bekleyen' : 'Pending')]}
+                    />
+                    <Legend iconType="circle" wrapperStyle={{ paddingTop: '15px', fontWeight: '600', fontSize: '12px' }} />
+                    <Area type="monotone" dataKey="paidValue" name={language === 'tr' ? 'Ödenen Faturalar' : 'Paid Invoices'} stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorPaidArea)" />
+                    <Area type="monotone" dataKey="pendingValue" name={language === 'tr' ? 'Bekleyen Faturalar' : 'Pending Invoices'} stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorPendingArea)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </div>
         ) : (
           <>
@@ -572,7 +647,7 @@ const Reports = ({ user, onLogout }) => {
               {renderCustomChart(
                 stats.spenderData, 
                 language === 'tr' ? 'Personel Harcama Performansı' : 'Staff Spending Performance', 
-                '👥', 
+                '', 
                 'bar-expense', 
                 'label-expense'
               )}
@@ -581,7 +656,7 @@ const Reports = ({ user, onLogout }) => {
               {renderCustomChart(
                 stats.vendorData, 
                 language === 'tr' ? 'Kurum/Satıcı Tedarik Analizi' : 'Vendor Supply Analysis', 
-                '🏢', 
+                '', 
                 'bar-income', 
                 'label-income'
               )}

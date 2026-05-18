@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Modal from '../components/common/Modal';
+import ConfirmModal from '../components/common/ConfirmModal';
 import FormInput from '../components/common/FormInput';
 import { useToast } from '../contexts/ToastContext';
 import apiClient from '../api/apiClient';
@@ -30,6 +31,12 @@ const Invoices = ({ user, onLogout }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [highlightedId, setHighlightedId] = useState(null);
+  const [confirmState, setConfirmState] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null
+  });
 
   const generateInvoiceNumber = () => {
     const today = new Date();
@@ -157,24 +164,37 @@ const Invoices = ({ user, onLogout }) => {
 
   const handleSubmitInvoice = async (e) => {
     e.preventDefault();
-    try {
-      let categoryId = formData.category;
 
-      // Kullanıcı "Diğer" seçtiyse, önce yeni kategoriyi oluştur
-      if (formData.category === 'other') {
-        if (!customCategoryName.trim()) {
-          addToast(t('invoices.pleaseEnterCategoryName'), 'error');
-          return;
-        }
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (!isEditing && formData.date && formData.date < todayStr) {
+      addToast(t('invoices.pastDateError'), 'error');
+      return;
+    }
+
+    let categoryId = formData.category;
+
+    // Kullanıcı "Diğer" seçtiyse, önce yeni kategoriyi oluştur
+    if (formData.category === 'other') {
+      if (!customCategoryName.trim()) {
+        addToast(t('invoices.pleaseEnterCategoryName'), 'error');
+        return;
+      }
+      try {
         const catResponse = await apiClient.post('/category', { name: customCategoryName.trim() });
         if (catResponse.success) {
           categoryId = catResponse.data._id;
           setCategories(prev => [...prev, catResponse.data]);
         }
+      } catch (catErr) {
+        addToast(t('invoices.pleaseEnterCategoryName'), 'error');
+        return;
       }
+    }
 
-      const finalInvoiceNumber = formData.invoiceNumber?.trim() || generateInvoiceNumber();
-      const invoicePayload = { ...formData, invoiceNumber: finalInvoiceNumber, category: categoryId || null };
+    const finalInvoiceNumber = formData.invoiceNumber?.trim() || generateInvoiceNumber();
+    const invoicePayload = { ...formData, invoiceNumber: finalInvoiceNumber, category: categoryId || null };
+
+    const saveAction = async () => {
       let response;
       if (isEditing) {
         response = await apiClient.put(`/invoice/${editingInvoiceId}`, invoicePayload);
@@ -190,8 +210,48 @@ const Invoices = ({ user, onLogout }) => {
         // Raporlar sayfasının veriyi yenilemesi için event gönder
         window.dispatchEvent(new CustomEvent('invoiceUpdated'));
       }
+    };
+
+    try {
+      await saveAction();
     } catch (error) {
-      addToast(error.message || t('invoices.saveError'), 'error');
+      if (error.data?.existingId) {
+        const confirmMessage = error.data.type === 'DUPLICATE_NUMBER'
+          ? t('invoices.duplicateNumberMessage').replace('{invoiceNumber}', finalInvoiceNumber)
+          : t('invoices.duplicateMetadataMessage');
+
+        setConfirmState({
+          isOpen: true,
+          title: t('invoices.duplicateDetectedTitle'),
+          message: confirmMessage,
+          onConfirm: async () => {
+            setConfirmState(prev => ({ ...prev, isOpen: false }));
+            try {
+              // 1. Eskisini sil
+              try {
+                await apiClient.delete(`/invoice/${error.data.existingId}`);
+              } catch (delErr) {
+                throw new Error(t('invoices.clearOldRecordError'));
+              }
+
+              // 2. Yenisini kaydet
+              const retryResponse = await apiClient.post('/invoice', invoicePayload);
+              if (retryResponse.success) {
+                setShowModal(false);
+                resetForm();
+                fetchData();
+                addToast(t('invoices.overwriteSuccess'), 'success');
+                window.dispatchEvent(new CustomEvent('invoiceUpdated'));
+              }
+            } catch (overwriteError) {
+              addToast(overwriteError.message || t('invoices.saveError'), 'error');
+              console.error('Overwrite error details:', overwriteError);
+            }
+          }
+        });
+      } else {
+        addToast(error.message || t('invoices.saveError'), 'error');
+      }
     }
   };
 
@@ -471,6 +531,7 @@ const Invoices = ({ user, onLogout }) => {
               name="date"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              min={isEditing ? undefined : new Date().toISOString().split('T')[0]}
               required
             />
             <FormInput
@@ -479,6 +540,7 @@ const Invoices = ({ user, onLogout }) => {
               name="dueDate"
               value={formData.dueDate || ''}
               onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+              min={isEditing ? undefined : new Date().toISOString().split('T')[0]}
               required
             />
           </div>
@@ -572,6 +634,14 @@ const Invoices = ({ user, onLogout }) => {
           </p>
         </div>
       </Modal>
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        onClose={() => setConfirmState({ ...confirmState, isOpen: false })}
+        onConfirm={confirmState.onConfirm}
+      />
     </DashboardLayout>
   );
 };

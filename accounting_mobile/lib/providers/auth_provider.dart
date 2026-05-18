@@ -13,11 +13,13 @@ class AuthProvider with ChangeNotifier {
   Map<String, dynamic>? _user;
   bool _isLoading = false;
   bool _isInitialized = false;
+  String? _loginError;
 
   bool get isAuthenticated => _isAuthenticated;
   Map<String, dynamic>? get user => _user;
   bool get isLoading => _isLoading;
   bool get isInitialized => _isInitialized;
+  String? get loginError => _loginError;
 
   Future<void> checkAuthStatus() async {
     // Otomatik giriş devredışı bırakıldı (Kullanıcı isteği üzerine her açılışta login ekranı gelsin)
@@ -41,6 +43,7 @@ class AuthProvider with ChangeNotifier {
 
   Future<bool> login(String email, String password) async {
     _isLoading = true;
+    _loginError = null;
     notifyListeners();
 
     try {
@@ -64,12 +67,14 @@ class AuthProvider with ChangeNotifier {
       }
     } on DioException catch (e) {
       if (e.response != null) {
-        // Backend'den gelen hata mesajını yazdıralım
-        print('Giriş Hatası (Backend): ${e.response?.data['message'] ?? e.response?.data}');
+        _loginError = e.response?.data['message'] ?? 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.';
+        print('Giriş Hatası (Backend): $_loginError');
       } else {
+        _loginError = 'Bağlantı hatası oluştu. Lütfen internetinizi kontrol edin.';
         print('Giriş Hatası (Bağlantı): ${e.message}');
       }
     } catch (e) {
+      _loginError = 'Beklenmedik bir hata oluştu.';
       print('Beklenmedik Hata: $e');
     }
 

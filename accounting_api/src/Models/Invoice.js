@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import MESSAGES from '../Utils/messages.js';
 
 const InvoiceSchema = new mongoose.Schema({
   companyId: {
@@ -8,19 +9,19 @@ const InvoiceSchema = new mongoose.Schema({
   uploadedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: [true, MESSAGES.MODELS.INVOICE.UPLOADED_BY_REQUIRED]
   },
   amount: {
     type: Number,
-    required: true
+    required: [true, MESSAGES.MODELS.INVOICE.AMOUNT_REQUIRED]
   },
   invoiceNumber: {
     type: String,
-    required: true
+    required: [true, MESSAGES.MODELS.INVOICE.INVOICE_NUMBER_REQUIRED]
   },
   description: {
     type: String,
-    required: true
+    required: [true, MESSAGES.MODELS.INVOICE.DESCRIPTION_REQUIRED]
   },
   date: {
     type: Date,
@@ -32,7 +33,7 @@ const InvoiceSchema = new mongoose.Schema({
   type: {
     type: String,
     enum: ['INCOME', 'EXPENSE'],
-    required: true
+    required: [true, MESSAGES.MODELS.INVOICE.TYPE_REQUIRED]
   },
   taxAmount: {
     type: Number,

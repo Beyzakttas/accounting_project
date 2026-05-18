@@ -9,6 +9,21 @@ import User from '../Models/User.js';
 export const createInvoice = async (invoiceData, userId) => {
   const { invoiceNumber, amount, date, dueDate, vendor } = invoiceData;
 
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  if (date) {
+    const inputDate = new Date(date);
+    if (!isNaN(inputDate.getTime())) {
+      inputDate.setHours(0, 0, 0, 0);
+      if (inputDate < todayStart) {
+        const error = new Error('Geçmiş tarihli fatura girişi yapılamaz! Lütfen bugünün tarihini veya gelecekteki bir tarihi seçin.');
+        error.statusCode = STATUS_CODES.BAD_REQUEST;
+        throw error;
+      }
+    }
+  }
+
   // Fatura no boş ise otomatik benzersiz numara üret
   let finalInvoiceNumber = invoiceNumber;
   if (!finalInvoiceNumber || !finalInvoiceNumber.trim()) {

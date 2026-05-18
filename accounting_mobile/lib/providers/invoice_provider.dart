@@ -25,6 +25,13 @@ class InvoiceProvider with ChangeNotifier {
   List<dynamic> _staff = [];
   bool _isLoading = false;
   String? _lastError;
+  String? _existingDuplicateId;
+
+  String? get existingDuplicateId => _existingDuplicateId;
+  
+  void clearDuplicateError() {
+    _existingDuplicateId = null;
+  }
   String _filter = 'ALL';
   int _unreadNotificationsCount = 0;
   List<Map<String, dynamic>> _notifications = [];
@@ -350,6 +357,7 @@ class InvoiceProvider with ChangeNotifier {
   Future<bool> addInvoice(Map<String, dynamic> invoiceData, {XFile? image}) async {
     _isLoading = true;
     _lastError = null;
+    _existingDuplicateId = null;
     notifyListeners();
 
     try {
@@ -378,6 +386,13 @@ class InvoiceProvider with ChangeNotifier {
       print('Add Invoice Error: $e');
       if (e is DioException && e.response != null) {
         _lastError = e.response?.data['message'] ?? 'Sunucu hatası oluştu.';
+        final responseData = e.response?.data;
+        if (responseData is Map && responseData['data'] != null) {
+          final errData = responseData['data'];
+          if (errData is Map && errData['existingId'] != null) {
+            _existingDuplicateId = errData['existingId']?.toString();
+          }
+        }
       } else {
         _lastError = 'Bağlantı hatası oluştu.';
       }

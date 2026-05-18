@@ -121,7 +121,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               );
                               if (!success && mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Giriş başarısız! Lütfen bilgilerinizi kontrol edin.')),
+                                  SnackBar(
+                                    content: Text(authProvider.loginError ?? 'Giriş başarısız! Lütfen bilgilerinizi kontrol edin.'),
+                                    backgroundColor: Colors.redAccent,
+                                  ),
                                 );
                               }
                             },

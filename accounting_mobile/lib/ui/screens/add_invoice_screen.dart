@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 import '../../providers/invoice_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/ai_provider.dart';
 import '../../core/constants.dart';
 
 class AddInvoiceScreen extends StatefulWidget {
@@ -30,6 +31,10 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
   String? _assignedTo;
   DateTime? _dueDate;
   XFile? _image;
+
+  static const List<String> _allowedDepartments = [
+    'Muhasebe', 'Finans', 'IK', 'Satis', 'Pazarlama', 'Yazilim', 'Operasyon', 'Diger'
+  ];
   
   @override
   void dispose() {
@@ -72,7 +77,9 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
       _vendorController.text = inv['vendor'] ?? '';
       _invoiceNoController.text = inv['invoiceNumber'] ?? '';
       _type = inv['type'] ?? 'EXPENSE';
-      _department = inv['department'] ?? 'Diger';
+      
+      final String deptVal = inv['department'] ?? 'Diger';
+      _department = _allowedDepartments.contains(deptVal) ? deptVal : 'Diger';
       
       _assignedTo = inv['assignedTo'] != null 
           ? (inv['assignedTo'] is Map ? inv['assignedTo']['_id'] : inv['assignedTo'].toString()) 
@@ -95,7 +102,9 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
           ? data['invoiceNumber'].toString()
           : generateInvoiceNo();
       _type = data['type'] ?? 'EXPENSE';
-      _department = data['department'] ?? 'Diger';
+      
+      final String deptVal = data['department'] ?? 'Diger';
+      _department = _allowedDepartments.contains(deptVal) ? deptVal : 'Diger';
       
       if (data['category'] != null) {
         if (data['category'] is Map) {
@@ -112,8 +121,79 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
   Future<void> _pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: source);
-    if (image != null) {
-      setState(() => _image = image);
+    if (image == null) return;
+
+    setState(() => _image = image);
+
+    if (!mounted) return;
+
+    // Yapay Zeka analizini başlatıp form alanlarını dolduralım
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: Color(0xFF6366F1)),
+            SizedBox(height: 16),
+            Text('Yapay Zeka görseli analiz ediyor...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final aiProvider = Provider.of<AiProvider>(context, listen: false);
+      final data = await aiProvider.analyzeInvoice(image);
+
+      if (mounted) {
+        Navigator.pop(context); // Yükleme diyaloğunu kapat
+      }
+
+      if (data != null) {
+        setState(() {
+          _amountController.text = data['amount']?.toString() ?? '';
+          _descController.text = data['description'] ?? '';
+          _vendorController.text = data['vendor'] ?? '';
+          if (data['invoiceNumber'] != null && data['invoiceNumber'].toString().trim().isNotEmpty) {
+            _invoiceNoController.text = data['invoiceNumber'].toString();
+          }
+          _type = data['type'] ?? 'EXPENSE';
+          
+          final String deptVal = data['department'] ?? 'Diger';
+          _department = _allowedDepartments.contains(deptVal) ? deptVal : 'Diger';
+          
+          if (data['category'] != null) {
+            if (data['category'] is Map) {
+              _selectedCategory = data['category']['_id'];
+            } else {
+              _selectedCategory = data['category'];
+            }
+          }
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Fatura bilgileri yapay zeka ile dolduruldu! 🌟')),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Görsel eklendi fakat veriler çözümlenemedi. Bilgileri kendiniz doldurabilirsiniz.'),
+              backgroundColor: Colors.orangeAccent,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Analiz hatası: $e'), backgroundColor: Colors.redAccent),
+        );
+      }
     }
   }
 
@@ -300,7 +380,20 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedCategory,
+                value: () {
+                  if (_selectedCategory == null) return null;
+                  if (invoiceProvider.categories.any((c) => c['_id'] == _selectedCategory)) {
+                    return _selectedCategory;
+                  }
+                  final found = invoiceProvider.categories.firstWhere(
+                    (c) => c['name'] == _selectedCategory,
+                    orElse: () => {},
+                  );
+                  if (found.isNotEmpty && found['_id'] != null) {
+                    return found['_id'] as String;
+                  }
+                  return null;
+                }(),
                 menuMaxHeight: 250, // Yaklaşık 5 öğe yüksekliği
                 decoration: InputDecoration(
                   labelText: 'Kategori',
@@ -316,7 +409,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _department,
+                value: _allowedDepartments.contains(_department) ? _department : 'Diger',
                 decoration: InputDecoration(
                   labelText: 'Departman',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -341,7 +434,9 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                     final DateTime? picked = await showDatePicker(
                       context: context,
                       initialDate: _dueDate ?? DateTime.now(),
-                      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                      firstDate: widget.invoiceToEdit != null
+                          ? DateTime.now().subtract(const Duration(days: 365))
+                          : DateTime.now(),
                       lastDate: DateTime.now().add(const Duration(days: 365)),
                       builder: (context, child) {
                         return Theme(
@@ -386,6 +481,20 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                           ? null
                           : () async {
                               if (_formKey.currentState!.validate()) {
+                                  if (widget.invoiceToEdit == null && _dueDate != null) {
+                                    final todayStart = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+                                    final pickedDate = DateTime(_dueDate!.year, _dueDate!.month, _dueDate!.day);
+                                    if (pickedDate.isBefore(todayStart)) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Geçmiş tarihli fatura girişi yapılamaz! Lütfen bugünün tarihini veya gelecekteki bir tarihi seçin.'),
+                                          backgroundColor: Colors.redAccent,
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                  }
+
                                   final payload = {
                                     'amount': _amountController.text.replaceAll(',', '.'),
                                     'description': _descController.text,
@@ -400,17 +509,78 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                                     'dueDate': _dueDate?.toIso8601String(),
                                   };
 
-                                bool success;
-                                if (widget.invoiceToEdit == null) {
-                                  success = await invoiceProvider.addInvoice(payload, image: _image);
-                                } else {
-                                  success = await invoiceProvider.updateInvoice(widget.invoiceToEdit!['_id'], payload, image: _image);
-                                }
+                                  bool success;
+                                  if (widget.invoiceToEdit == null) {
+                                    success = await invoiceProvider.addInvoice(payload, image: _image);
+                                  } else {
+                                    success = await invoiceProvider.updateInvoice(widget.invoiceToEdit!['_id'], payload, image: _image);
+                                  }
 
                                   if (success && mounted) {
                                     Navigator.pop(context);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(content: Text(widget.invoiceToEdit == null ? 'Fatura başarıyla eklendi!' : 'Fatura başarıyla güncellendi!')),
+                                    );
+                                  } else if (!success && invoiceProvider.existingDuplicateId != null && mounted) {
+                                    final existingId = invoiceProvider.existingDuplicateId!;
+                                    showDialog(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                        title: const Row(
+                                          children: [
+                                            Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                                            SizedBox(width: 8),
+                                            Text('Mükerrer Fatura'),
+                                          ],
+                                        ),
+                                        content: Text(invoiceProvider.lastError ?? 'Bu fatura zaten kayıtlı. Mevcut kaydı silip yenisini kaydetmek ister misiniz?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx),
+                                            child: const Text('İptal'),
+                                          ),
+                                          ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(0xFF6366F1),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                            ),
+                                            onPressed: () async {
+                                              Navigator.pop(ctx);
+                                              
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Eski fatura temizlenip yenisi kaydediliyor...'), duration: Duration(seconds: 2)),
+                                              );
+                                              
+                                              final delSuccess = await invoiceProvider.deleteInvoice(existingId);
+                                              if (!delSuccess) {
+                                                if (mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(content: Text('Eski kayıt silinemedi.'), backgroundColor: Colors.redAccent),
+                                                  );
+                                                }
+                                                return;
+                                              }
+                                              
+                                              final retrySuccess = await invoiceProvider.addInvoice(payload, image: _image);
+                                              if (retrySuccess && mounted) {
+                                                Navigator.pop(context);
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(content: Text('Eski kayıt silindi ve yeni fatura başarıyla eklendi!')),
+                                                );
+                                              } else if (mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(invoiceProvider.lastError ?? 'Fatura eklenirken bir hata oluştu!'),
+                                                    backgroundColor: Colors.redAccent,
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                            child: const Text('Evet, Değiştir', style: TextStyle(color: Colors.white)),
+                                          ),
+                                        ],
+                                      ),
                                     );
                                   } else if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(

@@ -12,7 +12,7 @@ class TokenService {
      */
     static generateToken(payload) {
         return jwt.sign(payload, process.env.JWT_SECRET || 'fallback_secret', {
-            expiresIn: '15m', // Access token'ın geçerlilik süresi (15 dakika - Güvenlik için kısa tutuldu)
+            expiresIn: '7d', // Geliştirme ve test süreçlerini kolaylaştırmak için süreyi 7 güne uzattık (Eski değer: 15m)
         });
     }
 
